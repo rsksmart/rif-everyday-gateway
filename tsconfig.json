@@ -15,7 +15,6 @@
     "test",
     "typechain-types",
     "typechain-types/factories",
-    "utils",
   ],
   "paths": {
     "*": ["node_modules/*"]

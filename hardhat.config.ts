@@ -1,9 +1,8 @@
 import '@nomiclabs/hardhat-ethers';
-import '@nomiclabs/hardhat-waffle';
+import '@nomicfoundation/hardhat-chai-matchers';
 import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
 import 'hardhat-docgen';
-import 'hardhat-exposed-exclude-vars';
 import 'hardhat-gas-reporter';
 import 'hardhat-packager';
 import 'hardhat-watcher';
@@ -15,7 +14,7 @@ export default <HardhatUserConfig>{
   solidity: {
     compilers: [
       {
-        version: '0.8.4',
+        version: '0.8.16',
         settings: {
           optimizer: {
             enabled: true,
@@ -24,9 +23,6 @@ export default <HardhatUserConfig>{
         },
       },
     ],
-  },
-  exposed: {
-    excludeVars: ['_auctionByListing'],
   },
   networks: {
     regtest: {
@@ -71,7 +67,7 @@ export default <HardhatUserConfig>{
   },
   packager: {
     includeFactories: false,
-    contracts: [],
+    contracts: ['RIFGateway'],
   },
   docgen: {
     path: './docs',
@@ -79,5 +75,3 @@ export default <HardhatUserConfig>{
     runOnCompile: false,
   },
 };
-
-// export default config;
