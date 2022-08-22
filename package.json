@@ -20,6 +20,9 @@
     "format": "npm run format:sol && npm run format:ts",
     "postinstall": "npm run compile"
   },
+  "lint-staged": {
+    "*.ts": "eslint --cache --fix"
+  },
   "engines": {
     "node": ">=v14.16.1"
   },
