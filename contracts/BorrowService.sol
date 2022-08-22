@@ -35,7 +35,7 @@ abstract contract BorrowService is Service {
     );
 
     constructor() {
-        _serviceType = ServiceType.Borrowing;
+        serviceType = ServiceType.Borrowing;
     }
 
     function borrow(

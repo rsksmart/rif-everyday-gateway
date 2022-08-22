@@ -9,5 +9,5 @@ abstract contract Service is Ownable {
         Borrowing
     }
 
-    ServiceType private _serviceType;
+    ServiceType public serviceType;
 }
