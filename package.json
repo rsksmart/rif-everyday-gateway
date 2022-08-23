@@ -8,6 +8,7 @@
     "test": "REPORT_GAS=true hardhat test",
     "clean": "rm -rf typechain-types cache bin dist artifacts contracts-exposed && hardhat clean",
     "compile": "npm run clean && hardhat compile --force",
+    "coverage": "hardhat coverage",
     "ci:format": "prettier -c contracts/**/*.sol && prettier -c **/*.ts",
     "ci:lint": "solhint 'contracts/**/*.sol' && eslint test --ext .ts ",
     "ci:test": "npm run compile && npm run test",
