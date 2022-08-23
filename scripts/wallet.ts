@@ -1,6 +1,9 @@
-import { LendingService } from 'typechain-types';
+import {
+  LendingService,
+  MockTimeOracle,
+} from 'typechain-types/test-utils/MockTimeOracle';
 import { deployContract } from '../utils/deployment.utils';
-import { duration } from 'moment';
+import moment, { duration } from 'moment';
 import { PaybackOption } from 'test/utils';
 import { oneRBTC } from 'test/mock.utils';
 import { ethers } from 'hardhat';
@@ -11,6 +14,16 @@ const rBTC = ethers.constants.AddressZero;
 // execute lending
 
 // Deployment Script Goes here
+
+const setupMockTimeOracle = async () => {
+  const { contract } = await deployContract('MockTimeOracle', {});
+
+  const oracleTx = await contract.setTimeStamp(Date.now());
+  const txReceipt = await oracleTx.wait();
+  return {
+    timeOracleContract: contract,
+  };
+};
 
 const setupLendingProtocol = async () => {
   // deploy the contract and get the deployed address
@@ -39,6 +52,8 @@ const setupLendingProtocol = async () => {
 };
 
 const executeLending = async () => {
+  const { timeOracleContract } = await setupMockTimeOracle();
+
   const { lendingContract, lendingServiceListingId } =
     await setupLendingProtocol();
 
@@ -74,6 +89,23 @@ const executeLending = async () => {
   // an oracle that will return the current time. We'll make the lending protocol to depend on this oracle.
   // so when we execute lend it will have the current time, but before we
   // execute withdraw we will update the oracle time to reflect 3 months in the future or something. so the lending contract will allow it.
+
+  const timeForwardingTx = timeOracleContract.setTimeStamp(
+    moment().add(3, 'months').milliseconds()
+  );
+  const lenderCurrentBalance = await lendingContract.getBalance(lender.address);
+
+  const withdrawTx = await lendingContract.withdraw(lenderCurrentBalance);
+  await withdrawTx.wait();
+
+  console.log(
+    'Lender Balance on wallet',
+    await ethers.provider.getBalance(lender.address)
+  );
+  console.log(
+    'Lender Balance on lending contract',
+    await lendingContract.getBalance(lender.address)
+  );
 };
 
 executeLending().then(() => console.log('done 👀'));
