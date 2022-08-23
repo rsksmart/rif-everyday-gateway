@@ -3,7 +3,6 @@ pragma solidity ^0.8.16;
 
 import "./Service.sol";
 
-
 abstract contract LendingService is Service {
     event Lend(address indexed lender, address currency);
     event Withdraw(address indexed withdrawer, address currency);
@@ -32,13 +31,22 @@ abstract contract LendingService is Service {
         serviceType = ServiceType.Lending;
     }
 
-    function lend(uint256 amount, address currency, uint256 duration, PayBackOption payBackOption) public virtual payable;
+    function lend(
+        uint256 amount,
+        address currency,
+        uint256 duration,
+        PayBackOption payBackOption
+    ) public payable virtual;
 
     function withdraw(uint256 amount, address currency) public virtual;
 
     function getBalance(address currency) public virtual returns (uint256);
 
-    function addListing(LendingServiceListing memory listing) public onlyOwner returns (uint256) {
+    function addListing(LendingServiceListing memory listing)
+        public
+        onlyOwner
+        returns (uint256)
+    {
         uint256 listingId = _listingCounter + 1;
         listing.id = listingId;
         listings[listingId] = listing;
@@ -49,7 +57,11 @@ abstract contract LendingService is Service {
         delete listings[listingId];
     }
 
-    function getListing(uint256 listingId) public view returns (LendingServiceListing memory) {
+    function getListing(uint256 listingId)
+        public
+        view
+        returns (LendingServiceListing memory)
+    {
         return listings[listingId];
     }
 
@@ -57,7 +69,9 @@ abstract contract LendingService is Service {
         return _listingCounter;
     }
 
-    function update(LendingServiceListing memory listing, uint256 listingId) public {
+    function update(LendingServiceListing memory listing, uint256 listingId)
+        public
+    {
         listings[listingId] = listing;
     }
 }

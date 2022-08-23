@@ -4,11 +4,14 @@ pragma solidity ^0.8.16;
 import "./LendingService.sol";
 
 contract DummyLendingService is LendingService {
+    constructor() {}
 
-    constructor() {
-    }
-
-    function lend(uint256 amount, address currency, uint256 duration, PayBackOption payBackOption) public override payable {
+    function lend(
+        uint256 amount,
+        address currency,
+        uint256 duration,
+        PayBackOption payBackOption
+    ) public payable override {
         emit Lend(msg.sender, currency);
     }
 
@@ -16,7 +19,12 @@ contract DummyLendingService is LendingService {
         emit Withdraw(msg.sender, currency);
     }
 
-    function getBalance(address currency) public override view returns (uint256) {
+    function getBalance(address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return 0;
     }
 }

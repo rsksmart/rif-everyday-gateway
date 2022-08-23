@@ -9,6 +9,5 @@ abstract contract Service is Ownable {
         Lending
     }
 
-    ServiceType public  serviceType;
+    ServiceType public serviceType;
 }
-
