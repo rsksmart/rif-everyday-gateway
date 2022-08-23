@@ -17,6 +17,6 @@ contract DummyLendingService is LendingService {
     }
 
     function getBalance(address currency) public override view returns (uint256) {
-        return block.timestamp;
+        return 0;
     }
 }
