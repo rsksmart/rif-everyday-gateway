@@ -6,18 +6,18 @@ import { DummyLendingService__factory } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('DummyLendingService', () => {
-  let lendingService: DummyLendingService;
-  let deployer: SignerWithAddress;
+  let dummyLendingService: DummyLendingService;
+  let owner: SignerWithAddress;
   let otherUsers: SignerWithAddress[];
 
   beforeEach(async () => {
-    [deployer, ...otherUsers] = await ethers.getSigners();
+    [owner, ...otherUsers] = await ethers.getSigners();
 
     const lendingServiceFactory = (await ethers.getContractFactory(
       'DummyLendingService'
     )) as DummyLendingService__factory;
 
-    lendingService = await lendingServiceFactory.deploy();
+    dummyLendingService = await lendingServiceFactory.deploy();
   });
 
   it('should emit "Lend" event when lend is called', async () => {
@@ -26,24 +26,26 @@ describe('DummyLendingService', () => {
     const duration = ethers.constants.One;
     const payBackOption = ethers.constants.One;
 
-    await expect(lendingService.lend(amount, currency, duration, payBackOption))
-      .to.emit(lendingService, 'Lend')
-      .withArgs(deployer.address, currency);
+    await expect(
+      dummyLendingService.lend(amount, currency, duration, payBackOption)
+    )
+      .to.emit(dummyLendingService, 'Lend')
+      .withArgs(owner.address, currency);
   });
 
   it('should emit "Withdraw" event when withdraw is called', async () => {
     const amount = ethers.constants.Two;
     const currency = ethers.constants.AddressZero;
 
-    await expect(lendingService.withdraw(amount, currency))
-      .to.emit(lendingService, 'Withdraw')
-      .withArgs(deployer.address, currency);
+    await expect(dummyLendingService.withdraw(amount, currency))
+      .to.emit(dummyLendingService, 'Withdraw')
+      .withArgs(owner.address, currency);
   });
 
   it('should return "0" when getBalance is called', async () => {
     const currency = ethers.constants.AddressZero;
 
-    expect(await lendingService.getBalance(currency)).to.equal(
+    expect(await dummyLendingService.getBalance(currency)).to.equal(
       BigNumber.from(0)
     );
   });
