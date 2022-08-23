@@ -19,10 +19,6 @@ jobs:
           node-version: 14
       - name: Install dependecies
         run: npm ci
-      - name: Commit lint
-        uses: rsksmart/commitlint-github-action@v4
-        with:
-          configFile: .commitlintrc.ts
       - name: Check Formatting
         run: npm run ci:format
       - name: Check Code-quality
