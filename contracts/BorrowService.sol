@@ -54,6 +54,7 @@ abstract contract BorrowService is Service {
     function currentLiquidity(address currency, uint256 index)
         public
         virtual
+        view
         returns (uint256 liquidity)
     {
         return listings[currency][index].maxAmount;
@@ -103,6 +104,7 @@ abstract contract BorrowService is Service {
     function getListing(uint256 index, address currency)
         public
         virtual
+        view
         returns (BorrowServiceListing memory listing)
     {
         return listings[currency][index];
@@ -111,6 +113,7 @@ abstract contract BorrowService is Service {
     function getListingsCount(address currency)
         public
         virtual
+        view
         returns (uint256 count)
     {
         return _counters[currency];
