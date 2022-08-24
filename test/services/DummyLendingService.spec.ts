@@ -6,7 +6,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('DummyLendingService', () => {
   async function deployDummyLendingServiceFixture() {
-    const [owner, ...otherUsers] = await ethers.getSigners();
+    const [owner] = await ethers.getSigners();
 
     const lendingServiceFactory = (await ethers.getContractFactory(
       'DummyLendingService'
