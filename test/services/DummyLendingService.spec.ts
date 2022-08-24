@@ -1,11 +1,7 @@
 import { expect } from 'chairc';
 import { ethers } from 'hardhat';
 import { BigNumber, BigNumberish } from 'ethers';
-import {
-  DummyLendingService,
-  DummyLendingService__factory,
-} from '../../typechain-types';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { DummyLendingService__factory } from '../../typechain-types';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 
 describe('DummyLendingService', () => {
