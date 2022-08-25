@@ -6,6 +6,7 @@ import "./Service.sol";
 abstract contract LendingService is Service {
     event Lend(address indexed lender, address currency);
     event Withdraw(address indexed withdrawer, address currency);
+    // TODO: event for new listing
 
     enum PayBackOption {
         day,
@@ -23,7 +24,7 @@ abstract contract LendingService is Service {
         uint256 rewardRate;
     }
 
-    mapping(uint256 => LendingServiceListing) public listings;
+    mapping(address => mapping(uint256 => LendingServiceListing)) public listings;
 
     uint256 private _listingCounter;
 
@@ -42,7 +43,7 @@ abstract contract LendingService is Service {
 
     function getBalance(address currency) public virtual returns (uint256);
 
-    function addListing(LendingServiceListing memory listing)
+    function addListing(uint256 minDuration, uint256 maxDuration, address currency, PayBackOption payBackOption, uint256 rewardRate)
         public
         onlyOwner
         returns (uint256)
