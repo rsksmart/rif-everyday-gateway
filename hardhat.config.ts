@@ -1,8 +1,9 @@
-import '@nomiclabs/hardhat-ethers';
-import '@nomicfoundation/hardhat-chai-matchers';
 import '@typechain/hardhat';
+import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-waffle';
 import 'hardhat-contract-sizer';
 import 'hardhat-docgen';
+import 'hardhat-exposed-exclude-vars';
 import 'hardhat-gas-reporter';
 import 'hardhat-packager';
 import 'hardhat-watcher';
