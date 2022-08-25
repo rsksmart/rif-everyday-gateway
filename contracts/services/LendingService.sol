@@ -6,7 +6,7 @@ import "./Service.sol";
 abstract contract LendingService is Service {
     event Lend(address indexed lender, address currency);
     event Withdraw(address indexed withdrawer, address currency);
-    // TODO: event for new listing
+    event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     enum PayBackOption {
         day,
@@ -52,11 +52,24 @@ abstract contract LendingService is Service {
         uint256 rewardRate
     ) public onlyOwner returns (uint256) {
         uint256 listingId = _listingCounter + 1;
-        listings[currency][listingId] = LendingServiceListing(listingId, minDuration, maxDuration, currency, payBackOption, rewardRate);
+        listings[currency][listingId] = LendingServiceListing(
+            listingId,
+            minDuration,
+            maxDuration,
+            currency,
+            payBackOption,
+            rewardRate
+        );
+
+        emit ListingCreated(currency, listingId);
+
         return listingId;
     }
 
-    function removeListing(address currency, uint256 listingId) public onlyOwner {
+    function removeListing(address currency, uint256 listingId)
+        public
+        onlyOwner
+    {
         delete listings[currency][listingId];
     }
 
