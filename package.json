@@ -19,7 +19,8 @@
     "format:sol": "prettier -c -w --no-editorconfig contracts/**/*.sol contracts/**/**/*.sol",
     "format:ts": "prettier -c -w --no-editorconfig **/*.ts",
     "format": "npm run format:sol && npm run format:ts",
-    "postinstall": "npm run compile"
+    "postinstall": "npm run compile",
+    "tdd": "npm run compile && REPORT_GAS=true hardhat watch tdd"
   },
   "lint-staged": {
     "*.ts": "eslint --cache --fix"

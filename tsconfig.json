@@ -10,8 +10,11 @@
     "declaration": true,
     "baseUrl": "./"
   },
+  "exclude": ["dist", "node_modules"],
   "include": [
     "scripts",
+    "utils",
+    "utils/deployment.ts",
     "test",
     "typechain-types",
     "typechain-types/factories",
