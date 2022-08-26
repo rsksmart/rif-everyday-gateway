@@ -8,8 +8,8 @@ contract ACMELending {
     using SafeMath for uint256;
 
     struct Balance {
-      uint256 amount;
-      uint256 blockHeight;
+        uint256 amount;
+        uint256 blockHeight;
     }
 
     event Deposit(address indexed _from, uint256 _amount);
@@ -32,41 +32,50 @@ contract ACMELending {
         }
 
         if (_balance.blockHeight == 0) {
-          _balance.blockHeight = block.number;
+            _balance.blockHeight = block.number;
         }
 
         emit Deposit(msg.sender, amount);
     }
 
     function withdraw(address currency, uint256 amount) public {
-      require(_balances[msg.sender][currency].amount > 0, "Not enough balance");
+        require(
+            _balances[msg.sender][currency].amount > 0,
+            "Not enough balance"
+        );
 
-      if (currency == address(0)) {
-          _balances[msg.sender][address(0)].amount -= amount;
-          payable(msg.sender).transfer(amount);
-      } else {
-          _balances[msg.sender][currency].amount -= amount;
-          IERC20(currency).transferFrom(address(this), msg.sender, amount);
-      }
+        if (currency == address(0)) {
+            _balances[msg.sender][address(0)].amount -= amount;
+            payable(msg.sender).transfer(amount);
+        } else {
+            _balances[msg.sender][currency].amount -= amount;
+            IERC20(currency).transferFrom(address(this), msg.sender, amount);
+        }
 
-      if (_balances[msg.sender][currency].amount == 0) {
-        delete _balances[msg.sender][currency];
-      }
+        if (_balances[msg.sender][currency].amount == 0) {
+            delete _balances[msg.sender][currency];
+        }
     }
 
     function getBalance(address currency) public view returns (uint256) {
-        return _balances[msg.sender][currency].amount + _calculateInterest(msg.sender, currency);
+        return
+            _balances[msg.sender][currency].amount +
+            _calculateInterest(msg.sender, currency);
     }
 
-    function _calculateInterest(address from, address currency) private view returns (uint256) {
-      uint256 initialBlockHeight = _balances[from][currency].blockHeight;
-      
-      require(initialBlockHeight > 0, "Balance not found");
-      
-      uint256 elapsedBlocks = initialBlockHeight - block.number;
+    function _calculateInterest(address from, address currency)
+        private
+        view
+        returns (uint256)
+    {
+        uint256 initialBlockHeight = _balances[from][currency].blockHeight;
 
-      require(elapsedBlocks > 100, "Must wait for 100 blocks");
+        require(initialBlockHeight > 0, "Balance not found");
 
-      return elapsedBlocks.div(100).mul(_interestPer100Blocks.div(100));
+        uint256 elapsedBlocks = initialBlockHeight - block.number;
+
+        require(elapsedBlocks > 100, "Must wait for 100 blocks");
+
+        return elapsedBlocks.div(100).mul(_interestPer100Blocks.div(100));
     }
 }
