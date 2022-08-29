@@ -6,6 +6,20 @@ pragma solidity ^0.8.16;
  *         Beneficiaries may consult/withdraw their funds using this contract
  */
 interface IFeeManager {
+    /**
+     * @notice Emitted when `payee` withdraws from the RIF Gateway
+     * @param payee withdrawer
+     * @param amount funds to be withdrawn
+     */
+    event Withdraw(address indexed payee, uint256 indexed amount);
+
+    /**
+     * @notice Emitted when `payee` deposits to the RIF Gateway
+     * @param payer account that deposits
+     * @param amount funds to be deposited
+     */
+    event Deposit(address indexed payer, uint256 indexed amount);
+
     error InvalidAmount();
 
     error InsufficientFunds();

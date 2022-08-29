@@ -15,6 +15,11 @@ async function feeManagerSetUp() {
   return { feeManager, signers };
 }
 
+enum FeeManagerEvents {
+  Deposit = 'Deposit',
+  Withdraw = 'Withdraw',
+}
+
 describe('FeeManager', () => {
   let feeManager: IFeeManager;
   let signers: SignerWithAddress[];
@@ -49,6 +54,16 @@ describe('FeeManager', () => {
       );
     });
 
+    it('should emit `Deposit` event', async () => {
+      const expectedFee = 100;
+      // Verify results
+      await expect(
+        feeManager.fundBeneficiary(beneficiaryAddr, { value: expectedFee })
+      )
+        .to.emit(feeManager, FeeManagerEvents.Deposit)
+        .withArgs(beneficiaryAddr, expectedFee);
+    });
+
     it('should revert when the caller sends an invalid value', async () => {
       await expect(
         feeManager.fundBeneficiary(beneficiaryAddr)
@@ -80,6 +95,20 @@ describe('FeeManager', () => {
       await expect(feeManager.getBalance(beneficiaryAddr)).to.eventually.equal(
         expectedLeftBalance
       );
+    });
+
+    it('should emit `Withdraw` event', async () => {
+      const initialBalance = 50;
+      const amountToWithdraw = 30;
+
+      await feeManager.fundBeneficiary(beneficiaryAddr, {
+        value: initialBalance,
+      });
+
+      // Verify results
+      await expect(feeManagerAsBeneficiary.withdraw(amountToWithdraw))
+        .to.emit(feeManager, FeeManagerEvents.Withdraw)
+        .withArgs(beneficiaryAddr, amountToWithdraw);
     });
 
     it('should revert when caller does not have enough funds', async () => {
