@@ -16,12 +16,6 @@ import {
 } from 'ethers';
 import { Fragment } from 'ethers/lib/utils';
 import { ethers, network, waffle } from 'hardhat';
-import {
-  ERC20,
-  ERC20__factory,
-  ERC721,
-  ERC721__factory,
-} from 'typechain-types';
 
 export const oneRBTC = BigNumber.from(10).pow(18);
 // mock contract default balance set to a very
@@ -34,46 +28,6 @@ export const calculatePercentageWPrecision = (
   precision = oneRBTC
 ): BigNumber => {
   return BigNumber.from(num).mul(perc).div(precision.mul(100));
-};
-
-export const createERC20Mock = async <T extends ERC20>(
-  signer: Signer,
-  ABI: any = ERC20__factory.abi,
-  { name, symbol, decimals } = {
-    name: 'some-token-name',
-    symbol: 'YY',
-    decimals: 6,
-  }
-): Promise<MockContract<T>> => {
-  const mockERC20Token = await deployMockContract(signer, ABI);
-  await Promise.all([
-    mockERC20Token.mock.name.returns(name),
-    mockERC20Token.mock.symbol.returns(symbol),
-    mockERC20Token.mock.decimals.returns(decimals),
-  ]);
-
-  return mockERC20Token as MockContract<T>;
-};
-
-export const createERC721Mock = async <T extends ERC721>(
-  signer: Signer,
-  ABI: any = ERC721__factory.abi,
-  { name, symbol } = {
-    name: 'some-token-name',
-    symbol: 'YY',
-  }
-): Promise<MockContract<T>> => {
-  const mockERC721Token = await deployMockContract(signer, ABI);
-
-  await Promise.all([
-    mockERC721Token.mock.name.returns(name),
-    mockERC721Token.mock.symbol.returns(symbol),
-    mockERC721Token.mock.transferFrom.returns(),
-    mockERC721Token.mock.safeTransferFrom.returns(),
-    //ownerOf to be defined by user
-  ]);
-
-  return mockERC721Token as MockContract<T>;
 };
 
 export const getRandomBytes = (size = 32, encoding: BufferEncoding = 'hex') => {
