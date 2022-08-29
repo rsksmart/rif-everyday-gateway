@@ -6,6 +6,7 @@ import "./Service.sol";
 abstract contract LendingService is Service {
     event Lend(address indexed lender, address currency);
     event Withdraw(address indexed withdrawer, address currency);
+    event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     enum PayBackOption {
         day,
@@ -23,7 +24,8 @@ abstract contract LendingService is Service {
         uint256 rewardRate;
     }
 
-    mapping(uint256 => LendingServiceListing) public listings;
+    mapping(address => mapping(uint256 => LendingServiceListing))
+        public listings;
 
     uint256 private _listingCounter;
 
@@ -42,36 +44,50 @@ abstract contract LendingService is Service {
 
     function getBalance(address currency) public virtual returns (uint256);
 
-    function addListing(LendingServiceListing memory listing)
-        public
-        onlyOwner
-        returns (uint256)
-    {
+    function addListing(
+        uint256 minDuration,
+        uint256 maxDuration,
+        address currency,
+        PayBackOption payBackOption,
+        uint256 rewardRate
+    ) public onlyOwner returns (uint256) {
         uint256 listingId = _listingCounter + 1;
-        listing.id = listingId;
-        listings[listingId] = listing;
+        listings[currency][listingId] = LendingServiceListing(
+            listingId,
+            minDuration,
+            maxDuration,
+            currency,
+            payBackOption,
+            rewardRate
+        );
+
+        emit ListingCreated(currency, listingId);
+
         return listingId;
     }
 
-    function removeListing(uint256 listingId) public onlyOwner {
-        delete listings[listingId];
+    function removeListing(address currency, uint256 listingId)
+        public
+        onlyOwner
+    {
+        delete listings[currency][listingId];
     }
 
-    function getListing(uint256 listingId)
+    function getListing(address currency, uint256 listingId)
         public
         view
         returns (LendingServiceListing memory)
     {
-        return listings[listingId];
+        return listings[currency][listingId];
     }
 
     function getListingCount() public view returns (uint256) {
         return _listingCounter;
     }
 
-    function update(LendingServiceListing memory listing, uint256 listingId)
+    function update(address currency, LendingServiceListing memory listing)
         public
     {
-        listings[listingId] = listing;
+        listings[currency][listing.id] = listing;
     }
 }
