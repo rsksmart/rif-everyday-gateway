@@ -20,7 +20,7 @@ contract ACMELending {
     uint256 private _interestPer100Blocks = 10;
 
     function deposit(address currency, uint256 amount) public payable {
-        require(msg.value > 0 || amount > 0, "No tokens sent");
+        require(msg.value > 0 || amount > 0, "No amount sent");
 
         Balance storage _balance = _balances[msg.sender][currency];
 
@@ -44,17 +44,21 @@ contract ACMELending {
             "Not enough balance"
         );
 
+        uint256 total = amount + _calculateInterest(msg.sender, currency);
+
         if (currency == address(0)) {
-            _balances[msg.sender][address(0)].amount -= amount;
-            payable(msg.sender).transfer(amount);
+            _balances[msg.sender][address(0)].amount -= total;
+            payable(msg.sender).transfer(total);
         } else {
-            _balances[msg.sender][currency].amount -= amount;
-            IERC20(currency).transferFrom(address(this), msg.sender, amount);
+            _balances[msg.sender][currency].amount -= total;
+            IERC20(currency).transferFrom(address(this), msg.sender, total);
         }
 
         if (_balances[msg.sender][currency].amount == 0) {
             delete _balances[msg.sender][currency];
         }
+
+        emit Withdraw(msg.sender, total);
     }
 
     function getBalance(address currency) public view returns (uint256) {
@@ -70,12 +74,17 @@ contract ACMELending {
     {
         uint256 initialBlockHeight = _balances[from][currency].blockHeight;
 
-        require(initialBlockHeight > 0, "Balance not found");
+        if (initialBlockHeight == 0) {
+            return 0;
+        }
 
-        uint256 elapsedBlocks = initialBlockHeight - block.number;
+        uint256 elapsedBlocks = block.number - initialBlockHeight;
 
-        require(elapsedBlocks > 100, "Must wait for 100 blocks");
-
-        return elapsedBlocks.div(100).mul(_interestPer100Blocks.div(100));
+        return
+            _balances[from][currency]
+                .amount
+                .mul(elapsedBlocks)
+                .mul(_interestPer100Blocks)
+                .div(100 * 100);
     }
 }
