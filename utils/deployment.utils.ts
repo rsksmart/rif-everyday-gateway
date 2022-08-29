@@ -31,29 +31,6 @@ export const deployContract = async <
   };
 };
 
-export const deployContractNew = async <
-  C extends Contract,
-  A = Map<string, unknown>
->(
-  contractName: string,
-  constructorArgs: A,
-  factory?: Factory<C>
-): Promise<{
-  contract: C;
-  signers: SignerWithAddress[];
-  contractFactory: Factory<C>;
-}> => {
-  const options = Object.values(constructorArgs);
-  const contractFactory =
-    factory ?? ((await ethers.getContractFactory(contractName)) as Factory<C>);
-
-  return {
-    contract: await contractFactory.deploy(...options),
-    signers: await ethers.getSigners(),
-    contractFactory,
-  };
-};
-
 export const onlyDeployContract = async <C extends Contract>(
   contractName: string,
   constructorArgs?: any,

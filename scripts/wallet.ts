@@ -1,8 +1,5 @@
-import {
-  LendingService,
-  MockTimeOracle,
-} from 'typechain-types/test-utils/MockTimeOracle';
-import { deployContract } from '../utils/deployment.utils';
+import { LendingService } from 'typechain-types';
+import { deployContract, onlyDeployContract } from '../utils/deployment.utils';
 import moment, { duration } from 'moment';
 import { PaybackOption } from 'test/utils';
 import { oneRBTC } from 'test/mock.utils';
@@ -27,7 +24,10 @@ const setupMockTimeOracle = async () => {
 
 const setupLendingProtocol = async () => {
   // deploy the contract and get the deployed address
-  const { contract } = await deployContract('LendingService', {});
+  const contract = await onlyDeployContract<LendingService>(
+    'LendingService',
+    {}
+  );
 
   const rewardRate = oneRBTC.mul(10); //10%
 
@@ -62,12 +62,11 @@ const executeLending = async () => {
   const lendingContractAsLender = lendingContract.connect(lender);
 
   const loanTx = await lendingContractAsLender.lend(
-    {
-      amount: oneRBTC.mul(10),
-      currency: rBTC,
-      duraction: duration(3, 'months').asMilliseconds(),
-      lendingServiceListingId,
-    },
+    oneRBTC.mul(10),
+    rBTC,
+    duration(3, 'months').asMilliseconds(),
+    PaybackOption.Month,
+    lendingServiceListingId,
     {
       value: oneRBTC.mul(10),
     }
@@ -95,7 +94,7 @@ const executeLending = async () => {
   );
   const lenderCurrentBalance = await lendingContract.getBalance(lender.address);
 
-  const withdrawTx = await lendingContract.withdraw(lenderCurrentBalance);
+  const withdrawTx = await lendingContract.withdraw(lenderCurrentBalance, rBTC);
   await withdrawTx.wait();
 
   console.log(
