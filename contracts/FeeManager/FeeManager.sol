@@ -12,6 +12,9 @@ contract FeeManager is IFeeManager {
         }
 
         _beneficiares[beneficiary] += msg.value;
+
+        // TODO: add support for ERC20 tokens
+        emit Deposit(beneficiary, msg.value);
     }
 
     function getBalance(address beneficiary)
@@ -34,5 +37,8 @@ contract FeeManager is IFeeManager {
         if (!success) {
             revert RBTCTransferFailed();
         }
+
+        // TODO: add support for ERC20 tokens
+        emit Withdraw(msg.sender, amount);
     }
 }
