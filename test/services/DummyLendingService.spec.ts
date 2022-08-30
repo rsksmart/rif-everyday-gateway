@@ -1,11 +1,12 @@
 import { expect } from 'chairc';
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 import { BigNumber, BigNumberish } from 'ethers';
 import {
   ACMELending__factory,
   DummyLendingService__factory,
 } from '../../typechain-types';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
+import { DummyLendingService } from 'typechain-types/contracts/Mocks';
 
 describe('DummyLendingService', () => {
   async function deployDummyLendingServiceFixture() {
@@ -19,13 +20,19 @@ describe('DummyLendingService', () => {
 
     await acmeLending.deployed();
 
+    // Add initial liquidity of 100 RBTC
+    await owner.sendTransaction({
+      to: acmeLending.address,
+      value: ethers.utils.parseEther('100'),
+    });
+
     const lendingServiceFactory = (await ethers.getContractFactory(
       'DummyLendingService'
     )) as DummyLendingService__factory;
 
-    const dummyLendingService = await lendingServiceFactory.deploy(
+    const dummyLendingService = (await lendingServiceFactory.deploy(
       acmeLending.address
-    );
+    )) as DummyLendingService;
 
     await dummyLendingService.deployed();
 
@@ -75,25 +82,55 @@ describe('DummyLendingService', () => {
       .withArgs(owner.address, currency, amount);
   });
 
-  //
-  // it('should emit "Withdraw" event when withdraw is called', async () => {
-  //   const amount = ethers.constants.Two;
-  //   const currency = ethers.constants.AddressZero;
-  //
-  //   const { dummyLendingService, owner } = await loadFixture(
-  //     deployDummyLendingServiceFixture
-  //   );
-  //
-  //   await expect(dummyLendingService.withdraw(amount))
-  //     .to.emit(dummyLendingService, 'Withdraw')
-  //     .withArgs(owner.address, currency);
-  // });
-  //
-  // it('should return "0" when getBalance is called', async () => {
-  //   const { dummyLendingService } = await loadFixture(
-  //     deployDummyLendingServiceFixture
-  //   );
-  //
-  //   expect(await dummyLendingService.getBalance()).to.equal(BigNumber.from(0));
-  // });
+  it('should emit "Withdraw" event when withdraw is called', async () => {
+    const duration = ethers.constants.One;
+    const payBackOption = ethers.constants.One;
+    const currency = ethers.constants.AddressZero;
+
+    const RBTC_DEPOSIT = ethers.utils.parseEther('10');
+
+    const { dummyLendingService, owner } = await loadFixture(
+      deployDummyLendingServiceFixture
+    );
+
+    await expect(
+      dummyLendingService.lend(duration, payBackOption, { value: RBTC_DEPOSIT })
+    ).to.be.fulfilled;
+
+    // Fast forward 100 blocks
+    await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);
+
+    await expect(dummyLendingService.withdraw(RBTC_DEPOSIT))
+      .to.emit(dummyLendingService, 'Withdraw')
+      .withArgs(owner.address, currency, RBTC_DEPOSIT);
+  });
+
+  it('should return "0" when getBalance is called', async () => {
+    const { dummyLendingService } = await loadFixture(
+      deployDummyLendingServiceFixture
+    );
+
+    expect(await dummyLendingService.getBalance()).to.equal(BigNumber.from(0));
+  });
+
+  it('should return 10 RBTC + interest when getBalance is called after 100 blocks', async () => {
+    const duration = ethers.constants.One;
+    const payBackOption = ethers.constants.One;
+
+    const RBTC_DEPOSIT = ethers.utils.parseEther('10');
+
+    const { dummyLendingService } = await loadFixture(
+      deployDummyLendingServiceFixture
+    );
+
+    await expect(
+      dummyLendingService.lend(duration, payBackOption, { value: RBTC_DEPOSIT })
+    ).to.be.fulfilled;
+
+    // Fast forward 100 blocks
+    await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);
+
+    expect((await dummyLendingService.getBalance()).gt(RBTC_DEPOSIT)).to.be
+      .true;
+  });
 });

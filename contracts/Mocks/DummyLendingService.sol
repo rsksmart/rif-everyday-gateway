@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "contracts/Services/LendingService.sol";
-import "contracts/Services/ACMELending.sol";
+import "contracts/Mocks/ACMELending.sol";
 
 contract DummyLendingService is LendingService {
     error InvalidAmount(uint256 amount);
