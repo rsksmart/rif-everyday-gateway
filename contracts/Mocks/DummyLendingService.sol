@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "../Services/LendingService.sol";
+import "contracts/Services/LendingService.sol";
 
 contract DummyLendingService is LendingService {
     constructor() {}
