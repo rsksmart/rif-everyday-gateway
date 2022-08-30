@@ -24,54 +24,70 @@ contract ACMELending {
     }
 
     function deposit() external payable {
-        require(msg.value > 0, "No amount sent");
+        _deposit(msg.value, msg.sender);
+    }
 
-        _balances[msg.sender][address(0)].amount += msg.value;
+    function deposit(address depositor) external payable {
+        _deposit(msg.value, depositor);
+    }
 
-        if (_balances[msg.sender][address(0)].blockHeight == 0) {
-            _balances[msg.sender][address(0)].blockHeight = block.number;
+    function _deposit(uint256 amount, address depositor) internal {
+        require(amount > 0, "No amount sent");
+
+        _balances[depositor][address(0)].amount += amount;
+
+        if (_balances[depositor][address(0)].blockHeight == 0) {
+            _balances[depositor][address(0)].blockHeight = block.number;
         }
 
-        emit Deposit(msg.sender, msg.value);
+        emit Deposit(depositor, amount);
     }
 
     function withdraw(uint256 amount) external {
+        _withdraw(amount, msg.sender);
+    }
+
+    function withdraw(uint256 amount, address withdrawer) external {
+        _withdraw(amount, withdrawer);
+    }
+
+    function _withdraw(uint256 amount, address withdrawer) internal {
         require(
-            _balances[msg.sender][address(0)].amount > 0 &&
-                _balances[msg.sender][address(0)].amount >= amount,
+            _balances[withdrawer][address(0)].amount > 0 &&
+            _balances[withdrawer][address(0)].amount >= amount,
             "Not enough balance"
         );
 
-        uint256 interest = _calculateInterest(msg.sender, address(0));
+        uint256 interest = _calculateInterest(withdrawer, address(0));
 
-        _balances[msg.sender][address(0)].amount -= amount;
+        _balances[withdrawer][address(0)].amount -= amount;
 
-        if (_balances[msg.sender][address(0)].amount == 0) {
-            delete _balances[msg.sender][address(0)];
+        if (_balances[withdrawer][address(0)].amount == 0) {
+            delete _balances[withdrawer][address(0)];
         }
 
         uint256 total = amount + interest;
 
-        payable(msg.sender).transfer(total);
+        payable(withdrawer).transfer(total);
 
-        emit Withdraw(msg.sender, total);
+        emit Withdraw(withdrawer, total);
     }
 
     function getBalance()
-        external
-        view
-        returns (uint256 deposited, uint256 interest)
+    external
+    view
+    returns (uint256 deposited, uint256 interest)
     {
         return (
-            _balances[msg.sender][address(0)].amount,
-            _calculateInterest(msg.sender, address(0))
+        _balances[msg.sender][address(0)].amount,
+        _calculateInterest(msg.sender, address(0))
         );
     }
 
     function _calculateInterest(address from, address currency)
-        private
-        view
-        returns (uint256)
+    private
+    view
+    returns (uint256)
     {
         uint256 initialBlockHeight = _balances[from][currency].blockHeight;
 
@@ -82,10 +98,10 @@ contract ACMELending {
         uint256 elapsedBlocks = block.number - initialBlockHeight;
 
         return
-            _balances[from][currency]
-                .amount
-                .mul(elapsedBlocks)
-                .mul(_interestPer100Blocks)
-                .div(100 * 100);
+        _balances[from][currency]
+        .amount
+        .mul(elapsedBlocks)
+        .mul(_interestPer100Blocks)
+        .div(100 * 100);
     }
 }
