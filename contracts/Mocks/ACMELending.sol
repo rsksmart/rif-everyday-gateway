@@ -54,7 +54,7 @@ contract ACMELending {
     function _withdraw(uint256 amount, address withdrawer) internal {
         require(
             _balances[withdrawer][address(0)].amount > 0 &&
-            _balances[withdrawer][address(0)].amount >= amount,
+                _balances[withdrawer][address(0)].amount >= amount,
             "Not enough balance"
         );
 
@@ -74,36 +74,36 @@ contract ACMELending {
     }
 
     function getBalance(address depositor)
-    external
-    view
-    returns (uint256 deposited, uint256 interest)
+        external
+        view
+        returns (uint256 deposited, uint256 interest)
     {
         return _getBalance(depositor);
     }
 
     function getBalance()
-    external
-    view
-    returns (uint256 deposited, uint256 interest)
+        external
+        view
+        returns (uint256 deposited, uint256 interest)
     {
         return _getBalance(msg.sender);
     }
 
     function _getBalance(address depositor)
-    internal
-    view
-    returns (uint256 deposited, uint256 interest)
+        internal
+        view
+        returns (uint256 deposited, uint256 interest)
     {
         return (
-        _balances[depositor][address(0)].amount,
-        _calculateInterest(depositor, address(0))
+            _balances[depositor][address(0)].amount,
+            _calculateInterest(depositor, address(0))
         );
     }
 
     function _calculateInterest(address from, address currency)
-    private
-    view
-    returns (uint256)
+        private
+        view
+        returns (uint256)
     {
         uint256 initialBlockHeight = _balances[from][currency].blockHeight;
 
@@ -114,10 +114,10 @@ contract ACMELending {
         uint256 elapsedBlocks = block.number - initialBlockHeight;
 
         return
-        _balances[from][currency]
-        .amount
-        .mul(elapsedBlocks)
-        .mul(_interestPer100Blocks)
-        .div(100 * 100);
+            _balances[from][currency]
+                .amount
+                .mul(elapsedBlocks)
+                .mul(_interestPer100Blocks)
+                .div(100 * 100);
     }
 }

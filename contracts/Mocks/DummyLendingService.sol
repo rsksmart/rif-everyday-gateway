@@ -14,15 +14,15 @@ contract DummyLendingService is LendingService {
     }
 
     function lend(uint256 duration, PayBackOption payBackOption)
-    public
-    payable
-    override
+        public
+        payable
+        override
     {
         if (msg.value == 0) {
             revert InvalidAmount(msg.value);
         }
 
-        _acmeLending.deposit{value : msg.value}(msg.sender);
+        _acmeLending.deposit{value: msg.value}(msg.sender);
 
         emit Lend(msg.sender, address(0), msg.value);
     }
@@ -37,13 +37,10 @@ contract DummyLendingService is LendingService {
         emit Withdraw(msg.sender, address(0), amount);
     }
 
-    function getBalance()
-    public
-    view
-    override
-    returns (uint256)
-    {
-        (uint256 deposited, uint256 interest) =  _acmeLending.getBalance(msg.sender);
+    function getBalance() public view override returns (uint256) {
+        (uint256 deposited, uint256 interest) = _acmeLending.getBalance(
+            msg.sender
+        );
         return deposited + interest;
     }
 }
