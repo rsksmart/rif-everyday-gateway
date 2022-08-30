@@ -5,7 +5,7 @@ import "contracts/Services/Service.sol";
 
 abstract contract LendingService is Service {
     event Lend(address indexed lender, address currency, uint256 amount);
-    event Withdraw(address indexed withdrawer, address currency);
+    event Withdraw(address indexed withdrawer, address currency, uint256 amount);
     event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     enum PayBackOption {
@@ -33,14 +33,14 @@ abstract contract LendingService is Service {
         serviceType = ServiceType.Lending;
     }
 
-    function lend(
-        uint256 duration,
-        PayBackOption payBackOption
-    ) public payable virtual;
+    function lend(uint256 duration, PayBackOption payBackOption)
+        public
+        payable
+        virtual;
 
-    function withdraw(uint256 amount, address currency) public virtual;
+    function withdraw(uint256 amount) public virtual;
 
-    function getBalance(address currency) public virtual returns (uint256);
+    function getBalance() public virtual returns (uint256);
 
     function addListing(
         uint256 minDuration,

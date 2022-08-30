@@ -73,14 +73,30 @@ contract ACMELending {
         emit Withdraw(withdrawer, total);
     }
 
+    function getBalance(address depositor)
+    external
+    view
+    returns (uint256 deposited, uint256 interest)
+    {
+        return _getBalance(depositor);
+    }
+
     function getBalance()
     external
     view
     returns (uint256 deposited, uint256 interest)
     {
+        return _getBalance(msg.sender);
+    }
+
+    function _getBalance(address depositor)
+    internal
+    view
+    returns (uint256 deposited, uint256 interest)
+    {
         return (
-        _balances[msg.sender][address(0)].amount,
-        _calculateInterest(msg.sender, address(0))
+        _balances[depositor][address(0)].amount,
+        _calculateInterest(depositor, address(0))
         );
     }
 

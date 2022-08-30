@@ -27,11 +27,9 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    await expect(
-      dummyLendingService.lend(amount, currency, duration, payBackOption)
-    )
+    await expect(dummyLendingService.lend(duration, payBackOption))
       .to.emit(dummyLendingService, 'Lend')
-      .withArgs(owner.address, currency);
+      .withArgs(owner.address, currency, amount);
   });
 
   it('should emit "Withdraw" event when withdraw is called', async () => {

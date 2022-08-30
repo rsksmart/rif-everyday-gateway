@@ -9,50 +9,41 @@ contract DummyLendingService is LendingService {
 
     ACMELending private _acmeLending;
 
-    struct Lending {
-        uint256 id;
-        uint256 duration;
-        uint256 amount;
-        PayBackOption payBackOption;
-    }
-
-    mapping(address => mapping(uint256 => Lending)) private _lendings;
-
-    mapping(address => uint256) private _lendingCounter;
-
     constructor(ACMELending acmeLending) {
         _acmeLending = acmeLending;
     }
 
-    function lend(
-        uint256 duration,
-        PayBackOption payBackOption
-    ) public payable override {
-        if (msg.value <= 0) {
+    function lend(uint256 duration, PayBackOption payBackOption)
+    public
+    payable
+    override
+    {
+        if (msg.value == 0) {
             revert InvalidAmount(msg.value);
         }
 
-        uint256 amount = msg.value;
+        _acmeLending.deposit{value : msg.value}(msg.sender);
 
-        uint256 newLendingId = _lendingCounter[msg.sender] + 1;
-
-        _lendings[msg.sender][newLendingId] = Lending(newLendingId, duration, amount, payBackOption);
-
-        _acmeLending.deposit{value: amount}();
-
-        emit Lend(msg.sender, address(0), amount);
+        emit Lend(msg.sender, address(0), msg.value);
     }
 
-    function withdraw(uint256 amount, address currency) public override {
-        emit Withdraw(msg.sender, currency);
+    function withdraw(uint256 amount) public override {
+        if (amount == 0) {
+            revert InvalidAmount(amount);
+        }
+
+        _acmeLending.withdraw(amount, msg.sender);
+
+        emit Withdraw(msg.sender, address(0), amount);
     }
 
-    function getBalance(address currency)
+    function getBalance()
     public
     view
     override
     returns (uint256)
     {
-        return 0;
+        (uint256 deposited, uint256 interest) =  _acmeLending.getBalance(msg.sender);
+        return deposited + interest;
     }
 }
