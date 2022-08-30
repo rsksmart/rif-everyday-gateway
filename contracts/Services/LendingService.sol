@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "contracts/Services/Service.sol";
 
 abstract contract LendingService is Service {
-    event Lend(address indexed lender, address currency);
+    event Lend(address indexed lender, address currency, uint256 amount);
     event Withdraw(address indexed withdrawer, address currency);
     event ListingCreated(address indexed currency, uint256 indexed listingId);
 
@@ -34,8 +34,6 @@ abstract contract LendingService is Service {
     }
 
     function lend(
-        uint256 amount,
-        address currency,
         uint256 duration,
         PayBackOption payBackOption
     ) public payable virtual;
