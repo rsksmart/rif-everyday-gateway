@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "./Service.sol";
+import "contracts/Services/Service.sol";
 
 abstract contract LendingService is Service {
     event Lend(address indexed lender, address currency);
