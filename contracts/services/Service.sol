@@ -5,8 +5,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 abstract contract Service is Ownable {
     enum ServiceType {
-        Borrowing,
-        Lending
+        Lending,
+        Borrowing
     }
 
     ServiceType public serviceType;
