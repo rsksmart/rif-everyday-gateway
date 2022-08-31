@@ -44,7 +44,7 @@ describe('Service Provider Lending Contract', () => {
       const { contract } = await loadFixture(initialFixture);
 
       expect(contract['deposit()']({ value: ZERO_RBTC })).to.revertedWith(
-        'No amount sent'
+        'InvalidAmount(0)'
       );
     });
 

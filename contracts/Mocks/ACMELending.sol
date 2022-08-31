@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract ACMELending {
     using SafeMath for uint256;
 
+    error InvalidAmount(uint256 amount);
+    error NotEnoughBalance(uint256 amount);
+
     struct Balance {
         uint256 amount;
         uint256 blockHeight;
@@ -32,7 +35,9 @@ contract ACMELending {
     }
 
     function _deposit(uint256 amount, address depositor) internal {
-        require(amount > 0, "No amount sent");
+        if (amount == 0) {
+            revert InvalidAmount(amount);
+        }
 
         _balances[depositor][address(0)].amount += amount;
 
@@ -52,11 +57,12 @@ contract ACMELending {
     }
 
     function _withdraw(uint256 amount, address withdrawer) internal {
-        require(
-            _balances[withdrawer][address(0)].amount > 0 &&
-                _balances[withdrawer][address(0)].amount >= amount,
-            "Not enough balance"
-        );
+        if (
+            _balances[withdrawer][address(0)].amount == 0 ||
+            amount > _balances[withdrawer][address(0)].amount
+        ) {
+            revert NotEnoughBalance(amount);
+        }
 
         uint256 interest = _calculateInterest(withdrawer, address(0));
 
