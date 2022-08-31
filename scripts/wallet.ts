@@ -1,86 +1,116 @@
-import { DummyBorrowService, DummyLendingService } from 'typechain-types';
+import {
+  ACMELending__factory,
+  DummyBorrowService,
+  DummyLendingService,
+  DummyLendingService__factory,
+} from 'typechain-types';
 import { deployContract, onlyDeployContract } from '../utils/deployment.utils';
 import moment, { duration } from 'moment';
 import { PaybackOption } from 'test/utils';
 import { oneRBTC } from 'test/mock.utils';
-import { ethers } from 'hardhat';
+import { ethers, network } from 'hardhat';
 const rBTC = ethers.constants.AddressZero;
 
-// retrieve the services available listings
+// const setupLendingProtocol = async () => {
+//   // deploy the contract and get the deployed address
+//   const contract = await onlyDeployContract<DummyLendingService>(
+//     'DummyLendingService',
+//     {}
+//   );
 
-// execute lending
+//   const rewardRate = oneRBTC.mul(10); //10%
 
-// Deployment Script Goes here
+//   const listingTx = await contract.addListing(
+//     duration(60, 'days').asMilliseconds(),
+//     duration(3, 'years').asMilliseconds(),
+//     rBTC, //for now 👀
+//     PaybackOption.Month,
+//     rewardRate
+//   );
 
-const setupLendingProtocol = async () => {
-  // deploy the contract and get the deployed address
-  const contract = await onlyDeployContract<DummyLendingService>(
-    'DummyLendingService',
-    {}
-  );
+//   const txReceipt = await listingTx.wait();
 
-  const rewardRate = oneRBTC.mul(10); //10%
+//   const lendingServiceListingId = txReceipt.events?.find(
+//     (e: any) => e.event === 'LendingServiceAdded'
+//   )?.args?.lendingServiceId;
 
-  const listingTx = await contract.addListing(
-    duration(60, 'days').asMilliseconds(),
-    duration(3, 'years').asMilliseconds(),
-    rBTC, //for now 👀
-    PaybackOption.Month,
-    rewardRate
-  );
+//   return {
+//     lendingContract: contract,
+//     lendingServiceListingId,
+//   };
+// };
 
-  const txReceipt = await listingTx.wait();
+// const setupBorrowingProtocol = async () => {
+//   // deploy the contract and get the deployed address
+//   const contract = await onlyDeployContract<DummyBorrowService>(
+//     'DummyBorrowService',
+//     {}
+//   );
 
-  const lendingServiceListingId = txReceipt.events?.find(
-    (e: any) => e.event === 'LendingServiceAdded'
-  )?.args?.lendingServiceId;
+//   const listingTx = await contract.addListing({
+//     currency: rBTC,
+//     interestRate: 5,
+//     loanToValue: 10000,
+//     loanToValueTokenAddr: rBTC,
+//     maxAmount: 100,
+//     minAmount: 1,
+//     maxDuration: 1000,
+//   });
 
-  return {
-    lendingContract: contract,
-    lendingServiceListingId,
-  };
-};
+//   const txReceipt = await listingTx.wait();
 
-const setupBorrowingProtocol = async () => {
-  // deploy the contract and get the deployed address
-  const contract = await onlyDeployContract<DummyBorrowService>(
-    'DummyBorrowService',
-    {}
-  );
+//   const lendingServiceListingId = txReceipt.events?.find(
+//     (e: any) => e.event === 'LendingServiceAdded'
+//   )?.args?.lendingServiceId;
 
-  const listingTx = await contract.addListing({
-    currency: rBTC,
-    interestRate: 5,
-    loanToValue: 10000,
-    loanToValueTokenAddr: rBTC,
-    maxAmount: 100,
-    minAmount: 1,
-    maxDuration: 1000,
+//   return {
+//     lendingContract: contract,
+//     lendingServiceListingId,
+//   };
+// };
+
+async function deployDummyLendingServiceFixture() {
+  const [owner] = await ethers.getSigners();
+
+  const acmeLendingFactory = (await ethers.getContractFactory(
+    'ACMELending'
+  )) as ACMELending__factory;
+
+  const acmeLending = await acmeLendingFactory.deploy();
+
+  await acmeLending.deployed();
+
+  // Add initial liquidity of 100 RBTC
+  await owner.sendTransaction({
+    to: acmeLending.address,
+    value: ethers.utils.parseEther('100'),
   });
 
-  const txReceipt = await listingTx.wait();
+  const lendingServiceFactory = (await ethers.getContractFactory(
+    'DummyLendingService'
+  )) as DummyLendingService__factory;
 
-  const lendingServiceListingId = txReceipt.events?.find(
-    (e: any) => e.event === 'LendingServiceAdded'
-  )?.args?.lendingServiceId;
+  const dummyLendingService = (await lendingServiceFactory.deploy(
+    acmeLending.address
+  )) as DummyLendingService;
 
-  return {
-    lendingContract: contract,
-    lendingServiceListingId,
-  };
-};
+  await dummyLendingService.deployed();
+
+  return { acmeLending, dummyLendingService };
+}
 
 const executeLending = async () => {
-  const { lendingContract, lendingServiceListingId } =
-    await setupLendingProtocol();
+  const { acmeLending, dummyLendingService } =
+    await deployDummyLendingServiceFixture();
 
   const [owner, lender, ...otherUsers] = await ethers.getSigners();
 
-  const lendingContractAsLender = lendingContract.connect(lender);
-
+  const lendingContractAsLender = dummyLendingService.connect(lender);
+  console.log(
+    'Lender Balance on wallet before lending: ',
+    await ethers.provider.getBalance(lender.address)
+  );
   const loanTx = await lendingContractAsLender.lend(
-    oneRBTC.mul(10),
-    rBTC,
     duration(3, 'months').asMilliseconds(),
     PaybackOption.Month,
     {
@@ -96,14 +126,21 @@ const executeLending = async () => {
   );
   console.log(
     'Lender Balance on lending contract',
-    await lendingContract.getBalance(lender.address)
+    await lendingContractAsLender.getBalance()
   );
 
   //time manipulation...
+  // Fast forward 100 blocks
+  await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);
+  const lenderCurrentBalance = await lendingContractAsLender.getBalance();
+  console.log(
+    'Lender Balance on lending contract after fast forward',
+    lenderCurrentBalance
+  );
 
-  const lenderCurrentBalance = await lendingContract.getBalance(lender.address);
-
-  const withdrawTx = await lendingContract.withdraw(lenderCurrentBalance, rBTC);
+  const withdrawTx = await lendingContractAsLender.withdraw(
+    lenderCurrentBalance
+  );
   await withdrawTx.wait();
 
   console.log(
@@ -112,54 +149,54 @@ const executeLending = async () => {
   );
   console.log(
     'Lender Balance on lending contract',
-    await lendingContract.getBalance(lender.address)
+    await lendingContractAsLender.getBalance()
   );
 };
 
-const executeBorrowing = async () => {
-  const { lendingContract, lendingServiceListingId } =
-    await setupLendingProtocol();
+// const executeBorrowing = async () => {
+//   const { lendingContract, lendingServiceListingId } =
+//     await setupLendingProtocol();
 
-  const [owner, lender, ...otherUsers] = await ethers.getSigners();
+//   const [owner, lender, ...otherUsers] = await ethers.getSigners();
 
-  const lendingContractAsLender = lendingContract.connect(lender);
+//   const lendingContractAsLender = lendingContract.connect(lender);
 
-  const loanTx = await lendingContractAsLender.lend(
-    oneRBTC.mul(10),
-    rBTC,
-    duration(3, 'months').asMilliseconds(),
-    PaybackOption.Month,
-    {
-      value: oneRBTC.mul(10),
-    }
-  );
+//   const loanTx = await lendingContractAsLender.lend(
+//     oneRBTC.mul(10),
+//     rBTC,
+//     duration(3, 'months').asMilliseconds(),
+//     PaybackOption.Month,
+//     {
+//       value: oneRBTC.mul(10),
+//     }
+//   );
 
-  await loanTx.wait();
+//   await loanTx.wait();
 
-  console.log(
-    'Lender Balance on wallet',
-    await ethers.provider.getBalance(lender.address)
-  );
-  console.log(
-    'Lender Balance on lending contract',
-    await lendingContract.getBalance(lender.address)
-  );
+//   console.log(
+//     'Lender Balance on wallet',
+//     await ethers.provider.getBalance(lender.address)
+//   );
+//   console.log(
+//     'Lender Balance on lending contract',
+//     await lendingContract.getBalance(lender.address)
+//   );
 
-  //time manipulation...
+//   //time manipulation...
 
-  const lenderCurrentBalance = await lendingContract.getBalance(lender.address);
+//   const lenderCurrentBalance = await lendingContract.getBalance(lender.address);
 
-  const withdrawTx = await lendingContract.withdraw(lenderCurrentBalance, rBTC);
-  await withdrawTx.wait();
+//   const withdrawTx = await lendingContract.withdraw(lenderCurrentBalance, rBTC);
+//   await withdrawTx.wait();
 
-  console.log(
-    'Lender Balance on wallet',
-    await ethers.provider.getBalance(lender.address)
-  );
-  console.log(
-    'Lender Balance on lending contract',
-    await lendingContract.getBalance(lender.address)
-  );
-};
+//   console.log(
+//     'Lender Balance on wallet',
+//     await ethers.provider.getBalance(lender.address)
+//   );
+//   console.log(
+//     'Lender Balance on lending contract',
+//     await lendingContract.getBalance(lender.address)
+//   );
+// };
 
 executeLending().then(() => console.log('done 👀'));
