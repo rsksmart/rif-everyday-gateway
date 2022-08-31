@@ -6,6 +6,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 contract ACMELending {
     using SafeMath for uint256;
 
+    error InvalidAmount(uint256 amount);
+    error NotEnoughBalance(uint256 amount);
+
     struct Balance {
         uint256 amount;
         uint256 blockHeight;
@@ -24,37 +27,64 @@ contract ACMELending {
     }
 
     function deposit() external payable {
-        require(msg.value > 0, "No amount sent");
+        _deposit(msg.value, msg.sender);
+    }
 
-        _balances[msg.sender][address(0)].amount += msg.value;
+    function deposit(address depositor) external payable {
+        _deposit(msg.value, depositor);
+    }
 
-        if (_balances[msg.sender][address(0)].blockHeight == 0) {
-            _balances[msg.sender][address(0)].blockHeight = block.number;
+    function _deposit(uint256 amount, address depositor) internal {
+        if (amount == 0) {
+            revert InvalidAmount(amount);
         }
 
-        emit Deposit(msg.sender, msg.value);
+        _balances[depositor][address(0)].amount += amount;
+
+        if (_balances[depositor][address(0)].blockHeight == 0) {
+            _balances[depositor][address(0)].blockHeight = block.number;
+        }
+
+        emit Deposit(depositor, amount);
     }
 
     function withdraw(uint256 amount) external {
-        require(
-            _balances[msg.sender][address(0)].amount > 0 &&
-                _balances[msg.sender][address(0)].amount >= amount,
-            "Not enough balance"
-        );
+        _withdraw(amount, msg.sender);
+    }
 
-        uint256 interest = _calculateInterest(msg.sender, address(0));
+    function withdraw(uint256 amount, address withdrawer) external {
+        _withdraw(amount, withdrawer);
+    }
 
-        _balances[msg.sender][address(0)].amount -= amount;
+    function _withdraw(uint256 amount, address withdrawer) internal {
+        if (
+            _balances[withdrawer][address(0)].amount == 0 ||
+            amount > _balances[withdrawer][address(0)].amount
+        ) {
+            revert NotEnoughBalance(amount);
+        }
 
-        if (_balances[msg.sender][address(0)].amount == 0) {
-            delete _balances[msg.sender][address(0)];
+        uint256 interest = _calculateInterest(withdrawer, address(0));
+
+        _balances[withdrawer][address(0)].amount -= amount;
+
+        if (_balances[withdrawer][address(0)].amount == 0) {
+            delete _balances[withdrawer][address(0)];
         }
 
         uint256 total = amount + interest;
 
-        payable(msg.sender).transfer(total);
+        payable(withdrawer).transfer(total);
 
-        emit Withdraw(msg.sender, total);
+        emit Withdraw(withdrawer, total);
+    }
+
+    function getBalance(address depositor)
+        external
+        view
+        returns (uint256 deposited, uint256 interest)
+    {
+        return _getBalance(depositor);
     }
 
     function getBalance()
@@ -62,9 +92,17 @@ contract ACMELending {
         view
         returns (uint256 deposited, uint256 interest)
     {
+        return _getBalance(msg.sender);
+    }
+
+    function _getBalance(address depositor)
+        internal
+        view
+        returns (uint256 deposited, uint256 interest)
+    {
         return (
-            _balances[msg.sender][address(0)].amount,
-            _calculateInterest(msg.sender, address(0))
+            _balances[depositor][address(0)].amount,
+            _calculateInterest(depositor, address(0))
         );
     }
 

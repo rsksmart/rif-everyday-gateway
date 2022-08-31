@@ -2,29 +2,45 @@
 pragma solidity ^0.8.16;
 
 import "contracts/Services/LendingService.sol";
+import "contracts/Mocks/ACMELending.sol";
 
 contract DummyLendingService is LendingService {
-    constructor() {}
+    error InvalidAmount(uint256 amount);
 
-    function lend(
-        uint256 amount,
-        address currency,
-        uint256 duration,
-        PayBackOption payBackOption
-    ) public payable override {
-        emit Lend(msg.sender, currency);
+    ACMELending private _acmeLending;
+
+    constructor(ACMELending acmeLending) {
+        _acmeLending = acmeLending;
     }
 
-    function withdraw(uint256 amount, address currency) public override {
-        emit Withdraw(msg.sender, currency);
-    }
-
-    function getBalance(address currency)
+    function lend(uint256 duration, PayBackOption payBackOption)
         public
-        view
+        payable
         override
-        returns (uint256)
     {
-        return 0;
+        if (msg.value == 0) {
+            revert InvalidAmount(msg.value);
+        }
+
+        _acmeLending.deposit{value: msg.value}(msg.sender);
+
+        emit Lend(msg.sender, address(0), msg.value);
+    }
+
+    function withdraw(uint256 amount) public override {
+        if (amount == 0) {
+            revert InvalidAmount(amount);
+        }
+
+        _acmeLending.withdraw(amount, msg.sender);
+
+        emit Withdraw(msg.sender, address(0), amount);
+    }
+
+    function getBalance() public view override returns (uint256) {
+        (uint256 deposited, uint256 interest) = _acmeLending.getBalance(
+            msg.sender
+        );
+        return deposited + interest;
     }
 }
