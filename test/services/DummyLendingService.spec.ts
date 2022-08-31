@@ -9,6 +9,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { DummyLendingService } from 'typechain-types/contracts/Mocks';
 
 describe('DummyLendingService', () => {
+  const INTEREST_PER_100_BLOCKS = 10;
   async function deployDummyLendingServiceFixture() {
     const [owner] = await ethers.getSigners();
 
@@ -100,9 +101,15 @@ describe('DummyLendingService', () => {
     // Fast forward 100 blocks
     await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);
 
-    await expect(dummyLendingService.withdraw(RBTC_DEPOSIT))
+    const FAST_FORWARD_BLOCKS = 101;
+    const ACC_INTEREST = RBTC_DEPOSIT.mul(FAST_FORWARD_BLOCKS)
+      .mul(INTEREST_PER_100_BLOCKS)
+      .div(100 * 100);
+    const totalBalance = ACC_INTEREST.add(RBTC_DEPOSIT);
+
+    await expect(dummyLendingService.withdraw())
       .to.emit(dummyLendingService, 'Withdraw')
-      .withArgs(owner.address, currency, RBTC_DEPOSIT);
+      .withArgs(owner.address, currency, totalBalance);
   });
 
   it('should return "0" when getBalance is called', async () => {

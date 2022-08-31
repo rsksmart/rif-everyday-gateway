@@ -42,7 +42,7 @@ abstract contract LendingService is Service {
         payable
         virtual;
 
-    function withdraw(uint256 amount) public virtual;
+    function withdraw() public virtual;
 
     function getBalance() public virtual returns (uint256);
 
