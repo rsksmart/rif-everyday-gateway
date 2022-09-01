@@ -57,14 +57,10 @@ contract ACMELending {
     }
 
     function _withdraw(uint256 amount, address withdrawer) internal {
-        if (_balances[withdrawer][address(0)].amount == 0) {
-            revert NotEnoughBalance(amount);
-        }
-
-        (uint256 deposited, uint256 balanceInterest) = _getBalance(withdrawer);
-        uint256 totalBalance = deposited + balanceInterest;
-
-        if (amount > totalBalance) {
+        if (
+            _balances[withdrawer][address(0)].amount == 0 ||
+            amount > _balances[withdrawer][address(0)].amount
+        ) {
             revert NotEnoughBalance(amount);
         }
 
