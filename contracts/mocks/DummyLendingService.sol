@@ -28,18 +28,14 @@ contract DummyLendingService is LendingService {
     }
 
     function withdraw() public override {
-        (uint256 deposited, uint256 interest) = _acme.getBalance(
-            msg.sender
-        );
+        (uint256 deposited, uint256 interest) = _acme.getBalance(msg.sender);
         _acme.withdraw(deposited, msg.sender);
 
         emit Withdraw(msg.sender, address(0), deposited + interest);
     }
 
     function getBalance() public view override returns (uint256) {
-        (uint256 deposited, uint256 interest) = _acme.getBalance(
-            msg.sender
-        );
+        (uint256 deposited, uint256 interest) = _acme.getBalance(msg.sender);
         return deposited + interest;
     }
 }

@@ -40,10 +40,7 @@ abstract contract BorrowService is Service {
         uint256 indexed interestRate
     );
 
-    event ListingRemoved(
-        uint256 indexed index,
-        address indexed currency
-    );
+    event ListingRemoved(uint256 indexed index, address indexed currency);
 
     constructor() {
         serviceType = ServiceType.Borrowing;
@@ -84,14 +81,14 @@ abstract contract BorrowService is Service {
         address currency,
         uint256 index
     ) public virtual onlyOwner {
-        _removeLiquidityInternal( amount, currency, index);
+        _removeLiquidityInternal(amount, currency, index);
     }
 
     function _removeLiquidityInternal(
         uint256 amount,
         address currency,
         uint256 index
-    )  internal {
+    ) internal {
         listings[currency][index].maxAmount -= amount;
     }
 
