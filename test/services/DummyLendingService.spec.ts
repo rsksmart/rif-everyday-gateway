@@ -2,7 +2,7 @@ import { expect } from 'chairc';
 import { ethers, network } from 'hardhat';
 import { BigNumber, BigNumberish } from 'ethers';
 import {
-  ACMELending__factory,
+  ACME__factory,
   DummyLendingService__factory,
 } from '../../typechain-types';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
@@ -13,17 +13,17 @@ describe('DummyLendingService', () => {
   async function deployDummyLendingServiceFixture() {
     const [owner] = await ethers.getSigners();
 
-    const acmeLendingFactory = (await ethers.getContractFactory(
-      'ACMELending'
-    )) as ACMELending__factory;
+    const acmeFactory = (await ethers.getContractFactory(
+      'ACME'
+    )) as ACME__factory;
 
-    const acmeLending = await acmeLendingFactory.deploy();
+    const acme = await acmeFactory.deploy();
 
-    await acmeLending.deployed();
+    await acme.deployed();
 
     // Add initial liquidity of 100 RBTC
     await owner.sendTransaction({
-      to: acmeLending.address,
+      to: acme.address,
       value: ethers.utils.parseEther('100'),
     });
 
@@ -32,12 +32,12 @@ describe('DummyLendingService', () => {
     )) as DummyLendingService__factory;
 
     const dummyLendingService = (await lendingServiceFactory.deploy(
-      acmeLending.address
+      acme.address
     )) as DummyLendingService;
 
     await dummyLendingService.deployed();
 
-    return { acmeLending, dummyLendingService, owner };
+    return { acmeLending: acme, dummyLendingService, owner };
   }
   it('should revert with InvalidAmount(0) when lend is called with 0 amount', async () => {
     const duration = ethers.constants.One;

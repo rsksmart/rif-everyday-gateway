@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
-import { ACMELending__factory } from 'typechain-types';
+import { ACME__factory } from '../../typechain-types';
 
 const RBTC_SENT = ethers.utils.parseEther('10');
 const INTEREST_PER_100_BLOCKS = 10;
@@ -9,11 +9,11 @@ const INTEREST_PER_100_BLOCKS = 10;
 describe('Service Provider Lending Contract', () => {
   const initialFixture = async () => {
     const [owner, ...accounts] = await ethers.getSigners();
-    const ACMELendingFactory = (await ethers.getContractFactory(
-      'ACMELending'
-    )) as ACMELending__factory;
+    const ACMEFactory = (await ethers.getContractFactory(
+      'ACME'
+    )) as ACME__factory;
 
-    const contract = await ACMELendingFactory.deploy();
+    const contract = await ACMEFactory.deploy();
 
     await contract.deployed();
 

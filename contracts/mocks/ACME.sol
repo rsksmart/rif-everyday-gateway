@@ -3,7 +3,9 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
-contract ACMELending {
+contract ACME {
+    using SafeMath for uint256;
+
     error InvalidAmount(uint256 amount);
     error NotEnoughBalance(uint256 amount);
 
@@ -14,9 +16,12 @@ contract ACMELending {
 
     event Deposit(address indexed _from, uint256 _amount);
     event Withdraw(address indexed _from, uint256 _amount);
+    event Loan(address indexed _from, uint256 _amount);
+    event Repay(address indexed _from, uint256 _amount);
     event ReceivedLiquidity(uint256 _amount);
 
     mapping(address => mapping(address => Balance)) private _balances;
+    mapping(address => mapping(address => Balance)) private _debts;
     uint256 private _subsidy = 0;
     uint256 private _interestPer100Blocks = 10;
 
