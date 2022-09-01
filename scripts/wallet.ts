@@ -6,9 +6,9 @@ import {
 } from 'typechain-types';
 import moment, { duration } from 'moment';
 import { PaybackOption } from 'test/utils';
-import { oneRBTC } from 'test/mock.utils';
 import { ethers, network } from 'hardhat';
 import chalk from 'chalk';
+import { oneRBTC } from 'test/utils/mock.utils';
 const rBTC = ethers.constants.AddressZero;
 
 async function deployDummyLendingServiceFixture() {
