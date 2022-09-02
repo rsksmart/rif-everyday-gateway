@@ -25,7 +25,7 @@ async function main() {
 
   console.log('Account balance:', (await owner.getBalance()).toString());
 
-  await deployDummyBorrowService(owner, true);
+  await deployDummyBorrowService(owner, false);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
