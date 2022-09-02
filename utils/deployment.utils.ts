@@ -8,10 +8,7 @@ export interface Factory<C extends Contract> extends ContractFactory {
   deploy: (...args: Array<unknown>) => Promise<C>;
 }
 
-export const deployContract = async <
-  C extends Contract,
-  A = Factory<C>['deploy']
->(
+export const deployContract = async <C extends Contract, A = {}>(
   contractName: string,
   constructorArgs: A,
   factory?: Factory<C>
@@ -29,21 +26,4 @@ export const deployContract = async <
     signers: await ethers.getSigners(),
     contractFactory,
   };
-};
-
-export const onlyDeployContract = async <C extends Contract>(
-  contractName: string,
-  constructorArgs?: any,
-  libraries?: Libraries | undefined
-): Promise<C> => {
-  const options = constructorArgs
-    ? Object.values(constructorArgs)
-    : new Array();
-  const contractFactory = (await ethers.getContractFactory(contractName, {
-    libraries,
-  })) as Factory<C>;
-
-  const contract = await contractFactory.deploy(...options);
-
-  return contract;
 };

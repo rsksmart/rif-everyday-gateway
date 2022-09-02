@@ -1,26 +1,17 @@
-import {
-  ACMELending__factory,
-  DummyBorrowService,
-  DummyLendingService,
-  DummyLendingService__factory,
-} from 'typechain-types';
+import { ACMELending, DummyLendingService } from 'typechain-types';
 import moment, { duration } from 'moment';
-import { PaybackOption } from 'test/utils';
+import { PaybackOption } from 'test/constants/service';
 import { ethers, network } from 'hardhat';
 import chalk from 'chalk';
 import { oneRBTC } from 'test/utils/mock.utils';
+import { deployContract } from 'utils/deployment.utils';
 const rBTC = ethers.constants.AddressZero;
 
 async function deployDummyLendingServiceFixture() {
-  const [owner] = await ethers.getSigners();
-
-  const acmeLendingFactory = (await ethers.getContractFactory(
-    'ACMELending'
-  )) as ACMELending__factory;
-
-  const acmeLending = await acmeLendingFactory.deploy();
-
-  await acmeLending.deployed();
+  const {
+    contract: acmeLending,
+    signers: [owner],
+  } = await deployContract<ACMELending>('ACMELending', {});
 
   // Add initial liquidity of 100 RBTC
   await owner.sendTransaction({
@@ -28,15 +19,10 @@ async function deployDummyLendingServiceFixture() {
     value: ethers.utils.parseEther('100'),
   });
 
-  const lendingServiceFactory = (await ethers.getContractFactory(
-    'DummyLendingService'
-  )) as DummyLendingService__factory;
-
-  const dummyLendingService = (await lendingServiceFactory.deploy(
-    acmeLending.address
-  )) as DummyLendingService;
-
-  await dummyLendingService.deployed();
+  const { contract: dummyLendingService } =
+    await deployContract<DummyLendingService>('DummyLendingService', {
+      acmeLending: acmeLending.address,
+    });
 
   return { acmeLending, dummyLendingService };
 }
@@ -48,7 +34,7 @@ const executeLending = async () => {
 
   const { dummyLendingService } = await deployDummyLendingServiceFixture();
 
-  const [owner, lender] = await ethers.getSigners();
+  const [, lender] = await ethers.getSigners();
 
   const lendingContractAsLender = dummyLendingService.connect(lender);
 

@@ -1,8 +1,8 @@
 import { expect } from 'chairc';
 import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployContract, Factory } from 'utils/deployment';
-import { IFeeManager } from 'typechain-types/contracts/FeeManager';
+import { deployContract, Factory } from 'utils/deployment.utils';
+import { IFeeManager } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 async function feeManagerSetUp() {

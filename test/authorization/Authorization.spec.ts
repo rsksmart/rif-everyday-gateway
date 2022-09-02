@@ -1,7 +1,7 @@
 import { expect } from 'chairc';
 import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployContract, Factory } from 'utils/deployment';
+import { deployContract, Factory } from 'utils/deployment.utils';
 import { Authorization, IAuthorization } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ER_MSG_ONLY_ROLE } from 'test/utils/errors';

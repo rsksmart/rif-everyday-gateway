@@ -4,8 +4,6 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 
 contract ACMELending {
-    using SafeMath for uint256;
-
     error InvalidAmount(uint256 amount);
     error NotEnoughBalance(uint256 amount);
 
@@ -120,10 +118,8 @@ contract ACMELending {
         uint256 elapsedBlocks = block.number - initialBlockHeight;
 
         return
-            _balances[from][currency]
-                .amount
-                .mul(elapsedBlocks)
-                .mul(_interestPer100Blocks)
-                .div(100 * 100);
+            (_balances[from][currency].amount *
+                elapsedBlocks *
+                _interestPer100Blocks) / (100 * 100);
     }
 }

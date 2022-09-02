@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/Services/BorrowService.sol";
+import "contracts/services/BorrowService.sol";
 
 contract DummyBorrowService is BorrowService {
     function borrow(
