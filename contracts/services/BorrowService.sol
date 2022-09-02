@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/Services/Service.sol";
+import "contracts/services/Service.sol";
 
 abstract contract BorrowService is Service {
     mapping(address => mapping(uint256 => BorrowServiceListing))

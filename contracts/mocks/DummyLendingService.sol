@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/Services/LendingService.sol";
-import "contracts/Mocks/ACMELending.sol";
+import "contracts/services/LendingService.sol";
+import "contracts/mocks/ACMELending.sol";
 
 contract DummyLendingService is LendingService {
     error InvalidAmount(uint256 amount);

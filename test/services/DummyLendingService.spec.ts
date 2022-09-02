@@ -6,7 +6,7 @@ import {
   DummyLendingService__factory,
 } from '../../typechain-types';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { DummyLendingService } from 'typechain-types/contracts/Mocks';
+import { DummyLendingService } from 'typechain-types';
 
 describe('DummyLendingService', () => {
   const INTEREST_PER_100_BLOCKS = 10;
