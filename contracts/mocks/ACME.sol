@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract ACME {
     using SafeMath for uint256;
@@ -24,6 +25,14 @@ contract ACME {
     mapping(address => mapping(address => Balance)) private _debts;
     uint256 private _subsidy = 0;
     uint256 private _interestPer100Blocks = 10;
+
+    uint256 private _rbtcPrice = 20000;
+
+    mapping(address => uint256) private _collateralFactors;
+
+    function updateCollateralFactor(address currency, uint256 factor) external {
+        _collateralFactors[currency] = factor;
+    }
 
     receive() external payable {
         emit ReceivedLiquidity(msg.value);
@@ -57,6 +66,29 @@ contract ACME {
 
     function withdraw(uint256 amount, address withdrawer) external {
         _withdraw(amount, withdrawer);
+    }
+
+    function loan(address currency, uint256 amount) external {
+        _loan(currency, amount, msg.sender);
+    }
+
+    function _loan(
+        address currency,
+        uint256 amount,
+        address loaner
+    ) internal {
+        uint256 collateralFactor = _collateralFactors[currency];
+        uint256 balance = _balances[loaner][address(0)].amount;
+        require(
+            balance * _rbtcPrice * collateralFactor >= amount,
+            "not enough collateral"
+        );
+        require(
+            ERC20(currency).balanceOf(address(this)) >= amount,
+            "not enough balance"
+        );
+
+        ERC20(currency).transfer(loaner, amount);
     }
 
     function _withdraw(uint256 amount, address withdrawer) internal {

@@ -1,7 +1,14 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
-import { ACME__factory } from '../../typechain-types';
+import {
+  ACME,
+  ACME__factory,
+  ERC677,
+  ERC677__factory,
+} from '../../typechain-types';
+import { Signer } from 'ethers';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const RBTC_SENT = ethers.utils.parseEther('10');
 const INTEREST_PER_100_BLOCKS = 10;
@@ -116,6 +123,69 @@ describe('Service Provider Lending Contract', () => {
       balanceOnContract = await contract['getBalance()']();
       expect(balanceOnContract.deposited).to.be.equals(ethers.constants.Zero);
       expect(balanceOnContract.interest).to.be.equals(ethers.constants.Zero);
+    });
+  });
+
+  describe('loans', () => {
+    let acmeContract: ACME;
+    let ERC20Mock: ERC677;
+    let owner: SignerWithAddress;
+
+    beforeEach(async () => {
+      const { owner: contractOwner, contract } = await loadFixture(
+        initialFixture
+      );
+
+      owner = contractOwner;
+
+      acmeContract = contract;
+
+      const ERC20MockFactory = (await ethers.getContractFactory(
+        'ERC677'
+      )) as ERC677__factory;
+
+      ERC20Mock = (await ERC20MockFactory.deploy(
+        acmeContract.address,
+        ethers.utils.parseEther('100000000000000'),
+        'Dollar On Chain',
+        'DOC'
+      )) as ERC677;
+
+      await ERC20Mock.deployed();
+
+      await acmeContract.updateCollateralFactor(
+        ERC20Mock.address,
+        ethers.utils.parseEther('0.5')
+      );
+    });
+
+    it('should be able to loan doc', async () => {
+      const balance = await ERC20Mock.balanceOf(acmeContract.address);
+
+      expect(+balance / 1e18).to.eq(100000000000000);
+
+      expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+        .to.emit(acmeContract, 'Deposit')
+        .withArgs(owner.address, RBTC_SENT);
+
+      const [deposited] = await acmeContract['getBalance()']();
+
+      expect(deposited).equal(RBTC_SENT.toString());
+
+      const initialOwnerBalance = await ERC20Mock.balanceOf(owner.address);
+
+      const tx = await acmeContract.loan(
+        ERC20Mock.address,
+        ethers.utils.parseEther('100')
+      );
+
+      await tx.wait();
+
+      const finalOwnerBalance = await ERC20Mock.balanceOf(owner.address);
+
+      expect(finalOwnerBalance.toString()).equal(
+        initialOwnerBalance.add(ethers.utils.parseEther('100')).toString()
+      );
     });
   });
 });
