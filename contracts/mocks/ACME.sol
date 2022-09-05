@@ -1,13 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "hardhat/console.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract ACME {
-    using SafeMath for uint256;
-
     error InvalidAmount(uint256 amount);
     error NotEnoughBalance(uint256 amount);
 
@@ -19,8 +15,16 @@ contract ACME {
 
     event Deposit(address indexed _from, uint256 _amount);
     event Withdraw(address indexed _from, uint256 _amount);
-    event Loan(address indexed _from, uint256 _amount, address indexed _currency);
-    event Repay(address indexed _from, uint256 _amount, address indexed _currency);
+    event Loan(
+        address indexed _from,
+        uint256 _amount,
+        address indexed _currency
+    );
+    event Repay(
+        address indexed _from,
+        uint256 _amount,
+        address indexed _currency
+    );
     event ReceivedLiquidity(uint256 _amount);
 
     mapping(address => mapping(address => Balance)) private _balances;
@@ -107,7 +111,11 @@ contract ACME {
         emit Loan(loaner, amount, currency);
     }
 
-    function repay(address currency, uint256 amount, address loaner) external {
+    function repay(
+        address currency,
+        uint256 amount,
+        address loaner
+    ) external {
         _repay(currency, amount, msg.sender, loaner);
     }
 
@@ -131,7 +139,8 @@ contract ACME {
 
         ERC20(currency).transferFrom(payer, address(this), amount);
         _debts[loaner][currency].amount -= amount;
-        if(_debts[loaner][currency].amount == 0) _debts[loaner][currency].locked = false;
+        if (_debts[loaner][currency].amount == 0)
+            _debts[loaner][currency].locked = false;
 
         emit Repay(loaner, amount, currency);
     }
@@ -209,7 +218,11 @@ contract ACME {
                 _interestPer100Blocks) / (100 * 100);
     }
 
-    function getCetCollateralFactor(address currency) external view returns(uint256) {
+    function getCetCollateralFactor(address currency)
+        external
+        view
+        returns (uint256)
+    {
         return _collateralFactors[currency];
     }
 }

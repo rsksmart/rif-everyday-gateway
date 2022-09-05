@@ -163,13 +163,22 @@ describe('Service Provider Lending Contract', () => {
       expect(+balance / 1e18).to.eq(100000000000000);
     });
 
-    it('should not loan doc if user does not have collateral deposited', async () => {
+    it('should not loan DOC if user does not have collateral deposited', async () => {
       expect(
         acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
       ).to.revertedWith('not enough collateral');
     });
 
-    it('should be able to loan doc', async () => {
+    it('should not loan DOC if provider does not have enough ERC20 balance', async () => {
+      const tx = await acmeContract['deposit()']({ value: RBTC_SENT });
+      await tx.wait();
+
+      expect(
+        acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
+      ).to.revertedWith('not enough balance');
+    });
+
+    it('should be able to loan DOC', async () => {
       expect(acmeContract['deposit()']({ value: RBTC_SENT }))
         .to.emit(acmeContract, 'Deposit')
         .withArgs(owner.address, RBTC_SENT);
