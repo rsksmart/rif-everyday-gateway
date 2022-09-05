@@ -352,7 +352,7 @@ describe('BorrowService', () => {
         .toString();
     });
 
-    it('should not be able borrow doc without enough collateral', async () => {
+    it.skip('should not be able borrow doc without enough collateral', async () => {
       const amountToBorrow = 1000;
       const amountToLend = 0.00000000000000005;
 
