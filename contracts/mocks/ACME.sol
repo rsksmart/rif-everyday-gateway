@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "hardhat/console.sol";
 
 contract ACME {
     using SafeMath for uint256;
@@ -18,8 +19,8 @@ contract ACME {
 
     event Deposit(address indexed _from, uint256 _amount);
     event Withdraw(address indexed _from, uint256 _amount);
-    event Loan(address indexed _from, uint256 _amount);
-    event Repay(address indexed _from, uint256 _amount);
+    event Loan(address indexed _from, uint256 _amount, address indexed _currency);
+    event Repay(address indexed _from, uint256 _amount, address indexed _currency);
     event ReceivedLiquidity(uint256 _amount);
 
     mapping(address => mapping(address => Balance)) private _balances;
@@ -102,26 +103,42 @@ contract ACME {
             blockHeight: block.number,
             locked: false
         });
+
+        emit Loan(loaner, amount, currency);
     }
 
-    function repay(address currency, uint256 amount) external {
-        _repay(currency, amount, msg.sender);
+    function repay(address currency, uint256 amount, address loaner) external {
+        _repay(currency, amount, msg.sender, loaner);
     }
 
     function repay(
         address currency,
         uint256 amount,
-        address payer
+        address payer,
+        address loaner
     ) external {
-        _repay(currency, amount, payer);
+        _repay(currency, amount, payer, loaner);
     }
 
     function _repay(
         address currency,
         uint256 amount,
-        address payer
+        address payer,
+        address loaner
     ) internal {
-        // TODO
+        uint256 debt = _debts[loaner][currency].amount;
+        console.log(
+            "Debt = %s | Amount = %s",
+            debt,
+            amount
+        );
+        require(amount <= debt, "Amount exceeds debt");
+
+        ERC20(currency).transferFrom(payer, address(this), amount);
+        _debts[loaner][currency].amount -= amount;
+        if(_debts[loaner][currency].amount == 0) _debts[loaner][currency].locked = false;
+
+        emit Repay(loaner, amount, currency);
     }
 
     function _withdraw(uint256 amount, address withdrawer) internal {
@@ -195,5 +212,9 @@ contract ACME {
             (_balances[from][currency].amount *
                 elapsedBlocks *
                 _interestPer100Blocks) / (100 * 100);
+    }
+
+    function collateralFactor(address currency) external view returns(uint256) {
+        return _collateralFactors[currency];
     }
 }

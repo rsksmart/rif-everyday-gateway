@@ -40,6 +40,10 @@ contract DummyBorrowService is BorrowService {
         address currency,
         uint256 index
     ) public payable override {
+        ERC20(currency).transferFrom(msg.sender, address(this), amount);
+        ERC20(currency).approve(address(_acme), amount);
+        _acme.repay(currency, amount, address(this), msg.sender);
+
         emit Pay(index, msg.sender, currency, amount);
     }
 }

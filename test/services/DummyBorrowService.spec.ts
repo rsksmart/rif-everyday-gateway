@@ -1,6 +1,7 @@
 import { expect } from 'chairc';
 import { constants, Signer } from 'ethers';
 import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 import {
   ACME,
   ACME__factory,
@@ -241,7 +242,13 @@ describe('BorrowService', () => {
 
   describe('Borrow', () => {
     let doc: ERC677;
+    let owner: Signer;
+    let collateralFactor: number;
+    const rbtcPrice = 20000;
+
     beforeEach(async () => {
+      [owner] = await ethers.getSigners();
+
       const ERC677Factory = (await ethers.getContractFactory(
         'ERC677'
       )) as ERC677__factory;
@@ -259,6 +266,89 @@ describe('BorrowService', () => {
         doc.address,
         ethers.utils.parseEther('0.5') // 50%
       );
+
+      collateralFactor = +(await acme.collateralFactor(doc.address)) / 1e18;
+
+      const listingTx = await borrowService.addListing({
+        currency: doc.address,
+        interestRate: 5,
+        loanToValue: ethers.utils.parseEther(collateralFactor.toString()),
+        loanToValueTokenAddr: NATIVE_CURRENCY,
+        maxAmount: ethers.utils.parseEther('100'),
+        minAmount: ethers.utils.parseEther('1'),
+        maxDuration: 1000,
+      });
+
+      await listingTx.wait();
+    });
+
+    it('should be able to borrow doc', async () => {
+      const amountToBorrow = 10;
+      const amountToLend = amountToBorrow / (rbtcPrice * collateralFactor);
+
+      const initialOwnerBalance = await doc.balanceOf(await owner.getAddress());
+
+      const tx = await borrowService.borrow(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        doc.address,
+        0,
+        10,
+        { value: ethers.utils.parseEther(amountToLend.toString()) }
+      );
+
+      await tx.wait();
+
+      const finalOwnerBalance = await doc.balanceOf(await owner.getAddress());
+
+      expect(finalOwnerBalance.toString()).equal(
+        initialOwnerBalance.add(ethers.utils.parseEther('10')).toString()
+      );
+    });
+
+    it('should be able to repay doc debt', async () => {
+      const amountToBorrow = 10;
+      const amountToLend = amountToBorrow / (rbtcPrice * collateralFactor);
+
+      const initialOwnerBalance = await doc.balanceOf(await owner.getAddress());
+
+      const tx = await borrowService.borrow(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        doc.address,
+        0,
+        10,
+        { value: ethers.utils.parseEther(amountToLend.toString()) }
+      );
+
+      await tx.wait();
+
+      const finalOwnerBalance = await doc.balanceOf(await owner.getAddress());
+
+      expect(finalOwnerBalance.toString()).equal(
+        initialOwnerBalance.add(ethers.utils.parseEther('10')).toString()
+      );
+
+      const approveTx = await doc.approve(
+        borrowService.address,
+        ethers.utils.parseEther(amountToBorrow.toString())
+      );
+
+      await approveTx.wait();
+
+      const tx2 = await borrowService.pay(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        doc.address,
+        0
+      );
+
+      tx2.wait();
+
+      const afterPayOwnerBalance = await doc.balanceOf(
+        await owner.getAddress()
+      );
+
+      expect(afterPayOwnerBalance.toString())
+        .equal(initialOwnerBalance)
+        .toString();
     });
   });
 });
