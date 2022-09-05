@@ -32,6 +32,7 @@ contract ACME {
     mapping(address => uint256) private _collateralFactors;
 
     function updateCollateralFactor(address currency, uint256 factor) external {
+        if (factor == 0) revert InvalidAmount(factor);
         _collateralFactors[currency] = factor;
     }
 

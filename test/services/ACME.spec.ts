@@ -164,6 +164,12 @@ describe('Service Provider Lending Contract', () => {
       expect(+balance / 1e18).to.eq(docPoolBalance);
     });
 
+    it('should fail when setting a collateral factor to zero', () => {
+      expect(
+        acmeContract.updateCollateralFactor(ERC20Mock.address, 0)
+      ).to.revertedWith('InvalidAmount(0)');
+    });
+
     it('should not loan DOC if provider does not have enough ERC20 balance', async () => {
       const tx = await acmeContract['deposit()']({ value: RBTC_SENT });
       await tx.wait();
