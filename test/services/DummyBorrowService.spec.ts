@@ -370,7 +370,9 @@ describe('BorrowService', () => {
           10,
           { value: ethers.utils.parseEther(amountToLend.toFixed(18)) }
         )
-      ).to.revertedWith('not enough collateral');
+      ).to.revertedWith(
+        `NotEnoughCollateral(${ethers.utils.parseEther('100')})`
+      );
       const finalRBTCBalance = await ethers.provider.getBalance(
         await owner.getAddress()
       );

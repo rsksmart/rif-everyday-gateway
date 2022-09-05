@@ -6,6 +6,9 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract ACME {
     error InvalidAmount(uint256 amount);
     error NotEnoughBalance(uint256 amount);
+    error NotEnoughCollateral(uint256 balance);
+    error NotEnoughDocBalance(uint256 docBalance);
+    error PaymentBiggerThanDebt(uint256 debt);
 
     struct Balance {
         uint256 amount;
@@ -86,11 +89,11 @@ contract ACME {
         uint256 collateralFactor = _collateralFactors[currency];
         uint256 balance = _balances[loaner][address(0)].amount;
         uint256 collateralBalance = balance * _rbtcPrice * collateralFactor;
-        require(collateralBalance >= amount, "not enough collateral");
-        require(
-            ERC20(currency).balanceOf(address(this)) >= amount,
-            "not enough balance"
-        );
+
+        if (collateralBalance < amount) revert NotEnoughCollateral(balance);
+        uint256 docBalance = ERC20(currency).balanceOf(address(this));
+        if (ERC20(currency).balanceOf(address(this)) < amount)
+            revert NotEnoughDocBalance(docBalance);
 
         ERC20(currency).transfer(loaner, amount);
         _balances[loaner][address(0)].locked = true;
@@ -127,7 +130,7 @@ contract ACME {
         address loaner
     ) internal {
         uint256 debt = _debts[loaner][currency].amount;
-        require(amount <= debt, "Amount exceeds debt");
+        if (amount > debt) revert PaymentBiggerThanDebt(debt);
 
         ERC20(currency).transferFrom(payer, address(this), amount);
         _debts[loaner][currency].amount -= amount;

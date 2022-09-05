@@ -125,10 +125,11 @@ describe('Service Provider Lending Contract', () => {
     });
   });
 
-  describe('loans', () => {
+  describe('Loans', () => {
     let acmeContract: ACME;
     let ERC20Mock: ERC677;
     let owner: SignerWithAddress;
+    const docPoolBalance = 1000000;
 
     beforeEach(async () => {
       const { owner: contractOwner, contract } = await loadFixture(
@@ -145,8 +146,8 @@ describe('Service Provider Lending Contract', () => {
 
       // Emulates a pool of DOC for loans
       ERC20Mock = (await ERC20MockFactory.deploy(
-        acmeContract.address,
-        ethers.utils.parseEther('100000000000000'),
+        owner.address,
+        ethers.utils.parseEther(docPoolBalance.toString()),
         'Dollar On Chain',
         'DOC'
       )) as ERC677;
@@ -158,15 +159,9 @@ describe('Service Provider Lending Contract', () => {
         ethers.utils.parseEther('0.5')
       );
 
-      const balance = await ERC20Mock.balanceOf(acmeContract.address);
+      const balance = await ERC20Mock.balanceOf(owner.address);
 
-      expect(+balance / 1e18).to.eq(100000000000000);
-    });
-
-    it('should not loan DOC if user does not have collateral deposited', async () => {
-      expect(
-        acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
-      ).to.revertedWith('not enough collateral');
+      expect(+balance / 1e18).to.eq(docPoolBalance);
     });
 
     it('should not loan DOC if provider does not have enough ERC20 balance', async () => {
@@ -175,81 +170,96 @@ describe('Service Provider Lending Contract', () => {
 
       expect(
         acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
-      ).to.revertedWith('not enough balance');
+      ).to.revertedWith('NotEnoughDocBalance(0)');
     });
 
-    it('should be able to loan DOC', async () => {
-      expect(acmeContract['deposit()']({ value: RBTC_SENT }))
-        .to.emit(acmeContract, 'Deposit')
-        .withArgs(owner.address, RBTC_SENT);
+    describe('DOC pool', () => {
+      beforeEach(async () => {
+        await ERC20Mock.transfer(
+          acmeContract.address,
+          ethers.utils.parseEther(docPoolBalance.toString())
+        );
+      });
 
-      const [deposited] = await acmeContract['getBalance()']();
+      it('should not loan DOC if user does not have collateral deposited', async () => {
+        expect(
+          acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
+        ).to.revertedWith('NotEnoughCollateral(0)');
+      });
 
-      expect(deposited).equal(RBTC_SENT.toString());
+      it('should be able to loan DOC', async () => {
+        expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+          .to.emit(acmeContract, 'Deposit')
+          .withArgs(owner.address, RBTC_SENT);
 
-      const initialOwnerBalance = await ERC20Mock.balanceOf(owner.address);
+        const [deposited] = await acmeContract['getBalance()']();
 
-      const tx = await acmeContract['loan(address,uint256)'](
-        ERC20Mock.address,
-        ethers.utils.parseEther('100')
-      );
+        expect(deposited).equal(RBTC_SENT.toString());
 
-      await tx.wait();
+        const initialOwnerBalance = await ERC20Mock.balanceOf(owner.address);
 
-      const finalOwnerBalance = await ERC20Mock.balanceOf(owner.address);
+        const tx = await acmeContract['loan(address,uint256)'](
+          ERC20Mock.address,
+          ethers.utils.parseEther('100')
+        );
 
-      expect(finalOwnerBalance.toString()).equal(
-        initialOwnerBalance.add(ethers.utils.parseEther('100')).toString()
-      );
-    });
+        await tx.wait();
 
-    it('should be able to repay doc debt', async () => {
-      expect(acmeContract['deposit()']({ value: RBTC_SENT }))
-        .to.emit(acmeContract, 'Deposit')
-        .withArgs(owner.address, RBTC_SENT);
+        const finalOwnerBalance = await ERC20Mock.balanceOf(owner.address);
 
-      const [deposited] = await acmeContract['getBalance()']();
+        expect(finalOwnerBalance.toString()).equal(
+          initialOwnerBalance.add(ethers.utils.parseEther('100')).toString()
+        );
+      });
 
-      expect(deposited).equal(RBTC_SENT.toString());
+      it('should be able to repay doc debt', async () => {
+        expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+          .to.emit(acmeContract, 'Deposit')
+          .withArgs(owner.address, RBTC_SENT);
 
-      const initialOwnerBalance = await ERC20Mock.balanceOf(owner.address);
+        const [deposited] = await acmeContract['getBalance()']();
 
-      const tx = await acmeContract['loan(address,uint256)'](
-        ERC20Mock.address,
-        ethers.utils.parseEther('100')
-      );
+        expect(deposited).equal(RBTC_SENT.toString());
 
-      await tx.wait();
+        const initialOwnerBalance = await ERC20Mock.balanceOf(owner.address);
 
-      const finalOwnerBalance = await ERC20Mock.balanceOf(owner.address);
+        const tx = await acmeContract['loan(address,uint256)'](
+          ERC20Mock.address,
+          ethers.utils.parseEther('100')
+        );
 
-      expect(finalOwnerBalance.toString()).equal(
-        initialOwnerBalance.add(ethers.utils.parseEther('100')).toString()
-      );
+        await tx.wait();
 
-      const acmeBeforeDocBalance =
-        +(await ERC20Mock.balanceOf(acmeContract.address)) / 1e18;
+        const finalOwnerBalance = await ERC20Mock.balanceOf(owner.address);
 
-      const amountToBorrow = 100;
+        expect(finalOwnerBalance.toString()).equal(
+          initialOwnerBalance.add(ethers.utils.parseEther('100')).toString()
+        );
 
-      const approveTx = await ERC20Mock.approve(
-        acmeContract.address,
-        ethers.utils.parseEther(amountToBorrow.toString())
-      );
+        const acmeBeforeDocBalance =
+          +(await ERC20Mock.balanceOf(acmeContract.address)) / 1e18;
 
-      await approveTx.wait();
+        const amountToBorrow = 100;
 
-      const tx2 = await acmeContract['repay(address,uint256,address)'](
-        ERC20Mock.address,
-        ethers.utils.parseEther(amountToBorrow.toString()),
-        owner.address
-      );
+        const approveTx = await ERC20Mock.approve(
+          acmeContract.address,
+          ethers.utils.parseEther(amountToBorrow.toString())
+        );
 
-      await tx2.wait();
+        await approveTx.wait();
 
-      const acmeAfterDocBalance =
-        +(await ERC20Mock.balanceOf(acmeContract.address)) / 1e18;
-      expect(acmeAfterDocBalance).to.eq(acmeBeforeDocBalance + 100);
+        const tx2 = await acmeContract['repay(address,uint256,address)'](
+          ERC20Mock.address,
+          ethers.utils.parseEther(amountToBorrow.toString()),
+          owner.address
+        );
+
+        await tx2.wait();
+
+        const acmeAfterDocBalance =
+          +(await ERC20Mock.balanceOf(acmeContract.address)) / 1e18;
+        expect(acmeAfterDocBalance).to.eq(acmeBeforeDocBalance + 100);
+      });
     });
   });
 });
