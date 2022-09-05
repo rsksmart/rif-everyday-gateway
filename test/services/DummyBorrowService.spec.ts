@@ -1,18 +1,40 @@
 import { expect } from 'chairc';
 import { constants, Signer } from 'ethers';
 import { ethers } from 'hardhat';
-import { deployDummyBorrowService } from 'scripts/deploy';
-import { DummyBorrowService } from 'typechain-types';
+import {
+  ACME,
+  ACME__factory,
+  DummyBorrowService,
+  DummyBorrowService__factory,
+  ERC677,
+  ERC677__factory,
+} from 'typechain-types';
 
 const NATIVE_CURRENCY = constants.AddressZero;
 
 describe('BorrowService', () => {
   let owner: Signer;
   let borrowService: DummyBorrowService;
+  let acme: ACME;
 
   beforeEach(async () => {
     [owner] = await ethers.getSigners();
-    borrowService = await deployDummyBorrowService(owner);
+
+    const acmeFactory = (await ethers.getContractFactory(
+      'ACME'
+    )) as ACME__factory;
+    acme = await acmeFactory.deploy();
+    await acme.deployed();
+
+    const borrowServiceFactory = (await ethers.getContractFactory(
+      'DummyBorrowService'
+    )) as DummyBorrowService__factory;
+
+    borrowService = (await borrowServiceFactory.deploy(
+      acme.address
+    )) as DummyBorrowService;
+
+    await borrowService.deployed();
   });
 
   it('should deployed a Borrow Service', async () => {
@@ -215,5 +237,28 @@ describe('BorrowService', () => {
     expect(listing.maxAmount).equal(100);
     expect(listing.minAmount).equal(1);
     expect(listing.maxDuration).equal(1000);
+  });
+
+  describe('Borrow', () => {
+    let doc: ERC677;
+    beforeEach(async () => {
+      const ERC677Factory = (await ethers.getContractFactory(
+        'ERC677'
+      )) as ERC677__factory;
+
+      doc = (await ERC677Factory.deploy(
+        acme.address,
+        ethers.utils.parseEther('100000000000000'),
+        'Dollar On Chain',
+        'DOC'
+      )) as ERC677;
+
+      await doc.deployed();
+
+      await acme.updateCollateralFactor(
+        doc.address,
+        ethers.utils.parseEther('0.5') // 50%
+      );
+    });
   });
 });

@@ -2,8 +2,15 @@
 pragma solidity ^0.8.16;
 
 import "contracts/services/BorrowService.sol";
+import "contracts/mocks/ACME.sol";
 
 contract DummyBorrowService is BorrowService {
+    ACME private _acme;
+
+    constructor(ACME acme) {
+        _acme = acme;
+    }
+
     function borrow(
         uint256 amount,
         address currency,
@@ -19,6 +26,10 @@ contract DummyBorrowService is BorrowService {
             amount > listings[currency][index].minAmount,
             "Min amount not met"
         );
+
+        _acme.deposit{value: msg.value}(msg.sender);
+        _acme.loan(currency, amount, msg.sender);
+
         removeLiquidity(amount, currency, index);
 
         emit Borrow(index, msg.sender, currency, amount, duration);

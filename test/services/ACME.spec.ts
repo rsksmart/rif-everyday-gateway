@@ -7,7 +7,6 @@ import {
   ERC677,
   ERC677__factory,
 } from '../../typechain-types';
-import { Signer } from 'ethers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const RBTC_SENT = ethers.utils.parseEther('10');
@@ -174,7 +173,7 @@ describe('Service Provider Lending Contract', () => {
 
       const initialOwnerBalance = await ERC20Mock.balanceOf(owner.address);
 
-      const tx = await acmeContract.loan(
+      const tx = await acmeContract['loan(address,uint256)'](
         ERC20Mock.address,
         ethers.utils.parseEther('100')
       );

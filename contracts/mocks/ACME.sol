@@ -13,6 +13,7 @@ contract ACME {
     struct Balance {
         uint256 amount;
         uint256 blockHeight;
+        bool locked;
     }
 
     event Deposit(address indexed _from, uint256 _amount);
@@ -68,6 +69,14 @@ contract ACME {
         _withdraw(amount, withdrawer);
     }
 
+    function loan(
+        address currency,
+        uint256 amount,
+        address loaner
+    ) external {
+        _loan(currency, amount, loaner);
+    }
+
     function loan(address currency, uint256 amount) external {
         _loan(currency, amount, msg.sender);
     }
@@ -79,19 +88,47 @@ contract ACME {
     ) internal {
         uint256 collateralFactor = _collateralFactors[currency];
         uint256 balance = _balances[loaner][address(0)].amount;
-        require(
-            balance * _rbtcPrice * collateralFactor >= amount,
-            "not enough collateral"
-        );
+        uint256 collateralBalance = balance * _rbtcPrice * collateralFactor;
+        require(collateralBalance >= amount, "not enough collateral");
         require(
             ERC20(currency).balanceOf(address(this)) >= amount,
             "not enough balance"
         );
 
         ERC20(currency).transfer(loaner, amount);
+        _balances[loaner][address(0)].locked = true;
+        _debts[loaner][currency] = Balance({
+            amount: amount,
+            blockHeight: block.number,
+            locked: false
+        });
+    }
+
+    function repay(address currency, uint256 amount) external {
+        _repay(currency, amount, msg.sender);
+    }
+
+    function repay(
+        address currency,
+        uint256 amount,
+        address payer
+    ) external {
+        _repay(currency, amount, payer);
+    }
+
+    function _repay(
+        address currency,
+        uint256 amount,
+        address payer
+    ) internal {
+        // TODO
     }
 
     function _withdraw(uint256 amount, address withdrawer) internal {
+        require(
+            !_balances[withdrawer][address(0)].locked,
+            "balance compromised as collateral"
+        );
         if (
             _balances[withdrawer][address(0)].amount == 0 ||
             amount > _balances[withdrawer][address(0)].amount
