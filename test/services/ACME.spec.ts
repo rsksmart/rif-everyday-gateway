@@ -212,6 +212,35 @@ describe('Service Provider Lending Contract', () => {
         );
       });
 
+      it('should fail when trying to repaying more that the debt', async () => {
+        expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+          .to.emit(acmeContract, 'Deposit')
+          .withArgs(owner.address, RBTC_SENT);
+
+        expect(
+          acmeContract['loan(address,uint256)'](
+            ERC20Mock.address,
+            ethers.utils.parseEther('100')
+          )
+        )
+          .to.emit(acmeContract, 'Loan')
+          .withArgs(
+            owner.address,
+            ethers.utils.parseEther('100'),
+            ERC20Mock.address
+          );
+
+        expect(
+          acmeContract['repay(address,uint256,address)'](
+            ERC20Mock.address,
+            ethers.utils.parseEther('101'),
+            owner.address
+          )
+        ).to.revertedWith(
+          `PaymentBiggerThanDebt(${ethers.utils.parseEther('100')})`
+        );
+      });
+
       it('should be able to repay doc debt', async () => {
         expect(acmeContract['deposit()']({ value: RBTC_SENT }))
           .to.emit(acmeContract, 'Deposit')
