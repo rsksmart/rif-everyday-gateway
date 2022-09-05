@@ -13,19 +13,19 @@ contract ACME {
         bool locked;
     }
 
-    event Deposit(address indexed _from, uint256 _amount);
-    event Withdraw(address indexed _from, uint256 _amount);
+    event Deposit(address indexed from, uint256 amount);
+    event Withdraw(address indexed from, uint256 amount);
     event Loan(
-        address indexed _from,
-        uint256 _amount,
-        address indexed _currency
+        address indexed from,
+        uint256 amount,
+        address indexed currency
     );
     event Repay(
-        address indexed _from,
-        uint256 _amount,
-        address indexed _currency
+        address indexed from,
+        uint256 amount,
+        address indexed currency
     );
-    event ReceivedLiquidity(uint256 _amount);
+    event ReceivedLiquidity(uint256 amount);
 
     mapping(address => mapping(address => Balance)) private _balances;
     mapping(address => mapping(address => Balance)) private _debts;
