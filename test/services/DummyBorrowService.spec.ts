@@ -267,14 +267,15 @@ describe('BorrowService', () => {
         ethers.utils.parseEther('0.5') // 50%
       );
 
-      collateralFactor = +(await acme.collateralFactor(doc.address)) / 1e18;
+      collateralFactor =
+        +(await acme.getCetCollateralFactor(doc.address)) / 1e18;
 
       const listingTx = await borrowService.addListing({
         currency: doc.address,
         interestRate: 5,
         loanToValue: ethers.utils.parseEther(collateralFactor.toString()),
         loanToValueTokenAddr: NATIVE_CURRENCY,
-        maxAmount: ethers.utils.parseEther('100'),
+        maxAmount: ethers.utils.parseEther('10000'),
         minAmount: ethers.utils.parseEther('1'),
         maxDuration: 1000,
       });
@@ -349,6 +350,39 @@ describe('BorrowService', () => {
       expect(afterPayOwnerBalance.toString())
         .equal(initialOwnerBalance)
         .toString();
+    });
+
+    it('should not be able borrow doc without enough collateral', async () => {
+      const amountToBorrow = 1000;
+      const amountToLend = 0.00000000000000005;
+
+      const initialOwnerBalance = await doc.balanceOf(await owner.getAddress());
+      const initialRBTCBalance = await ethers.provider.getBalance(
+        await owner.getAddress()
+      );
+      console.log('initialRBTCBalance', initialRBTCBalance);
+
+      expect(
+        borrowService.borrow(
+          ethers.utils.parseEther(amountToBorrow.toString()),
+          doc.address,
+          0,
+          10,
+          { value: ethers.utils.parseEther(amountToLend.toFixed(18)) }
+        )
+      ).to.revertedWith('not enough collateral');
+      const finalRBTCBalance = await ethers.provider.getBalance(
+        await owner.getAddress()
+      );
+      console.log('finalRBTCBalance', finalRBTCBalance);
+
+      const finalOwnerBalance = await doc.balanceOf(await owner.getAddress());
+
+      console.log('balances', initialOwnerBalance, finalOwnerBalance);
+
+      expect(finalOwnerBalance.toString()).equal(
+        initialOwnerBalance.toString()
+      );
     });
   });
 });

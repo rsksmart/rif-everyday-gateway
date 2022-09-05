@@ -127,11 +127,6 @@ contract ACME {
         address loaner
     ) internal {
         uint256 debt = _debts[loaner][currency].amount;
-        console.log(
-            "Debt = %s | Amount = %s",
-            debt,
-            amount
-        );
         require(amount <= debt, "Amount exceeds debt");
 
         ERC20(currency).transferFrom(payer, address(this), amount);
@@ -214,7 +209,7 @@ contract ACME {
                 _interestPer100Blocks) / (100 * 100);
     }
 
-    function collateralFactor(address currency) external view returns(uint256) {
+    function getCetCollateralFactor(address currency) external view returns(uint256) {
         return _collateralFactors[currency];
     }
 }

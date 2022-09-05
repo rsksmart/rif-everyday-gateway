@@ -143,6 +143,7 @@ describe('Service Provider Lending Contract', () => {
         'ERC677'
       )) as ERC677__factory;
 
+      // Emulates a pool of DOC for loans
       ERC20Mock = (await ERC20MockFactory.deploy(
         acmeContract.address,
         ethers.utils.parseEther('100000000000000'),
@@ -156,13 +157,19 @@ describe('Service Provider Lending Contract', () => {
         ERC20Mock.address,
         ethers.utils.parseEther('0.5')
       );
-    });
 
-    it('should be able to loan doc', async () => {
       const balance = await ERC20Mock.balanceOf(acmeContract.address);
 
       expect(+balance / 1e18).to.eq(100000000000000);
+    });
 
+    it('should not loan doc if user does not have collateral deposited', async () => {
+      expect(
+        acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
+      ).to.revertedWith('not enough collateral');
+    });
+
+    it('should be able to loan doc', async () => {
       expect(acmeContract['deposit()']({ value: RBTC_SENT }))
         .to.emit(acmeContract, 'Deposit')
         .withArgs(owner.address, RBTC_SENT);
@@ -187,7 +194,7 @@ describe('Service Provider Lending Contract', () => {
       );
     });
 
-    it('should be able to repay doc debtc', async () => {
+    it('should be able to repay doc debt', async () => {
       expect(acmeContract['deposit()']({ value: RBTC_SENT }))
         .to.emit(acmeContract, 'Deposit')
         .withArgs(owner.address, RBTC_SENT);
