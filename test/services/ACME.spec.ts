@@ -49,7 +49,7 @@ describe('Service Provider Lending Contract', () => {
       const ZERO_RBTC = ethers.constants.Zero;
       const { contract } = await loadFixture(initialFixture);
 
-      expect(contract['deposit()']({ value: ZERO_RBTC })).to.revertedWith(
+      await expect(contract['deposit()']({ value: ZERO_RBTC })).to.revertedWith(
         'InvalidAmount(0)'
       );
     });
@@ -129,13 +129,16 @@ describe('Service Provider Lending Contract', () => {
     let acmeContract: ACME;
     let ERC20Mock: ERC677;
     let owner: SignerWithAddress;
+    let alice: SignerWithAddress;
     const docPoolBalance = 1000000;
 
     beforeEach(async () => {
-      const { owner: contractOwner, contract } = await loadFixture(
-        initialFixture
-      );
-
+      const {
+        owner: contractOwner,
+        contract,
+        accounts,
+      } = await loadFixture(initialFixture);
+      alice = accounts[0];
       owner = contractOwner;
 
       acmeContract = contract;
@@ -164,8 +167,14 @@ describe('Service Provider Lending Contract', () => {
       expect(+balance / 1e18).to.eq(docPoolBalance);
     });
 
-    it('should fail when setting a collateral factor to zero', () => {
-      expect(
+    it('should not allowed not owner to update collateral factors', async () => {
+      await expect(
+        acmeContract.connect(alice).updateCollateralFactor(ERC20Mock.address, 1)
+      ).to.revertedWith('Ownable: caller is not the owner');
+    });
+
+    it('should fail when setting a collateral factor to zero', async () => {
+      await expect(
         acmeContract.updateCollateralFactor(ERC20Mock.address, 0)
       ).to.revertedWith('InvalidAmount(0)');
     });
@@ -174,7 +183,7 @@ describe('Service Provider Lending Contract', () => {
       const tx = await acmeContract['deposit()']({ value: RBTC_SENT });
       await tx.wait();
 
-      expect(
+      await expect(
         acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
       ).to.revertedWith('NotEnoughDocBalance(0)');
     });
@@ -188,7 +197,7 @@ describe('Service Provider Lending Contract', () => {
       });
 
       it('should not loan DOC if user does not have collateral deposited', async () => {
-        expect(
+        await expect(
           acmeContract['loan(address,uint256)'](ERC20Mock.address, '1')
         ).to.revertedWith('NotEnoughCollateral(0)');
       });
@@ -219,11 +228,11 @@ describe('Service Provider Lending Contract', () => {
       });
 
       it('should fail when trying to repaying more that the debt', async () => {
-        expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+        await expect(acmeContract['deposit()']({ value: RBTC_SENT }))
           .to.emit(acmeContract, 'Deposit')
           .withArgs(owner.address, RBTC_SENT);
 
-        expect(
+        await expect(
           acmeContract['loan(address,uint256)'](
             ERC20Mock.address,
             ethers.utils.parseEther('100')
@@ -236,7 +245,7 @@ describe('Service Provider Lending Contract', () => {
             ERC20Mock.address
           );
 
-        expect(
+        await expect(
           acmeContract['repay(address,uint256,address)'](
             ERC20Mock.address,
             ethers.utils.parseEther('101'),
