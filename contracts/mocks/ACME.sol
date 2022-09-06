@@ -100,13 +100,14 @@ contract ACME is Ownable {
         if (ERC20(currency).balanceOf(address(this)) < amount)
             revert NotEnoughDocBalance(docBalance);
 
-        ERC20(currency).transfer(loaner, amount);
         _balances[loaner][address(0)].locked = true;
         _debts[loaner][currency] = Balance({
             amount: amount,
             blockHeight: block.number,
             locked: false
         });
+
+        ERC20(currency).transfer(loaner, amount);
 
         emit Loan(loaner, amount, currency);
     }
