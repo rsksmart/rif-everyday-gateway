@@ -3,6 +3,7 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import { ACME, ACME__factory, ERC677, ERC677__factory } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { deployContract } from 'utils/deployment.utils';
 
 const RBTC_SENT = ethers.utils.parseEther('10');
 const INTEREST_PER_100_BLOCKS = 10;
@@ -147,19 +148,15 @@ describe('Service Provider Lending Contract', () => {
 
       acmeContract = contract;
 
-      const docFactory = (await ethers.getContractFactory(
-        'ERC677'
-      )) as ERC677__factory;
+      const { contract: docContract } = await deployContract<ERC677>('ERC677', {
+        owner: owner.address,
+        initialBalance: ethers.utils.parseEther(docPoolBalance.toString()),
+        name: 'Dollar On Chain',
+        symbol: 'DOC',
+      });
 
       // Emulates a pool of DOC for loans
-      doc = (await docFactory.deploy(
-        owner.address,
-        ethers.utils.parseEther(docPoolBalance.toString()),
-        'Dollar On Chain',
-        'DOC'
-      )) as ERC677;
-
-      await doc.deployed();
+      doc = docContract;
 
       await acmeContract.updateCollateralFactor(
         doc.address,
