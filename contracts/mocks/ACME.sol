@@ -28,7 +28,7 @@ contract ACME is Ownable {
     uint256 private _subsidy = 0;
     uint256 private _interestPer100Blocks = 10;
 
-    uint256 private _rbtcPrice = 20000;
+    uint256 private _rbtcPrice = 20000e18;
 
     mapping(address => uint256) private _collateralFactors;
 
@@ -93,7 +93,8 @@ contract ACME is Ownable {
     ) internal {
         uint256 collateralFactor = _collateralFactors[currency];
         uint256 balance = _balances[loaner][address(0)].amount;
-        uint256 collateralBalance = balance * _rbtcPrice * collateralFactor;
+        uint256 balanceUSD = (balance * _rbtcPrice) / 1e18;
+        uint256 collateralBalance = (balanceUSD * collateralFactor) / 1e18;
 
         if (collateralBalance < amount) revert NotEnoughCollateral(balance);
         uint256 docBalance = ERC20(currency).balanceOf(address(this));

@@ -10,6 +10,7 @@ import {
   ERC677,
   ERC677__factory,
 } from 'typechain-types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 const NATIVE_CURRENCY = constants.AddressZero;
 
@@ -242,7 +243,7 @@ describe('BorrowService', () => {
 
   describe('Borrow', () => {
     let doc: ERC677;
-    let owner: Signer;
+    let owner: SignerWithAddress;
     let collateralFactor: number;
     const rbtcPrice = 20000;
 
@@ -352,17 +353,13 @@ describe('BorrowService', () => {
         .toString();
     });
 
-    it.skip('should not be able borrow doc without enough collateral', async () => {
-      const amountToBorrow = 1000;
-      const amountToLend = 0.00000000000000005;
+    it('should not be able borrow doc without enough collateral', async () => {
+      const amountToBorrow = 100;
+      const amountToLend = 0.0005; // 20000 * 0.0005 = 10
 
-      const initialOwnerBalance = await doc.balanceOf(await owner.getAddress());
-      const initialRBTCBalance = await ethers.provider.getBalance(
-        await owner.getAddress()
-      );
-      console.log('initialRBTCBalance', initialRBTCBalance);
+      const initialDocBalance = await doc.balanceOf(owner.address);
 
-      expect(
+      await expect(
         borrowService.borrow(
           ethers.utils.parseEther(amountToBorrow.toString()),
           doc.address,
@@ -371,20 +368,12 @@ describe('BorrowService', () => {
           { value: ethers.utils.parseEther(amountToLend.toFixed(18)) }
         )
       ).to.revertedWith(
-        `NotEnoughCollateral(${ethers.utils.parseEther('100')})`
+        `NotEnoughCollateral(${ethers.utils.parseEther('0.0005')})`
       );
-      const finalRBTCBalance = await ethers.provider.getBalance(
-        await owner.getAddress()
-      );
-      console.log('finalRBTCBalance', finalRBTCBalance);
 
-      const finalOwnerBalance = await doc.balanceOf(await owner.getAddress());
+      const finalDocBalance = await doc.balanceOf(await owner.getAddress());
 
-      console.log('balances', initialOwnerBalance, finalOwnerBalance);
-
-      expect(finalOwnerBalance.toString()).equal(
-        initialOwnerBalance.toString()
-      );
+      expect(finalDocBalance.toString()).equal(initialDocBalance.toString());
     });
   });
 });
