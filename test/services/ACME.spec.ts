@@ -32,21 +32,30 @@ describe('Service Provider Lending Contract', () => {
   };
 
   describe('Deposits', () => {
-    it('should allow deposit and emit Deposit event', async () => {
-      const { owner, contract } = await loadFixture(initialFixture);
+    let owner: SignerWithAddress;
+    let acmeContract: ACME;
 
-      expect(contract['deposit()']({ value: RBTC_SENT }))
-        .to.emit(contract, 'Deposit')
+    beforeEach(async () => {
+      const { owner: contractOwner, contract } = await loadFixture(
+        initialFixture
+      );
+
+      owner = contractOwner;
+      acmeContract = contract;
+    });
+
+    it('should allow deposit and emit Deposit event', async () => {
+      expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+        .to.emit(acmeContract, 'Deposit')
         .withArgs(owner.address, RBTC_SENT);
     });
 
     it('should fail if amount sent is 0', async () => {
       const ZERO_RBTC = ethers.constants.Zero;
-      const { contract } = await loadFixture(initialFixture);
 
-      await expect(contract['deposit()']({ value: ZERO_RBTC })).to.revertedWith(
-        'InvalidAmount(0)'
-      );
+      await expect(
+        acmeContract['deposit()']({ value: ZERO_RBTC })
+      ).to.revertedWith('InvalidAmount(0)');
     });
 
     it('should return balance 1000 blocks after deposit', async () => {
@@ -54,11 +63,10 @@ describe('Service Provider Lending Contract', () => {
       const ACC_INTEREST = RBTC_SENT.mul(FAST_FORWARD_BLOCKS)
         .mul(INTEREST_PER_100_BLOCKS)
         .div(100 * 100);
-      const { contract } = await loadFixture(initialFixture);
 
-      await contract['deposit()']({ value: RBTC_SENT });
+      await acmeContract['deposit()']({ value: RBTC_SENT });
 
-      let balance = await contract['getBalance()']();
+      let balance = await acmeContract['getBalance()']();
 
       expect(balance.deposited).to.be.equals(RBTC_SENT);
       expect(balance.interest).to.be.equals(ethers.constants.Zero);
@@ -67,7 +75,7 @@ describe('Service Provider Lending Contract', () => {
         '0x' + FAST_FORWARD_BLOCKS.toString(16),
       ]);
 
-      balance = await contract['getBalance()']();
+      balance = await acmeContract['getBalance()']();
 
       expect(balance.deposited).to.be.equals(RBTC_SENT);
       expect(balance.interest).to.be.equals(ACC_INTEREST);
@@ -79,12 +87,11 @@ describe('Service Provider Lending Contract', () => {
         RBTC_SENT.mul((await ethers.provider.getBlockNumber()) - initialBlock)
           .mul(INTEREST_PER_100_BLOCKS)
           .div(100 * 100);
-      const { owner, contract } = await loadFixture(initialFixture);
       const initialOwnerBalance = await ethers.provider.getBalance(
         owner.address
       );
 
-      await (await contract['deposit()']({ value: RBTC_SENT })).wait();
+      await (await acmeContract['deposit()']({ value: RBTC_SENT })).wait();
       const blockOnDeposit = await ethers.provider.getBlockNumber();
 
       expect(
@@ -93,7 +100,7 @@ describe('Service Provider Lending Contract', () => {
         )
       ).to.be.true;
 
-      let balanceOnContract = await contract['getBalance()']();
+      let balanceOnContract = await acmeContract['getBalance()']();
       expect(balanceOnContract.deposited).to.be.equals(RBTC_SENT);
       expect(balanceOnContract.interest).to.be.equals(ethers.constants.Zero);
 
@@ -101,20 +108,22 @@ describe('Service Provider Lending Contract', () => {
         '0x' + FAST_FORWARD_BLOCKS.toString(16),
       ]);
 
-      balanceOnContract = await contract['getBalance()']();
+      balanceOnContract = await acmeContract['getBalance()']();
       expect(balanceOnContract.deposited).to.be.equals(RBTC_SENT);
       expect(balanceOnContract.interest).to.be.equals(
         await ACC_INTEREST(blockOnDeposit)
       );
 
-      expect(await contract['withdraw(uint256)'](balanceOnContract.deposited))
-        .to.emit(contract, 'Withdraw')
+      expect(
+        await acmeContract['withdraw(uint256)'](balanceOnContract.deposited)
+      )
+        .to.emit(acmeContract, 'Withdraw')
         .withArgs(
           owner.address,
           RBTC_SENT.add(await ACC_INTEREST(blockOnDeposit))
         );
 
-      balanceOnContract = await contract['getBalance()']();
+      balanceOnContract = await acmeContract['getBalance()']();
       expect(balanceOnContract.deposited).to.be.equals(ethers.constants.Zero);
       expect(balanceOnContract.interest).to.be.equals(ethers.constants.Zero);
     });
