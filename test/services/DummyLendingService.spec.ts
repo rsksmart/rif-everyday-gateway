@@ -1,10 +1,7 @@
 import { expect } from 'chairc';
 import { ethers, network } from 'hardhat';
 import { BigNumber, BigNumberish } from 'ethers';
-import {
-  ACME__factory,
-  DummyLendingService__factory,
-} from '../../typechain-types';
+import { ACME__factory, DummyLendingService__factory } from 'typechain-types';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { DummyLendingService } from 'typechain-types';
 
