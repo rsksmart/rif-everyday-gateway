@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import { Ownable } from "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract ACME is Ownable {
     error InvalidAmount(uint256 amount);
@@ -32,7 +32,10 @@ contract ACME is Ownable {
 
     mapping(address => uint256) private _collateralFactors;
 
-    function updateCollateralFactor(address currency, uint256 factor) onlyOwner external {
+    function updateCollateralFactor(address currency, uint256 factor)
+        external
+        onlyOwner
+    {
         if (factor == 0) revert InvalidAmount(factor);
         _collateralFactors[currency] = factor;
     }
