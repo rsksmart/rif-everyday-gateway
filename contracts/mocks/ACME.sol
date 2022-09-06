@@ -169,7 +169,8 @@ contract ACME is Ownable {
 
         uint256 total = amount + interest;
 
-        payable(withdrawer).transfer(total);
+        (bool sent, ) = payable(withdrawer).call{value: msg.value}("");
+        require(sent, "failed to send value");
 
         emit Withdraw(withdrawer, total);
     }
