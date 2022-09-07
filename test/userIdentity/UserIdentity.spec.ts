@@ -1,11 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import hre, { ethers } from 'hardhat';
+import { ethers } from 'hardhat';
 import { expect } from 'chairc';
-import {
-  IUserIdentityACL,
-  IUserIdentityFactory,
-  UserIdentityFactory,
-} from 'typechain-types';
+import { UserIdentityFactory } from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
@@ -25,7 +21,7 @@ describe('User Identity', () => {
   };
 
   describe('Callers and callees', async () => {
-    let identityFactory: IUserIdentityFactory,
+    let identityFactory: UserIdentityFactory,
       signers: SignerWithAddress[],
       owner: SignerWithAddress,
       provider: SignerWithAddress,
@@ -49,7 +45,10 @@ describe('User Identity', () => {
 
     it('should allow caller create new user identity for owner', async () => {
       const identityFactoryAsProvider = identityFactory.connect(provider);
-      expect(identityFactoryAsProvider.getIdentity(owner.address)).to.be
+      expect(
+        await identityFactoryAsProvider.getIdentity(owner.address)
+      ).to.be.equal(ethers.constants.AddressZero);
+      expect(identityFactoryAsProvider.createIdentity(owner.address)).to.be
         .fulfilled;
       expect(
         await identityFactoryAsProvider.getIdentity(owner.address)
