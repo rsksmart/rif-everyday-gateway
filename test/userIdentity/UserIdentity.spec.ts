@@ -1,20 +1,24 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
-import { IUserIdentityACL, IUserIdentityFactory } from 'typechain-types';
+import {
+  IUserIdentityACL,
+  IUserIdentityFactory,
+  UserIdentityFactory,
+} from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('User Identity', () => {
   const initialFixture = async () => {
     const { contract: identityFactory, signers } =
-      await deployContract<IUserIdentityFactory>(
+      await deployContract<UserIdentityFactory>(
         'UserIdentityFactory',
         {},
         (await ethers.getContractFactory(
           'UserIdentityFactory',
           {}
-        )) as Factory<IUserIdentityFactory>
+        )) as Factory<UserIdentityFactory>
       );
 
     return { identityFactory, signers };
