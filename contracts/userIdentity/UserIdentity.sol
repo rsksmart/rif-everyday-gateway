@@ -5,6 +5,7 @@ import "contracts/userIdentity/IUserIdentityACL.sol";
 
 contract UserIdentity {
     error CallerNotAllowed(address _caller);
+    error UnexpectedError();
 
     address private _owner;
     address private _acl;
@@ -21,40 +22,63 @@ contract UserIdentity {
         _;
     }
 
-    function lend(bytes calldata functionToCall)
+    function send(bytes calldata functionToCall)
         public
         payable
         isAllowedToExecuteCall
         returns (bool)
     {
         address allowedLendingContract = IUserIdentityACL(_acl)
-            .getAllowedContracts(msg.sender)
+            .getAllowedContracts(_owner, msg.sender)
             .lending;
 
-        (bool success, bytes memory data) = allowedLendingContract.call{
-            value: msg.value
-        }(functionToCall);
+        (bool success, ) = allowedLendingContract.call{value: msg.value}(
+            functionToCall
+        );
+
+        if (!success) {
+            revert UnexpectedError();
+        }
 
         return success;
     }
 
-    function withdraw(bytes calldata functionToCall)
+    function retrieve(bytes calldata functionToCall)
         public
         isAllowedToExecuteCall
         returns (bool)
     {
         address allowedLendingContract = IUserIdentityACL(_acl)
-            .getAllowedContracts(msg.sender)
+            .getAllowedContracts(_owner, msg.sender)
             .lending;
 
-        (bool success, bytes memory data) = allowedLendingContract.call(
-            functionToCall
-        );
+        (bool success, ) = allowedLendingContract.call(functionToCall);
+
+        if (!success) {
+            revert UnexpectedError();
+        }
 
         if (address(this).balance > 0) {
             payable(_owner).transfer(address(this).balance);
         }
 
         return success;
+    }
+
+    function read(bytes calldata functionToCall)
+        public
+        view
+        isAllowedToExecuteCall
+        returns (bytes memory)
+    {
+        address allowedLendingContract = IUserIdentityACL(_acl)
+            .getAllowedContracts(_owner, msg.sender)
+            .lending;
+
+        (, bytes memory data) = allowedLendingContract.staticcall(
+            functionToCall
+        );
+
+        return data;
     }
 }

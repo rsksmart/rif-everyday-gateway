@@ -28,10 +28,11 @@ contract DummierLendingService is LendingService {
             revert InvalidAmount(msg.value);
         }
 
+        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
-        identity.lend{value: msg.value}(abi.encodeWithSignature("deposit()"));
+        identity.send{value: msg.value}(abi.encodeWithSignature("deposit()"));
 
         emit Lend(msg.sender, address(0), msg.value);
     }
@@ -40,18 +41,32 @@ contract DummierLendingService is LendingService {
         (uint256 deposited, uint256 interest) = _acmeLending.getBalance(
             msg.sender
         );
+        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
-        identity.withdraw(abi.encodeWithSignature("withdraw()"));
+        identity.retrieve(abi.encodeWithSignature("withdraw()"));
 
         emit Withdraw(msg.sender, address(0), deposited + interest);
     }
 
     function getBalance() public view override returns (uint256) {
-        (uint256 deposited, uint256 interest) = _acmeLending.getBalance(
-            msg.sender
+        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
+            .getIdentity(msg.sender);
+
+        if (address(identity) == address(0x0)) {
+            return 0;
+        }
+
+        bytes memory data = identity.read(
+            abi.encodeWithSignature("getBalance()")
         );
+
+        (uint256 deposited, uint256 interest) = abi.decode(
+            data,
+            (uint256, uint256)
+        );
+
         return deposited + interest;
     }
 }

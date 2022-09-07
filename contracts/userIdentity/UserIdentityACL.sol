@@ -14,7 +14,10 @@ contract UserIdentityACL is Ownable, IUserIdentityACL {
         internal _allowedContractCalls;
 
     modifier canRetrieveIdentity(address user) {
-        if (_allowedContractCalls[user][msg.sender].lending == address(0x0)) {
+        if (
+            user != msg.sender &&
+            _allowedContractCalls[user][msg.sender].lending == address(0x0)
+        ) {
             revert CallerNotAllowed(msg.sender);
         }
         _;
@@ -28,12 +31,12 @@ contract UserIdentityACL is Ownable, IUserIdentityACL {
         return _allowedContractCalls[user][msg.sender].lending != address(0x0);
     }
 
-    function getAllowedContracts(address provider)
+    function getAllowedContracts(address user, address provider)
         public
         view
         returns (AllowedContracts memory)
     {
-        return _allowedContractCalls[msg.sender][provider];
+        return _allowedContractCalls[user][provider];
     }
 
     function allowLendingProvider(

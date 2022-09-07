@@ -20,19 +20,6 @@ describe('User Identity', () => {
     return { identityFactory, signers };
   };
 
-  it('should allow owner to add address as valid identity caller', async () => {
-    const { identityFactory, signers } = await loadFixture(initialFixture);
-    const [owner, provider, account1, fake_contract] = signers;
-
-    expect(
-      identityFactory.allowLendingProvider(
-        account1.address,
-        provider.address,
-        fake_contract.address
-      )
-    ).to.be.fulfilled;
-  });
-
   describe('Callers and callees', async () => {
     let identityFactory: IUserIdentityFactory,
       signers: SignerWithAddress[],

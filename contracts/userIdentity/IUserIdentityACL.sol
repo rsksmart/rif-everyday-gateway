@@ -17,7 +17,7 @@ interface IUserIdentityACL {
         view
         returns (bool);
 
-    function getAllowedContracts(address provider)
+    function getAllowedContracts(address user, address provider)
         external
         view
         returns (AllowedContracts memory);
