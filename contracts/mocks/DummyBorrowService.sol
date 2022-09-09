@@ -30,7 +30,7 @@ contract DummyBorrowService is BorrowService {
         _acme.deposit{value: msg.value}(msg.sender);
         _acme.loan(currency, amount, msg.sender);
 
-        removeLiquidity(amount, currency, index);
+        _removeLiquidityInternal(amount, currency, index);
 
         emit Borrow(index, msg.sender, currency, amount, duration);
     }
