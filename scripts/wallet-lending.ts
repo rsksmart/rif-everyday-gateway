@@ -1,5 +1,5 @@
-import { ACMELending, DummyLendingService } from 'typechain-types';
-import moment, { duration } from 'moment';
+import { ACME, DummyLendingService } from 'typechain-types';
+import { duration } from 'moment';
 import { PaybackOption } from 'test/constants/service';
 import { ethers, network } from 'hardhat';
 import chalk from 'chalk';
@@ -11,7 +11,7 @@ async function deployDummyLendingServiceFixture() {
   const {
     contract: acmeLending,
     signers: [owner],
-  } = await deployContract<ACMELending>('ACMELending', {});
+  } = await deployContract<ACME>('ACME', {});
 
   // Add initial liquidity of 100 RBTC
   await owner.sendTransaction({
