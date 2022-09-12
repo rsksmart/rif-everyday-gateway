@@ -13,11 +13,7 @@ contract DummyLendingService is LendingService {
         _acme = acme;
     }
 
-    function lend(uint256 duration, PayBackOption payBackOption)
-        public
-        payable
-        override
-    {
+    function lend() public payable override {
         if (msg.value == 0) {
             revert InvalidAmount(msg.value);
         }

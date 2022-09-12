@@ -1,4 +1,4 @@
-import { ACME, DummyLendingService } from 'typechain-types';
+import { ACME, DummierLendingService } from 'typechain-types';
 import { duration } from 'moment';
 import { PaybackOption } from 'test/constants/service';
 import { ethers, network } from 'hardhat';
@@ -20,7 +20,7 @@ async function deployDummyLendingServiceFixture() {
   });
 
   const { contract: dummyLendingService } =
-    await deployContract<DummyLendingService>('DummyLendingService', {
+    await deployContract<DummierLendingService>('DummyLendingService', {
       acmeLending: acmeLending.address,
     });
 
