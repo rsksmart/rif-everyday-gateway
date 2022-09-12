@@ -37,10 +37,7 @@ abstract contract LendingService is Service {
         serviceType = ServiceType.Lending;
     }
 
-    function lend(uint256 duration, PayBackOption payBackOption)
-        public
-        payable
-        virtual;
+    function lend() public payable virtual;
 
     function withdraw() public virtual;
 

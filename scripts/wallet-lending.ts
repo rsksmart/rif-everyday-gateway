@@ -1,5 +1,5 @@
-import { ACMELending, DummyLendingService } from 'typechain-types';
-import moment, { duration } from 'moment';
+import { ACME, IdentityLendingService } from 'typechain-types';
+import { duration } from 'moment';
 import { PaybackOption } from 'test/constants/service';
 import { ethers, network } from 'hardhat';
 import chalk from 'chalk';
@@ -11,7 +11,7 @@ async function deployDummyLendingServiceFixture() {
   const {
     contract: acmeLending,
     signers: [owner],
-  } = await deployContract<ACMELending>('ACMELending', {});
+  } = await deployContract<ACME>('ACME', {});
 
   // Add initial liquidity of 100 RBTC
   await owner.sendTransaction({
@@ -20,7 +20,7 @@ async function deployDummyLendingServiceFixture() {
   });
 
   const { contract: dummyLendingService } =
-    await deployContract<DummyLendingService>('DummyLendingService', {
+    await deployContract<IdentityLendingService>('IdentityLendingService', {
       acmeLending: acmeLending.address,
     });
 
@@ -45,13 +45,9 @@ const executeLending = async () => {
 
   console.log(chalk.yellowBright('Lending...'));
 
-  const loanTx = await lendingContractAsLender.lend(
-    duration(3, 'months').asMilliseconds(),
-    PaybackOption.Month,
-    {
-      value: oneRBTC.mul(10),
-    }
-  );
+  const loanTx = await lendingContractAsLender.lend({
+    value: oneRBTC.mul(10),
+  });
 
   await loanTx.wait();
 

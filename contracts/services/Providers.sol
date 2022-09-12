@@ -9,10 +9,11 @@ import "hardhat/console.sol";
 contract Providers is IServiceData, Ownable {
     error InvalidProviderAddress(address provider);
 
-    mapping(address => Service[]) _servicesByProvider;
-    mapping(address => Service[]) _pendingServices;
-    address[] _providers;
-    address[] _pendingProviders;
+    mapping(address => Service[]) private _servicesByProvider;
+    mapping(address => Service[]) private _pendingServices;
+    address[] private _providers;
+    address[] private _pendingProviders;
+    uint256 private _totalServices;
 
     function addService(Service service) external {
         address provider = service.owner();
@@ -20,50 +21,28 @@ contract Providers is IServiceData, Ownable {
         if (!_isOnAddressArray(_pendingProviders, provider))
             _pendingProviders.push(provider);
         _pendingServices[provider].push(service);
+        _totalServices++;
     }
 
     function validate(bool approved, Service service) external onlyOwner {
         address provider = service.owner();
         if (approved) {
             if (!_isOnAddressArray(_providers, provider))
-                _providers[_providers.length] = provider;
+                _providers.push(provider);
             _servicesByProvider[provider].push(service);
         }
         //TODO: else clean _pendingProviders & _pendingServices
     }
 
-    function getServices(ServiceType serviceType)
-        external
-        view
-        returns (Service[] memory)
-    {
-        Service[] memory servicesByType;
+    function getServices() external view returns (Service[] memory) {
+        Service[] memory servicesByType = new Service[](_totalServices);
         for (uint256 i = 0; i < _providers.length; i++) {
             Service[] memory services = _servicesByProvider[_providers[i]];
             for (uint256 j = 0; j < services.length; j++) {
-                if (services[j].serviceType() == serviceType)
-                    servicesByType[servicesByType.length] = services[j];
+                servicesByType[servicesByType.length - 1] = services[j];
             }
         }
         return servicesByType;
-    }
-
-    function getPendingServices(ServiceType serviceType)
-        external
-        view
-        returns (Service[] memory)
-    {
-        Service[] memory pendingServicesByType;
-        for (uint256 i = 0; i < _pendingProviders.length; i++) {
-            Service[] memory services = _pendingServices[_pendingProviders[i]];
-            for (uint256 j = 0; j < services.length; j++) {
-                if (services[j].serviceType() == serviceType)
-                    pendingServicesByType[
-                        pendingServicesByType.length
-                    ] = services[j];
-            }
-        }
-        return pendingServicesByType;
     }
 
     function _isOnAddressArray(address[] memory arr, address add)

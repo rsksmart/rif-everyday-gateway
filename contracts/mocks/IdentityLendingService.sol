@@ -5,7 +5,7 @@ import "contracts/services/LendingService.sol";
 import "contracts/userIdentity/UserIdentityFactory.sol";
 import "contracts/mocks/ACME.sol";
 
-contract DummierLendingService is LendingService {
+contract IdentityLendingService is LendingService {
     error InvalidAmount(uint256 amount);
 
     ACME private _acmeLending;
@@ -16,11 +16,7 @@ contract DummierLendingService is LendingService {
         _userIdentityFactory = userIdentityFactory;
     }
 
-    function lend(uint256 duration, PayBackOption payBackOption)
-        public
-        payable
-        override
-    {
+    function lend() public payable override {
         if (msg.value == 0) {
             revert InvalidAmount(msg.value);
         }

@@ -3,7 +3,7 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   ACME,
-  DummierLendingService,
+  IdentityLendingService,
   UserIdentityFactory,
 } from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
@@ -27,24 +27,24 @@ describe('Dummier Lending Service', () => {
       (await ethers.getContractFactory('ACME', {})) as Factory<ACME>
     );
 
-    const { contract: DummierLendingService } =
-      await deployContract<DummierLendingService>(
-        'DummierLendingService',
+    const { contract: IdentityLendingService } =
+      await deployContract<IdentityLendingService>(
+        'IdentityLendingService',
         {
           acmeLending: acmeLendingService.address,
           userIdentityFactory: identityFactory.address,
         },
         (await ethers.getContractFactory(
-          'DummierLendingService',
+          'IdentityLendingService',
           {}
-        )) as Factory<DummierLendingService>
+        )) as Factory<IdentityLendingService>
       );
 
     const [owner, account1, account2, account3, ...accounts] = signers;
 
     await (
       await identityFactory.connect(account1).authorize(
-        DummierLendingService.address, // user
+        IdentityLendingService.address, // user
         true
       )
     ).wait();
@@ -57,7 +57,7 @@ describe('Dummier Lending Service', () => {
 
     return {
       identityFactory,
-      DummierLendingService,
+      IdentityLendingService,
       owner,
       account1,
       account2,
@@ -68,32 +68,31 @@ describe('Dummier Lending Service', () => {
 
   describe('Lending and withdrawing', async () => {
     it('should allow account1 to lend', async () => {
-      const { DummierLendingService, account1 } = await loadFixture(
+      const { IdentityLendingService, account1 } = await loadFixture(
         initialFixture
       );
 
       const RBTC_TO_LEND = ethers.utils.parseEther('5');
 
       // Lend using account1
-      const DLSAsAccount1 = DummierLendingService.connect(account1);
-      await expect(DLSAsAccount1.lend(100, 0, { value: RBTC_TO_LEND })).to
-        .eventually.be.fulfilled;
+      const DLSAsAccount1 = IdentityLendingService.connect(account1);
+      await expect(DLSAsAccount1.lend({ value: RBTC_TO_LEND })).to.eventually.be
+        .fulfilled;
 
       // Check balance for account1
       expect(await DLSAsAccount1.getBalance()).to.be.equals(RBTC_TO_LEND);
     });
 
     it('should allow account1 to withdraw after lending', async () => {
-      const { DummierLendingService, account1 } = await loadFixture(
+      const { IdentityLendingService, account1 } = await loadFixture(
         initialFixture
       );
 
       const RBTC_TO_LEND = ethers.utils.parseEther('5');
 
       // Lend using account1
-      const DLSAsAccount1 = DummierLendingService.connect(account1);
-      expect(DLSAsAccount1.lend(100, 0, { value: RBTC_TO_LEND })).to.be
-        .fulfilled;
+      const DLSAsAccount1 = IdentityLendingService.connect(account1);
+      expect(DLSAsAccount1.lend({ value: RBTC_TO_LEND })).to.be.fulfilled;
 
       // Check balance for account1
       expect(await DLSAsAccount1.getBalance()).to.be.equals(RBTC_TO_LEND);
