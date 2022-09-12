@@ -3,18 +3,15 @@ pragma solidity ^0.8.16;
 
 import "contracts/services/LendingService.sol";
 import "contracts/userIdentity/UserIdentityFactory.sol";
-import "contracts/mocks/ACMELending.sol";
+import "contracts/mocks/ACME.sol";
 
 contract DummierLendingService is LendingService {
     error InvalidAmount(uint256 amount);
 
-    ACMELending private _acmeLending;
+    ACME private _acmeLending;
     UserIdentityFactory private _userIdentityFactory;
 
-    constructor(
-        ACMELending acmeLending,
-        UserIdentityFactory userIdentityFactory
-    ) {
+    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory) {
         _acmeLending = acmeLending;
         _userIdentityFactory = userIdentityFactory;
     }

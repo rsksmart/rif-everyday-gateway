@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "contracts/userIdentity/IUserIdentityACL.sol";
+import "hardhat/console.sol";
 
 contract UserIdentity {
     error CallerNotAllowed(address _caller);
@@ -15,6 +16,7 @@ contract UserIdentity {
 
     receive() external payable {
         emit ReceivedLiquidity(msg.sender, msg.value);
+        console.log("received li");
     }
 
     constructor(address user, address acl) {

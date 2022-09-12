@@ -2,7 +2,7 @@ import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
-  ACMELending,
+  ACME,
   DummierLendingService,
   UserIdentityFactory,
 } from 'typechain-types';
@@ -21,13 +21,10 @@ describe('Dummier Lending Service', () => {
         )) as Factory<UserIdentityFactory>
       );
 
-    const { contract: acmeLendingService } = await deployContract<ACMELending>(
-      'ACMELending',
+    const { contract: acmeLendingService } = await deployContract<ACME>(
+      'ACME',
       {},
-      (await ethers.getContractFactory(
-        'ACMELending',
-        {}
-      )) as Factory<ACMELending>
+      (await ethers.getContractFactory('ACME', {})) as Factory<ACME>
     );
 
     const { contract: DummierLendingService } =
