@@ -5,7 +5,8 @@ import "contracts/userIdentity/IUserIdentityACL.sol";
 
 contract UserIdentity {
     error CallerNotAllowed(address _caller);
-    error UnexpectedError();
+    error FundsNotReceived(address _caller, address _contract);
+    error UnexpectedError(bytes data);
 
     event ReceivedLiquidity(address _from, uint256 _amount);
 
@@ -39,7 +40,7 @@ contract UserIdentity {
         }(functionToCall);
 
         if (!success) {
-            revert UnexpectedError();
+            revert UnexpectedError(data);
         }
 
         return success;
@@ -53,11 +54,20 @@ contract UserIdentity {
         (bool success, bytes memory data) = contractToCall.call(functionToCall);
 
         if (!success) {
-            revert UnexpectedError();
+            revert UnexpectedError(data);
         }
 
+        // TODO: Move to receive() function or find a way to avoid holding to funds if the transfer fails
         if (address(this).balance > 0) {
-            payable(_owner).transfer(address(this).balance);
+            (bool transferSuccess, bytes memory transferData) = _owner.call{
+                value: address(this).balance
+            }("");
+
+            if (!transferSuccess) {
+                revert UnexpectedError(transferData);
+            }
+        } else {
+            revert FundsNotReceived(msg.sender, contractToCall);
         }
 
         return success;
