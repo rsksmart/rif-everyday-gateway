@@ -1,4 +1,4 @@
-import { ACME, DummierLendingService } from 'typechain-types';
+import { ACME, IdentityLendingService } from 'typechain-types';
 import { duration } from 'moment';
 import { PaybackOption } from 'test/constants/service';
 import { ethers, network } from 'hardhat';
@@ -20,7 +20,7 @@ async function deployDummyLendingServiceFixture() {
   });
 
   const { contract: dummyLendingService } =
-    await deployContract<DummierLendingService>('DummyLendingService', {
+    await deployContract<IdentityLendingService>('IdentityLendingService', {
       acmeLending: acmeLending.address,
     });
 
@@ -45,13 +45,9 @@ const executeLending = async () => {
 
   console.log(chalk.yellowBright('Lending...'));
 
-  const loanTx = await lendingContractAsLender.lend(
-    duration(3, 'months').asMilliseconds(),
-    PaybackOption.Month,
-    {
-      value: oneRBTC.mul(10),
-    }
-  );
+  const loanTx = await lendingContractAsLender.lend({
+    value: oneRBTC.mul(10),
+  });
 
   await loanTx.wait();
 

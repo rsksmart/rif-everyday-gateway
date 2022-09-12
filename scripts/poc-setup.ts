@@ -1,16 +1,19 @@
 import { ethers } from 'hardhat';
-import { ACME, DummierLendingService } from 'typechain-types';
+import {
+  ACME,
+  IdentityLendingService,
+  Providers,
+  UserIdentityFactory,
+} from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
 import { PaybackOption } from 'test/constants/service';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
 
-type DeployResult = {
-  acmeLending: ACME;
-  lendingService: DummierLendingService;
-};
+async function deployDummyLendingService() {
+  const { contract: identityFactory } =
+    await deployContract<UserIdentityFactory>('UserIdentityFactory', {});
 
-async function deployDummyLendingService(): Promise<DeployResult> {
   const {
     contract: acmeLending,
     signers: [owner],
@@ -23,23 +26,50 @@ async function deployDummyLendingService(): Promise<DeployResult> {
   });
 
   const { contract: dummyLendingService } =
-    await deployContract<DummierLendingService>('DummierLendingService', {
+    await deployContract<IdentityLendingService>('IdentityLendingService', {
       acmeLending: acmeLending.address,
+      identityFactory: identityFactory.address,
     });
 
-  return { acmeLending, lendingService: dummyLendingService };
+  return { acmeLending, lendingService: dummyLendingService, identityFactory };
+}
+
+async function deployProvidersContract() {
+  const { contract: providersContract } = await deployContract<Providers>(
+    'Providers',
+    {}
+  );
+
+  return providersContract;
 }
 
 async function setupLending() {
   //deploy providers contracts
+
   // add providers
   // deploy service provider contracts
-  const { acmeLending, lendingService } = await deployDummyLendingService();
+  const { acmeLending, lendingService, identityFactory } =
+    await deployDummyLendingService();
+
+  const providersContract = await deployProvidersContract();
+
+  const addServiceTx = await providersContract.addService(
+    lendingService.address
+  );
+  await addServiceTx.wait();
+
+  const validateTx = await providersContract.validate(
+    true,
+    lendingService.address
+  );
+  await validateTx.wait();
+
   const contractsJSON = {
     acmeLending: acmeLending.address,
     lendingService: lendingService.address,
+    providersContract: providersContract.address,
+    identityFactory: identityFactory.address,
   };
-
   await writeFileSync('contracts.json', JSON.stringify(contractsJSON, null, 2));
 
   lendingService.addListing(1, 1, NATIVE_CURRENCY, PaybackOption.Day, 1);

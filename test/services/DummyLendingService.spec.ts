@@ -44,9 +44,9 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    await expect(
-      dummyLendingService.lend(duration, payBackOption)
-    ).to.be.revertedWith('InvalidAmount(0)');
+    await expect(dummyLendingService.lend()).to.be.revertedWith(
+      'InvalidAmount(0)'
+    );
   });
 
   it('should not revert when lend is called with a proper amount', async () => {
@@ -58,9 +58,8 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    await expect(
-      dummyLendingService.lend(duration, payBackOption, { value: amount })
-    ).to.not.be.reverted;
+    await expect(dummyLendingService.lend({ value: amount })).to.not.be
+      .reverted;
   });
 
   it('should emit "Lend" event when lend is called with a proper amount', async () => {
@@ -73,9 +72,7 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    await expect(
-      dummyLendingService.lend(duration, payBackOption, { value: amount })
-    )
+    await expect(dummyLendingService.lend({ value: amount }))
       .to.emit(dummyLendingService, 'Lend')
       .withArgs(owner.address, currency, amount);
   });
@@ -91,9 +88,8 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    await expect(
-      dummyLendingService.lend(duration, payBackOption, { value: RBTC_DEPOSIT })
-    ).to.be.fulfilled;
+    await expect(dummyLendingService.lend({ value: RBTC_DEPOSIT })).to.be
+      .fulfilled;
 
     // Fast forward 100 blocks
     await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);
@@ -127,9 +123,8 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    await expect(
-      dummyLendingService.lend(duration, payBackOption, { value: RBTC_DEPOSIT })
-    ).to.be.fulfilled;
+    await expect(dummyLendingService.lend({ value: RBTC_DEPOSIT })).to.be
+      .fulfilled;
 
     // Fast forward 100 blocks
     await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);

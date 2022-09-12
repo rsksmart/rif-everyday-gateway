@@ -5,7 +5,7 @@ import "contracts/services/LendingService.sol";
 import "contracts/userIdentity/UserIdentityFactory.sol";
 import "contracts/mocks/ACME.sol";
 
-contract DummierLendingService is LendingService {
+contract IdentityLendingService is LendingService {
     error InvalidAmount(uint256 amount);
 
     ACME private _acmeLending;
