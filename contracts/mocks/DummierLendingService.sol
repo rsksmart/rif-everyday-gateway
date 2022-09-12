@@ -32,20 +32,33 @@ contract DummierLendingService is LendingService {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
-        identity.send{value: msg.value}(abi.encodeWithSignature("deposit()"));
+        identity.send{value: msg.value}(
+            address(_acmeLending),
+            abi.encodeWithSignature("deposit()")
+        );
 
         emit Lend(msg.sender, address(0), msg.value);
     }
 
     function withdraw() public override {
-        (uint256 deposited, uint256 interest) = _acmeLending.getBalance(
-            msg.sender
-        );
         UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
-        identity.retrieve(abi.encodeWithSignature("withdraw()"));
+        bytes memory data = identity.read(
+            address(_acmeLending),
+            abi.encodeWithSignature("getBalance()")
+        );
+
+        (uint256 deposited, uint256 interest) = abi.decode(
+            data,
+            (uint256, uint256)
+        );
+
+        identity.retrieve(
+            address(_acmeLending),
+            abi.encodeWithSignature("withdraw(uint256)", deposited)
+        );
 
         emit Withdraw(msg.sender, address(0), deposited + interest);
     }
@@ -59,6 +72,7 @@ contract DummierLendingService is LendingService {
         }
 
         bytes memory data = identity.read(
+            address(_acmeLending),
             abi.encodeWithSignature("getBalance()")
         );
 

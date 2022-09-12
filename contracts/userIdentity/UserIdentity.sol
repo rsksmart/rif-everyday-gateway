@@ -7,8 +7,14 @@ contract UserIdentity {
     error CallerNotAllowed(address _caller);
     error UnexpectedError();
 
+    event ReceivedLiquidity(address _from, uint256 _amount);
+
     address private _owner;
     address private _acl;
+
+    receive() external payable {
+        emit ReceivedLiquidity(msg.sender, msg.value);
+    }
 
     constructor(address user, address acl) {
         _owner = user;
@@ -22,19 +28,15 @@ contract UserIdentity {
         _;
     }
 
-    function send(bytes calldata functionToCall)
+    function send(address contractToCall, bytes calldata functionToCall)
         public
         payable
         isAllowedToExecuteCall
         returns (bool)
     {
-        address allowedLendingContract = IUserIdentityACL(_acl)
-            .getAllowedContracts(_owner, msg.sender)
-            .lending;
-
-        (bool success, ) = allowedLendingContract.call{value: msg.value}(
-            functionToCall
-        );
+        (bool success, bytes memory data) = contractToCall.call{
+            value: msg.value
+        }(functionToCall);
 
         if (!success) {
             revert UnexpectedError();
@@ -43,16 +45,12 @@ contract UserIdentity {
         return success;
     }
 
-    function retrieve(bytes calldata functionToCall)
+    function retrieve(address contractToCall, bytes calldata functionToCall)
         public
         isAllowedToExecuteCall
         returns (bool)
     {
-        address allowedLendingContract = IUserIdentityACL(_acl)
-            .getAllowedContracts(_owner, msg.sender)
-            .lending;
-
-        (bool success, ) = allowedLendingContract.call(functionToCall);
+        (bool success, bytes memory data) = contractToCall.call(functionToCall);
 
         if (!success) {
             revert UnexpectedError();
@@ -65,19 +63,13 @@ contract UserIdentity {
         return success;
     }
 
-    function read(bytes calldata functionToCall)
+    function read(address contractToCall, bytes calldata functionToCall)
         public
         view
         isAllowedToExecuteCall
         returns (bytes memory)
     {
-        address allowedLendingContract = IUserIdentityACL(_acl)
-            .getAllowedContracts(_owner, msg.sender)
-            .lending;
-
-        (, bytes memory data) = allowedLendingContract.staticcall(
-            functionToCall
-        );
+        (, bytes memory data) = contractToCall.staticcall(functionToCall);
 
         return data;
     }

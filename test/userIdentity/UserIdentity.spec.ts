@@ -35,15 +35,14 @@ describe('User Identity', () => {
       account1 = signers[2];
 
       expect(
-        identityFactory.allowLendingProvider(
-          owner.address, // user
+        identityFactory.authorize(
           provider.address, // caller
-          account1.address // callee
+          true
         )
       ).to.be.fulfilled;
     });
 
-    it('should allow caller create new user identity for owner', async () => {
+    it('should authorize caller to create new user identity for owner', async () => {
       const identityFactoryAsProvider = identityFactory.connect(provider);
       expect(
         await identityFactoryAsProvider.getIdentity(owner.address)
@@ -53,6 +52,12 @@ describe('User Identity', () => {
       expect(
         await identityFactoryAsProvider.getIdentity(owner.address)
       ).to.not.be.equal(ethers.constants.AddressZero);
+    });
+
+    it('should revert for unauthorized caller to retrieve user identity for owner', async () => {
+      const identityFactoryAsProvider = identityFactory.connect(account1);
+      await expect(identityFactoryAsProvider.getIdentity(owner.address)).to.be
+        .reverted;
     });
   });
 });
