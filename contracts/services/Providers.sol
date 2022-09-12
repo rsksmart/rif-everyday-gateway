@@ -9,11 +9,11 @@ import "hardhat/console.sol";
 contract Providers is IServiceData, Ownable {
     error InvalidProviderAddress(address provider);
 
-    mapping(address => Service[]) _servicesByProvider;
-    mapping(address => Service[]) _pendingServices;
-    address[] _providers;
-    address[] _pendingProviders;
-    uint256 _totalServices;
+    mapping(address => Service[]) private _servicesByProvider;
+    mapping(address => Service[]) private _pendingServices;
+    address[] private _providers;
+    address[] private _pendingProviders;
+    uint256 private _totalServices;
 
     function addService(Service service) external {
         address provider = service.owner();
