@@ -13,7 +13,7 @@ contract IdentityLendingService is LendingService {
     ACME private _acmeLending;
     UserIdentityFactory private _userIdentityFactory;
     IFeeManager private _feeManager;
-    
+
     uint256 private _fee = 0.1 ether;
     address private _feeBeneficiary;
 
@@ -21,7 +21,12 @@ contract IdentityLendingService is LendingService {
         emit ReceivedFeeSupport(msg.value);
     }
 
-    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory, IFeeManager feeManager, address feeBeneficiary) {
+    constructor(
+        ACME acmeLending,
+        UserIdentityFactory userIdentityFactory,
+        IFeeManager feeManager,
+        address feeBeneficiary
+    ) {
         _acmeLending = acmeLending;
         _userIdentityFactory = userIdentityFactory;
         _feeManager = feeManager;
