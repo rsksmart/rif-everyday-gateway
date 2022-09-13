@@ -29,6 +29,9 @@ export default <HardhatUserConfig>{
     regtest: {
       url: 'http://localhost:4444',
     },
+    hhcn: {
+      url: 'http://localhost:8545',
+    },
   },
   typechain: {
     target: 'ethers-v5',

@@ -4,6 +4,7 @@ import {
   IdentityLendingService,
   Providers,
   UserIdentityFactory,
+  FeeManager,
 } from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
@@ -11,6 +12,12 @@ import { PaybackOption } from 'test/constants/service';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
 
 async function deployDummyLendingService() {
+  const feeBeneficiary = (await ethers.getSigners())[10];
+  const { contract: feeManager } = await deployContract<FeeManager>(
+    'FeeManager',
+    {}
+  );
+
   const { contract: identityFactory } =
     await deployContract<UserIdentityFactory>('UserIdentityFactory', {});
 
@@ -29,9 +36,22 @@ async function deployDummyLendingService() {
     await deployContract<IdentityLendingService>('IdentityLendingService', {
       acmeLending: acmeLending.address,
       identityFactory: identityFactory.address,
+      feeManager: feeManager.address,
+      feeBeneficiary: feeBeneficiary.address,
     });
 
-  return { acmeLending, lendingService: dummyLendingService, identityFactory };
+  // Add initial fee support of 50 RBTC
+  await owner.sendTransaction({
+    to: dummyLendingService.address,
+    value: ethers.utils.parseEther('50'),
+  });
+
+  return {
+    feeManager,
+    acmeLending,
+    lendingService: dummyLendingService,
+    identityFactory,
+  };
 }
 
 async function deployProvidersContract() {
@@ -48,7 +68,7 @@ async function setupLending() {
 
   // add providers
   // deploy service provider contracts
-  const { acmeLending, lendingService, identityFactory } =
+  const { feeManager, acmeLending, lendingService, identityFactory } =
     await deployDummyLendingService();
 
   const providersContract = await deployProvidersContract();
@@ -65,11 +85,13 @@ async function setupLending() {
   await validateTx.wait();
 
   const contractsJSON = {
+    feeMananger: feeManager.address,
     acmeLending: acmeLending.address,
     lendingService: lendingService.address,
     providersContract: providersContract.address,
     identityFactory: identityFactory.address,
   };
+
   await writeFileSync('contracts.json', JSON.stringify(contractsJSON, null, 2));
 
   await (

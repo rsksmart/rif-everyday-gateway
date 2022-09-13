@@ -41,7 +41,7 @@ abstract contract LendingService is Service {
 
     function withdraw() public virtual;
 
-    function getBalance() public virtual returns (uint256);
+    function getBalance() public view virtual returns (uint256);
 
     function addListing(
         uint256 minDuration,

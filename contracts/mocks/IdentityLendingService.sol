@@ -1,19 +1,31 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.16;
 
+import "contracts/feeManager/IFeeManager.sol";
 import "contracts/services/LendingService.sol";
 import "contracts/userIdentity/UserIdentityFactory.sol";
 import "contracts/mocks/ACME.sol";
 
 contract IdentityLendingService is LendingService {
     error InvalidAmount(uint256 amount);
+    event ReceivedFeeSupport(uint256 amount);
 
     ACME private _acmeLending;
     UserIdentityFactory private _userIdentityFactory;
+    IFeeManager private _feeManager;
+    
+    uint256 private _fee = 0.1 ether;
+    address private _feeBeneficiary;
 
-    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory) {
+    receive() external payable {
+        emit ReceivedFeeSupport(msg.value);
+    }
+
+    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory, IFeeManager feeManager, address feeBeneficiary) {
         _acmeLending = acmeLending;
         _userIdentityFactory = userIdentityFactory;
+        _feeManager = feeManager;
+        _feeBeneficiary = feeBeneficiary;
     }
 
     function lend() public payable override {
@@ -29,6 +41,9 @@ contract IdentityLendingService is LendingService {
             address(_acmeLending),
             abi.encodeWithSignature("deposit()")
         );
+
+        // Distribute fees
+        _feeManager.fundBeneficiary{value: _fee}(_feeBeneficiary);
 
         emit Lend(msg.sender, address(0), msg.value);
     }
