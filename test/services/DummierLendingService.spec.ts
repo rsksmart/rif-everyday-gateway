@@ -3,6 +3,7 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   ACME,
+  FeeManager,
   IdentityLendingService,
   UserIdentityFactory,
 } from 'typechain-types';
@@ -11,6 +12,12 @@ import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('Dummier Lending Service', () => {
   const initialFixture = async () => {
+    const { contract: feeManager } = await deployContract<FeeManager>(
+      'FeeManager',
+      {},
+      (await ethers.getContractFactory('FeeManager', {})) as Factory<FeeManager>
+    );
+
     const { contract: identityFactory, signers } =
       await deployContract<UserIdentityFactory>(
         'UserIdentityFactory',
@@ -33,6 +40,8 @@ describe('Dummier Lending Service', () => {
         {
           acmeLending: acmeLendingService.address,
           userIdentityFactory: identityFactory.address,
+          feeManager: feeManager.address,
+          feeBeneficiary: ethers.constants.AddressZero,
         },
         (await ethers.getContractFactory(
           'IdentityLendingService',
@@ -53,6 +62,12 @@ describe('Dummier Lending Service', () => {
     await owner.sendTransaction({
       to: acmeLendingService.address,
       value: ethers.utils.parseEther('100'),
+    });
+
+    // Add initial fee support
+    await owner.sendTransaction({
+      to: IdentityLendingService.address,
+      value: ethers.utils.parseEther('50'),
     });
 
     return {
