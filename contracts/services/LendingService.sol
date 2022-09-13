@@ -60,6 +60,8 @@ abstract contract LendingService is Service {
             rewardRate
         );
 
+        _listingCounter++;
+
         emit ListingCreated(currency, listingId);
 
         return listingId;
@@ -70,6 +72,7 @@ abstract contract LendingService is Service {
         onlyOwner
     {
         delete listings[currency][listingId];
+        _listingCounter--;
     }
 
     function getListing(address currency, uint256 listingId)

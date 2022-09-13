@@ -72,28 +72,36 @@ async function setupLending() {
   };
   await writeFileSync('contracts.json', JSON.stringify(contractsJSON, null, 2));
 
-  lendingService.addListing(1, 1, NATIVE_CURRENCY, PaybackOption.Day, 1);
-  lendingService.addListing(
-    10,
-    10,
-    NATIVE_CURRENCY,
-    PaybackOption.TwoWeeks,
-    10
-  );
-  lendingService.addListing(
-    100,
-    100,
-    NATIVE_CURRENCY,
-    PaybackOption.Month,
-    100
-  );
-  lendingService.addListing(
-    1000,
-    1000,
-    NATIVE_CURRENCY,
-    PaybackOption.Week,
-    1000
-  );
+  await (
+    await lendingService.addListing(1, 1, NATIVE_CURRENCY, PaybackOption.Day, 1)
+  ).wait();
+  await (
+    await lendingService.addListing(
+      10,
+      10,
+      NATIVE_CURRENCY,
+      PaybackOption.TwoWeeks,
+      10
+    )
+  ).wait();
+  await (
+    await lendingService.addListing(
+      100,
+      100,
+      NATIVE_CURRENCY,
+      PaybackOption.Month,
+      100
+    )
+  ).wait();
+  await (
+    await lendingService.addListing(
+      1000,
+      1000,
+      NATIVE_CURRENCY,
+      PaybackOption.Week,
+      1000
+    )
+  ).wait();
 }
 
 setupLending().then(() => console.log('done 👀'));
