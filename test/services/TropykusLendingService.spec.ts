@@ -14,7 +14,7 @@ describe('Tropykus Lending Service', () => {
   let bob: SignerWithAddress;
   let tropykusLendingService: TropykusLendingService;
   let userIdentity: UserIdentityFactory;
-  const crbtc = '0x5b35072cd6110606c8421e013304110fa04a32a3';
+  const crbtc = '0xd406c55ad960b92e7f41517a84cb4b48557c3898';
 
   beforeEach(async () => {
     [owner, alice, bob] = await ethers.getSigners();
