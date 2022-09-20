@@ -29,6 +29,10 @@ export default <HardhatUserConfig>{
     regtest: {
       url: 'http://localhost:4444',
     },
+    ganache: {
+      url: 'http://127.0.0.1:8545',
+      chainId: 1337,
+    },
   },
   typechain: {
     target: 'ethers-v5',

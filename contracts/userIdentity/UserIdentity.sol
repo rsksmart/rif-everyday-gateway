@@ -81,7 +81,12 @@ contract UserIdentity {
         isAllowedToExecuteCall
         returns (bytes memory)
     {
-        (, bytes memory data) = contractToCall.staticcall(functionToCall);
+        (bool success, bytes memory data) = contractToCall.staticcall(
+            functionToCall
+        );
+        if (!success) {
+            revert UnexpectedError(data);
+        }
 
         return data;
     }
