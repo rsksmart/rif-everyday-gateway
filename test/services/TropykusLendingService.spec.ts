@@ -49,7 +49,7 @@ describe('Tropykus Lending Service', () => {
     ).wait();
   });
 
-  it('should allow to lend RBTC on tropykus', async () => {
+  it.skip('should allow to lend RBTC on tropykus', async () => {
     const balanceBefore =
       +(await ethers.provider.getBalance(alice.address)) / 1e18;
     console.log('balanceBefore', balanceBefore);
@@ -68,7 +68,7 @@ describe('Tropykus Lending Service', () => {
     expect(+tropBalance / 1e18).to.be.equals(0.5);
   });
 
-  it.only('should allow to withdraw RBTC on tropykus', async () => {
+  it.skip('should allow to withdraw RBTC on tropykus', async () => {
     await tropykusLendingService
       .connect(alice)
       .lend({ value: ethers.utils.parseEther('0.5') });
