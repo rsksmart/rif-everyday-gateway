@@ -6,7 +6,6 @@ import "../services/LendingService.sol";
 import "../userIdentity/UserIdentityFactory.sol";
 import "./ICRBTC.sol";
 import "../userIdentity/UserIdentity.sol";
-import "hardhat/console.sol";
 
 contract TropykusLendingService is LendingService {
     error InvalidAmount(uint256 amount);
@@ -37,7 +36,26 @@ contract TropykusLendingService is LendingService {
     }
 
     function withdraw() public override {
-        emit Withdraw(msg.sender, address(0), 0);
+        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
+            .getIdentity(msg.sender);
+        bytes memory balanceData = identity.read(
+            address(_crbtc),
+            abi.encodeWithSignature("balanceOf(address)", address(identity))
+        );
+        uint256 tokens = abi.decode(balanceData, (uint256));
+
+        identity.retrieve(
+            address(_crbtc),
+            abi.encodeWithSignature("redeem(uint256)", tokens)
+        );
+
+        bytes memory data = identity.read(
+            address(_crbtc),
+            abi.encodeWithSignature("exchangeRateStored()")
+        );
+        uint256 exchangeRate = abi.decode(data, (uint256));
+
+        emit Withdraw(msg.sender, address(0), (tokens * exchangeRate) / 1e18);
     }
 
     function getBalance() public view override returns (uint256) {
