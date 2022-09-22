@@ -22,15 +22,16 @@ describe('UserIdentityACL', () => {
       await expect(
         userIdentityACL
           .connect(serviceProvider)
-          .isAllowedToExecuteCallFor(user.address)
+          ['isAllowedToExecuteCallFor(address)'](user.address)
       ).to.eventually.true;
     });
 
     it('should forbid the caller for querying user identity', async () => {
       await userIdentityACL.authorize(serviceProvider.address, false);
 
-      await expect(userIdentityACL.isAllowedToExecuteCallFor(user.address)).to
-        .eventually.false;
+      await expect(
+        userIdentityACL['isAllowedToExecuteCallFor(address)'](user.address)
+      ).to.eventually.false;
     });
   });
 });

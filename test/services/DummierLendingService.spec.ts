@@ -7,7 +7,6 @@ import {
   UserIdentityFactory,
 } from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
-import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 describe('Dummier Lending Service', () => {
   const initialFixture = async () => {
@@ -27,7 +26,7 @@ describe('Dummier Lending Service', () => {
       (await ethers.getContractFactory('ACME', {})) as Factory<ACME>
     );
 
-    const { contract: IdentityLendingService } =
+    const { contract: identityLendingService } =
       await deployContract<IdentityLendingService>(
         'IdentityLendingService',
         {
@@ -44,7 +43,7 @@ describe('Dummier Lending Service', () => {
 
     await (
       await identityFactory.connect(account1).authorize(
-        IdentityLendingService.address, // user
+        identityLendingService.address, // user
         true
       )
     ).wait();
@@ -57,7 +56,7 @@ describe('Dummier Lending Service', () => {
 
     return {
       identityFactory,
-      IdentityLendingService,
+      identityLendingService,
       owner,
       account1,
       account2,
@@ -68,14 +67,13 @@ describe('Dummier Lending Service', () => {
 
   describe('Lending and withdrawing', async () => {
     it('should allow account1 to lend', async () => {
-      const { IdentityLendingService, account1 } = await loadFixture(
-        initialFixture
-      );
+      const { identityFactory, identityLendingService, account1 } =
+        await loadFixture(initialFixture);
 
       const RBTC_TO_LEND = ethers.utils.parseEther('5');
 
       // Lend using account1
-      const DLSAsAccount1 = IdentityLendingService.connect(account1);
+      const DLSAsAccount1 = identityLendingService.connect(account1);
       await expect(DLSAsAccount1.lend({ value: RBTC_TO_LEND })).to.eventually.be
         .fulfilled;
 
@@ -84,14 +82,14 @@ describe('Dummier Lending Service', () => {
     });
 
     it('should allow account1 to withdraw after lending', async () => {
-      const { IdentityLendingService, account1 } = await loadFixture(
+      const { identityLendingService, account1 } = await loadFixture(
         initialFixture
       );
 
       const RBTC_TO_LEND = ethers.utils.parseEther('5');
 
       // Lend using account1
-      const DLSAsAccount1 = IdentityLendingService.connect(account1);
+      const DLSAsAccount1 = identityLendingService.connect(account1);
       expect(DLSAsAccount1.lend({ value: RBTC_TO_LEND })).to.be.fulfilled;
 
       // Check balance for account1

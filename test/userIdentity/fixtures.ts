@@ -4,6 +4,7 @@ import {
   UserIdentity,
   IUserIdentityFactory,
   IUserIdentityACL,
+  UserIdentityFactory,
 } from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
 import ACMEScheme from 'artifacts/contracts/mocks/ACME.sol/ACME.json';
@@ -16,7 +17,7 @@ export const userIdentityFactoryFixture = async () => {
       'UserIdentityFactory',
       {},
       (await ethers.getContractFactory(
-        'IUserIdentityFactory',
+        'UserIdentityFactory',
         {}
       )) as Factory<IUserIdentityFactory>
     );

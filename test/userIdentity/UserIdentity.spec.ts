@@ -29,8 +29,10 @@ describe('UserIdentity', () => {
   describe('send', () => {
     it('should execute the given function in the target contract with the given payload', async () => {
       await mockTargetContract.mock['deposit()'].returns();
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(true);
       await expect(
         userIdentity.callStatic.send(
@@ -44,8 +46,10 @@ describe('UserIdentity', () => {
       await mockTargetContract.mock['deposit()'].revertsWithReason(
         'Something bad happened'
       );
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(true);
       await expect(
         userIdentity.callStatic.send(
@@ -57,8 +61,10 @@ describe('UserIdentity', () => {
 
     it('should revert if the caller is not allowed', async () => {
       await mockTargetContract.mock['deposit()'].returns();
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(false);
       await expect(
         userIdentity.send(
@@ -73,8 +79,10 @@ describe('UserIdentity', () => {
   describe.skip('retrieve', () => {
     it('should execute the given function in the target contract with the given payload', async () => {
       await mockTargetContract.mock['withdraw()'].returns();
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(true);
       await expect(
         userIdentity.retrieve(
@@ -88,8 +96,10 @@ describe('UserIdentity', () => {
       await mockTargetContract.mock['withdraw()'].revertsWithReason(
         'Something bad happened'
       );
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(true);
       await expect(
         userIdentity.callStatic.retrieve(
@@ -100,8 +110,10 @@ describe('UserIdentity', () => {
     });
 
     it('should revert if the caller is not allowed', async () => {
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(false);
       await expect(
         userIdentity.send(
@@ -119,8 +131,10 @@ describe('UserIdentity', () => {
 
     it('should execute the given function in the target contract with the given payload', async () => {
       await mockTargetContract.mock['getBalance()'].returns(100, 5);
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(true);
       const data = await userIdentity.read(
         mockTargetContract.address,
@@ -134,8 +148,10 @@ describe('UserIdentity', () => {
     });
 
     it('should revert if the caller is not allowed', async () => {
-      await userIdentityACLMock.mock.isAllowedToExecuteCallFor
-        .withArgs(user.address)
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
         .returns(false);
       await expect(
         userIdentity.send(

@@ -15,7 +15,6 @@ contract UserIdentity {
 
     receive() external payable {
         emit LiquidityReceived(msg.sender, msg.value);
-        console.log("received li");
 
         // TODO: validate that only authorized contracts
         // can send money to this contract
@@ -27,7 +26,12 @@ contract UserIdentity {
     }
 
     modifier isAllowedToExecuteCall() {
-        if (!IUserIdentityACL(_acl).isAllowedToExecuteCallFor(_owner)) {
+        if (
+            !IUserIdentityACL(_acl).isAllowedToExecuteCallFor(
+                _owner,
+                msg.sender
+            )
+        ) {
             revert CallerNotAllowed(msg.sender);
         }
         _;
@@ -42,8 +46,6 @@ contract UserIdentity {
         (bool success, bytes memory data) = targetContract.call{
             value: msg.value
         }(functionToCall);
-
-        console.log(success);
 
         if (!success) {
             revert UnexpectedError(data);
@@ -88,12 +90,14 @@ contract UserIdentity {
         isAllowedToExecuteCall
         returns (bytes memory)
     {
-        (bool success, bytes memory data) = targetContract.staticcall(functionToCall);
+        (bool success, bytes memory data) = targetContract.staticcall(
+            functionToCall
+        );
 
         if (!success) {
             revert UnexpectedError(data);
         }
-        
+
         return data;
     }
 }
