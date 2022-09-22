@@ -4,14 +4,6 @@ pragma solidity ^0.8.16;
 import "contracts/services/Service.sol";
 
 abstract contract LendingService is Service {
-    event Lend(address indexed lender, address currency, uint256 amount);
-    event Withdraw(
-        address indexed withdrawer,
-        address currency,
-        uint256 amount
-    );
-    event ListingCreated(address indexed currency, uint256 indexed listingId);
-
     enum PayBackOption {
         day,
         week,
@@ -32,6 +24,16 @@ abstract contract LendingService is Service {
         public listings;
 
     uint256 private _listingCounter;
+
+    error InvalidAmount(uint256 amount);
+
+    event Lend(address indexed lender, address currency, uint256 amount);
+    event Withdraw(
+        address indexed withdrawer,
+        address currency,
+        uint256 amount
+    );
+    event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     constructor() {
         serviceType = ServiceType.Lending;

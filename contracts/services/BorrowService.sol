@@ -19,6 +19,8 @@ abstract contract BorrowService is Service {
         address currency;
     }
 
+    error InvalidAmount(uint256 amount);
+
     event Borrow(
         uint256 indexed index,
         address indexed borrower,

@@ -3,13 +3,12 @@ pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Service.sol";
-import "./IServiceData.sol";
 
-contract Providers is IServiceData, Ownable {
+contract Providers is Ownable {
     error InvalidProviderAddress(address provider);
 
     mapping(address => Service[]) private _servicesByProvider;
-    mapping(address => Service[]) private _pendingServices;
+    mapping(address => Service[]) private _pendingServicesByProvider;
     address[] private _providers;
     address[] private _pendingProviders;
     uint256 private _totalServices;
@@ -19,7 +18,7 @@ contract Providers is IServiceData, Ownable {
         if (provider == address(0)) revert InvalidProviderAddress(provider);
         if (!_isOnAddressArray(_pendingProviders, provider))
             _pendingProviders.push(provider);
-        _pendingServices[provider].push(service);
+        _pendingServicesByProvider[provider].push(service);
         _totalServices++;
     }
 
@@ -34,14 +33,16 @@ contract Providers is IServiceData, Ownable {
     }
 
     function getServices() external view returns (Service[] memory) {
-        Service[] memory servicesByType = new Service[](_totalServices);
+        Service[] memory allServices = new Service[](_totalServices);
         for (uint256 i = 0; i < _providers.length; i++) {
-            Service[] memory services = _servicesByProvider[_providers[i]];
-            for (uint256 j = 0; j < services.length; j++) {
-                servicesByType[servicesByType.length - 1] = services[j];
+            Service[] memory servicesByProvider = _servicesByProvider[
+                _providers[i]
+            ];
+            for (uint256 j = 0; j < servicesByProvider.length; j++) {
+                allServices[allServices.length - 1] = servicesByProvider[j];
             }
         }
-        return servicesByType;
+        return allServices;
     }
 
     function _isOnAddressArray(address[] memory arr, address add)

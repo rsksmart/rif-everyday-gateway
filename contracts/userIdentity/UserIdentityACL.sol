@@ -27,6 +27,8 @@ contract UserIdentityACL is IUserIdentityACL {
         return _allowedContractCalls[user][msg.sender];
     }
 
+    // TODO: split this function in two, authoriz and deny
+    // to improve readability
     function authorize(address serviceProvider, bool approval) public override {
         _allowedContractCalls[msg.sender][serviceProvider] = approval;
     }

@@ -5,8 +5,6 @@ import "contracts/services/LendingService.sol";
 import "contracts/mocks/ACME.sol";
 
 contract DummyLendingService is LendingService {
-    error InvalidAmount(uint256 amount);
-
     ACME private _acme;
 
     constructor(ACME acme) {
