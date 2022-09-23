@@ -8,4 +8,9 @@ interface IUserIdentityACL {
         external
         view
         returns (bool);
+
+    function isAllowedToExecuteCallFor(address user, address caller)
+        external
+        view
+        returns (bool);
 }

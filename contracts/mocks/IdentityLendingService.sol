@@ -6,8 +6,6 @@ import "contracts/userIdentity/UserIdentityFactory.sol";
 import "contracts/mocks/ACME.sol";
 
 contract IdentityLendingService is LendingService {
-    error InvalidAmount(uint256 amount);
-
     ACME private _acmeLending;
     UserIdentityFactory private _userIdentityFactory;
 

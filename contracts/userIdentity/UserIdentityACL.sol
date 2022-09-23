@@ -7,7 +7,7 @@ import "contracts/userIdentity/IUserIdentityACL.sol";
   @title User Identity Access Control List
  */
 contract UserIdentityACL is IUserIdentityACL {
-    error CallerNotAllowed(address _caller);
+    error CallerNotAllowed(address caller);
 
     mapping(address => mapping(address => bool)) internal _allowedContractCalls;
 
@@ -24,9 +24,28 @@ contract UserIdentityACL is IUserIdentityACL {
         override
         returns (bool)
     {
-        return _allowedContractCalls[user][msg.sender];
+        return _isApprovedCaller(user, msg.sender);
     }
 
+    function isAllowedToExecuteCallFor(address user, address caller)
+        public
+        view
+        override
+        returns (bool)
+    {
+        return _isApprovedCaller(user, caller);
+    }
+
+    function _isApprovedCaller(address user, address caller)
+        private
+        view
+        returns (bool)
+    {
+        return _allowedContractCalls[user][caller];
+    }
+
+    // TODO: split this function in two, authoriz and deny
+    // to improve readability
     function authorize(address serviceProvider, bool approval) public override {
         _allowedContractCalls[msg.sender][serviceProvider] = approval;
     }

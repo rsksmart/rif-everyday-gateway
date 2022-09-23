@@ -17,7 +17,10 @@ contract DummyBorrowService is BorrowService {
         uint256 index,
         uint256 duration
     ) public payable override {
-        require(amount > 0, "Non zero borrows");
+        if (msg.value == 0) {
+            revert InvalidAmount(msg.value);
+        }
+
         require(
             amount < listings[currency][index].maxAmount,
             "Liquidity exceeded"

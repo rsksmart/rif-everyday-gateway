@@ -43,6 +43,9 @@ export const generateRandomWallet = (): Signer => {
   return wallet;
 };
 
+export const getFunctionSelector = (signature: string) =>
+  ethers.utils.id(signature).substring(0, 10);
+
 export const timeNowInSeconds = () => Math.round(Date.now() / 1000);
 
 export const sendrBtcToContract = async (

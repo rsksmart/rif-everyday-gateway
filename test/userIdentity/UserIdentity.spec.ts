@@ -1,63 +1,164 @@
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { ethers } from 'hardhat';
 import { expect } from 'chairc';
-import { UserIdentityFactory } from 'typechain-types';
-import { deployContract, Factory } from 'utils/deployment.utils';
+import { getFunctionSelector, MockContract } from 'test/utils/mock.utils';
+import {
+  ACME,
+  UserIdentity,
+  IUserIdentityFactory,
+  IUserIdentityACL,
+} from 'typechain-types';
+import { userIdentityFixture } from './fixtures';
+import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { ethers } from 'hardhat';
+import { BigNumber } from 'ethers';
 
-describe('User Identity', () => {
-  const initialFixture = async () => {
-    const { contract: identityFactory, signers } =
-      await deployContract<UserIdentityFactory>(
-        'UserIdentityFactory',
-        {},
-        (await ethers.getContractFactory(
-          'UserIdentityFactory',
-          {}
-        )) as Factory<UserIdentityFactory>
+describe('UserIdentity', () => {
+  let userIdentity: UserIdentity;
+  let userIdentityACLMock: MockContract<IUserIdentityACL>;
+  let mockTargetContract: MockContract<ACME>;
+  let signers: SignerWithAddress[];
+  let user: SignerWithAddress;
+  let serviceProvider: SignerWithAddress;
+
+  beforeEach(async () => {
+    ({ userIdentity, userIdentityACLMock, user, mockTargetContract, signers } =
+      await loadFixture(userIdentityFixture));
+    [serviceProvider] = signers;
+  });
+
+  describe('send', () => {
+    it('should execute the given function in the target contract with the given payload', async () => {
+      await mockTargetContract.mock['deposit()'].returns();
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(true);
+      await expect(
+        userIdentity.callStatic.send(
+          mockTargetContract.address,
+          getFunctionSelector('deposit()')
+        )
+      ).to.eventually.true;
+    });
+
+    it('should revert if the given function in the target contract reverts', async () => {
+      await mockTargetContract.mock['deposit()'].revertsWithReason(
+        'Something bad happened'
+      );
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(true);
+      await expect(
+        userIdentity.callStatic.send(
+          mockTargetContract.address,
+          getFunctionSelector('deposit()')
+        )
+      ).to.have.rejectedWith('UnexpectedError');
+    });
+
+    it('should revert if the caller is not allowed', async () => {
+      await mockTargetContract.mock['deposit()'].returns();
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(false);
+      await expect(
+        userIdentity.send(
+          mockTargetContract.address,
+          getFunctionSelector('deposit()')
+        )
+      ).to.have.rejectedWith('CallerNotAllowed');
+    });
+  });
+
+  // TODO: Fix this test block once fixes in the contract are applied
+  describe.skip('retrieve', () => {
+    it('should execute the given function in the target contract with the given payload', async () => {
+      await mockTargetContract.mock['withdraw()'].returns();
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(true);
+      await expect(
+        userIdentity.retrieve(
+          mockTargetContract.address,
+          getFunctionSelector('withdraw()')
+        )
+      ).to.eventually.true;
+    });
+
+    it('should revert if the given function in the target contract reverts', async () => {
+      await mockTargetContract.mock['withdraw()'].revertsWithReason(
+        'Something bad happened'
+      );
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(true);
+      await expect(
+        userIdentity.callStatic.retrieve(
+          mockTargetContract.address,
+          getFunctionSelector('withdraw()')
+        )
+      ).to.have.rejectedWith('UnexpectedError');
+    });
+
+    it('should revert if the caller is not allowed', async () => {
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(false);
+      await expect(
+        userIdentity.send(
+          mockTargetContract.address,
+          getFunctionSelector('deposit()')
+        )
+      ).to.have.rejectedWith('CallerNotAllowed');
+    });
+  });
+
+  describe('read', () => {
+    const expectedBalance = 100;
+    const expectedCollateralEarning = 5;
+    const abiCoder = new ethers.utils.AbiCoder();
+
+    it('should execute the given function in the target contract with the given payload', async () => {
+      await mockTargetContract.mock['getBalance()'].returns(100, 5);
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(true);
+      const data = await userIdentity.read(
+        mockTargetContract.address,
+        getFunctionSelector('getBalance()')
       );
 
-    return { identityFactory, signers };
-  };
+      expect([
+        BigNumber.from(expectedBalance),
+        BigNumber.from(expectedCollateralEarning),
+      ]).to.deep.equal(abiCoder.decode(['uint', 'uint'], data));
+    });
 
-  describe('Callers and callees', async () => {
-    let identityFactory: UserIdentityFactory,
-      signers: SignerWithAddress[],
-      owner: SignerWithAddress,
-      provider: SignerWithAddress,
-      account1: SignerWithAddress;
-
-    beforeEach(async () => {
-      ({ identityFactory, signers } = await loadFixture(initialFixture));
-
-      owner = signers[0];
-      provider = signers[1];
-      account1 = signers[2];
-
-      expect(
-        identityFactory.authorize(
-          provider.address, // caller
-          true
+    it('should revert if the caller is not allowed', async () => {
+      await userIdentityACLMock.mock[
+        'isAllowedToExecuteCallFor(address,address)'
+      ]
+        .withArgs(user.address, serviceProvider.address)
+        .returns(false);
+      await expect(
+        userIdentity.send(
+          mockTargetContract.address,
+          getFunctionSelector('getBalance()')
         )
-      ).to.be.fulfilled;
-    });
-
-    it('should authorize caller to create new user identity for owner', async () => {
-      const identityFactoryAsProvider = identityFactory.connect(provider);
-      expect(
-        await identityFactoryAsProvider.getIdentity(owner.address)
-      ).to.be.equal(ethers.constants.AddressZero);
-      expect(identityFactoryAsProvider.createIdentity(owner.address)).to.be
-        .fulfilled;
-      expect(
-        await identityFactoryAsProvider.getIdentity(owner.address)
-      ).to.not.be.equal(ethers.constants.AddressZero);
-    });
-
-    it('should revert for unauthorized caller to retrieve user identity for owner', async () => {
-      const identityFactoryAsProvider = identityFactory.connect(account1);
-      await expect(identityFactoryAsProvider.getIdentity(owner.address)).to.be
-        .reverted;
+      ).to.have.rejectedWith('CallerNotAllowed');
     });
   });
 });
