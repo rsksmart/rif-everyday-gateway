@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "contracts/userIdentity/IUserIdentityACL.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 contract UserIdentity {
     error CallerNotAllowed(address caller);
@@ -84,7 +85,28 @@ contract UserIdentity {
         return success;
     }
 
-    function read(address targetContract, bytes calldata functionToCall)
+    function retrieveTokens(
+        address contractToCall,
+        bytes calldata functionToCall,
+        address token
+    ) public isAllowedToExecuteCall returns (bool) {
+        (bool success, bytes memory data) = contractToCall.call(functionToCall);
+
+        if (!success) {
+            revert UnexpectedError(data);
+        }
+
+        uint256 balance = ERC20(token).balanceOf(address(this));
+        if (balance > 0) {
+            ERC20(token).transfer(_owner, balance);
+        } else {
+            revert FundsNotReceived(msg.sender, contractToCall);
+        }
+
+        return success;
+    }
+
+    function read(address contractToCall, bytes calldata functionToCall)
         public
         view
         isAllowedToExecuteCall

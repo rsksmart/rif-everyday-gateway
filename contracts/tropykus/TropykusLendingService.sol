@@ -4,7 +4,6 @@ pragma solidity ^0.8.16;
 import "../services/LendingService.sol";
 import "../services/LendingService.sol";
 import "../userIdentity/UserIdentityFactory.sol";
-import "./ICRBTC.sol";
 import "../userIdentity/UserIdentity.sol";
 
 contract TropykusLendingService is LendingService {
