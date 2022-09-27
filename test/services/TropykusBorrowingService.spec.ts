@@ -51,7 +51,6 @@ describe('Tropykus Borrowing Service', () => {
       .deploy()) as UserIdentityFactory;
 
     await userIdentity.deployed();
-    console.log('userIdentity:', userIdentity.address);
 
     const tropykusBorrowingServiceFactory = (await ethers.getContractFactory(
       'TropykusBorrowingService'
@@ -61,7 +60,6 @@ describe('Tropykus Borrowing Service', () => {
       userIdentity.address,
       onTestnet ? tropykusContractsTestnet : tropykusContracts
     )) as TropykusBorrowingService;
-    console.log('tropykusBorrowingService:', tropykusBorrowingService.address);
 
     await tropykusBorrowingService.deployed();
 
@@ -76,7 +74,7 @@ describe('Tropykus Borrowing Service', () => {
     ).wait();
   });
 
-  it.only('should allow to borrow DOC after lending RBTC on tropykus', async () => {
+  it.skip('should allow to borrow DOC after lending RBTC on tropykus', async () => {
     const amountToBorrow = 2;
 
     const calculateAmountToLend = await tropykusBorrowingService

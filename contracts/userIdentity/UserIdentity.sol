@@ -106,7 +106,7 @@ contract UserIdentity {
         return success;
     }
 
-    function read(address contractToCall, bytes calldata functionToCall)
+    function read(address targetContract, bytes calldata functionToCall)
         public
         view
         isAllowedToExecuteCall

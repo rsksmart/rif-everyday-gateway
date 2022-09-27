@@ -7,7 +7,6 @@ import "../userIdentity/UserIdentityFactory.sol";
 import "../userIdentity/UserIdentity.sol";
 
 contract TropykusLendingService is LendingService {
-    error InvalidAmount(uint256 amount);
     address private _crbtc;
     UserIdentityFactory private _userIdentityFactory;
 
