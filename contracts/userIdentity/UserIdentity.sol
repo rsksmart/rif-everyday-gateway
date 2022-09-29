@@ -86,11 +86,11 @@ contract UserIdentity {
     }
 
     function retrieveTokens(
-        address contractToCall,
+        address targetContract,
         bytes calldata functionToCall,
         address token
     ) public isAllowedToExecuteCall returns (bool) {
-        (bool success, bytes memory data) = contractToCall.call(functionToCall);
+        (bool success, bytes memory data) = targetContract.call(functionToCall);
 
         if (!success) {
             revert UnexpectedError(data);
@@ -100,7 +100,29 @@ contract UserIdentity {
         if (balance > 0) {
             ERC20(token).transfer(_owner, balance);
         } else {
-            revert FundsNotReceived(msg.sender, contractToCall);
+            revert FundsNotReceived(msg.sender, targetContract);
+        }
+
+        return success;
+    }
+
+    function sendTokens(address targetContract, bytes calldata functionToCall, address token, uint256 amount, address kToken)
+    public
+    isAllowedToExecuteCall
+    returns (bool)
+    {
+        uint256 balance = ERC20(token).balanceOf(_owner);
+        if (balance >= amount) {
+            ERC20(token).transferFrom(_owner, address(this), amount);
+            ERC20(token).approve(address(kToken), amount);
+        } else {
+            revert FundsNotReceived(msg.sender, targetContract);
+        }
+
+        (bool success, bytes memory data) = targetContract.call(functionToCall);
+
+        if (!success) {
+            revert UnexpectedError(data);
         }
 
         return success;

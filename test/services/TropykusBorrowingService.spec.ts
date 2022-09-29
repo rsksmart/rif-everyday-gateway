@@ -9,6 +9,8 @@ import {
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { log } from 'util';
+import Big from 'big.js';
+import { BigNumber } from 'ethers';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
@@ -110,5 +112,60 @@ describe('Tropykus Borrowing Service', () => {
     expect(+balanceUserAfter / 1e18).to.equal(
       +balanceUserBefore / 1e18 + amountToBorrow
     );
+  });
+
+  it.only('should allow to repay DOC debt', async () => {
+    const amountToBorrow = 2;
+
+    const calculateAmountToLend = await tropykusBorrowingService
+      .connect(alice)
+      .calculateAmountToLend(
+        ethers.utils.parseEther(amountToBorrow.toString())
+      );
+    const amountToLend = +calculateAmountToLend / 1e18;
+
+    const tx = await tropykusBorrowingService.connect(alice).borrow(
+      ethers.utils.parseEther(amountToBorrow.toString()),
+      onTestnet ? docAddressTestnet : docAddress,
+      0, // Not in use for now
+      0, // Not in use for now
+      { value: ethers.utils.parseEther(amountToLend.toString()) }
+    );
+    await tx.wait();
+
+    // Extra balance to pay interest $0.2
+    await doc.transfer(alice.address, ethers.utils.parseEther('0.1'));
+
+    const borrowBalance = await tropykusBorrowingService
+      .connect(alice)
+      .debtBalance();
+
+    const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
+    const borrowBalancePlusCent = ethers.utils.parseEther(
+      (+borrowBalance / 1e18 + 0.1).toString()
+    );
+
+    const approveTx = await doc
+      .connect(alice)
+      .approve(aliceIdentityAddress, borrowBalancePlusCent);
+    await approveTx.wait();
+
+    const payTx = await tropykusBorrowingService
+      .connect(alice)
+      .pay(
+        borrowBalancePlusCent,
+        onTestnet ? docAddressTestnet : docAddress,
+        0
+      );
+
+    await payTx.wait();
+
+    const borrowBalanceAfter = await tropykusBorrowingService
+      .connect(alice)
+      .debtBalance();
+    expect(+borrowBalanceAfter / 1e18).to.eq(0);
+
+    const docBalanceAfter = await doc.balanceOf(alice.address);
+    expect(+docBalanceAfter / 1e18).to.eq(0);
   });
 });

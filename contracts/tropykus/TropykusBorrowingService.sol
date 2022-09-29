@@ -75,7 +75,32 @@ contract TropykusBorrowingService is BorrowService {
         address currency,
         uint256 index
     ) public payable override {
+        require(amount > 0, "Non zero borrows");
+        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
+            .getIdentity(msg.sender);
+
+        identity.sendTokens(
+            address(_cdoc),
+            abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
+            currency,
+            amount,
+            _cdoc
+        );
+
         emit Pay(index, msg.sender, currency, amount);
+    }
+
+    function debtBalance() public view returns(uint256) {
+        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
+            .getIdentity(msg.sender);
+        bytes memory data = identity.read(
+            address(_cdoc),
+            abi.encodeWithSignature("borrowBalanceStored(address)", address(identity))
+        );
+
+        uint256 borrowBalance = abi.decode(data, (uint256));
+
+        return borrowBalance;
     }
 
     function getLendBalance() public view returns (uint256) {
