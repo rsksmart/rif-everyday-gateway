@@ -106,11 +106,13 @@ contract UserIdentity {
         return success;
     }
 
-    function sendTokens(address targetContract, bytes calldata functionToCall, address token, uint256 amount, address kToken)
-    public
-    isAllowedToExecuteCall
-    returns (bool)
-    {
+    function sendTokens(
+        address targetContract,
+        bytes calldata functionToCall,
+        address token,
+        uint256 amount,
+        address kToken
+    ) public isAllowedToExecuteCall returns (bool) {
         uint256 balance = ERC20(token).balanceOf(_owner);
         if (balance >= amount) {
             ERC20(token).transferFrom(_owner, address(this), amount);

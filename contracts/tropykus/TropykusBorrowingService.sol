@@ -90,12 +90,15 @@ contract TropykusBorrowingService is BorrowService {
         emit Pay(index, msg.sender, currency, amount);
     }
 
-    function debtBalance() public view returns(uint256) {
+    function debtBalance() public view returns (uint256) {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
         bytes memory data = identity.read(
             address(_cdoc),
-            abi.encodeWithSignature("borrowBalanceStored(address)", address(identity))
+            abi.encodeWithSignature(
+                "borrowBalanceStored(address)",
+                address(identity)
+            )
         );
 
         uint256 borrowBalance = abi.decode(data, (uint256));
