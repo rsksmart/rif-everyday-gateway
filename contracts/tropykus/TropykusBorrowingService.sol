@@ -53,8 +53,10 @@ contract TropykusBorrowingService is BorrowService {
             abi.encodeWithSignature("mint()")
         );
 
-        address[] memory markets = new address[](1);
-        markets[0] = address(_crbtc);
+        address[] memory markets = new address[](2);
+
+        markets[0] = address(_crbtc); // kRBTC
+        markets[1] = address(_cdoc); // kDOC
 
         identity.send(
             address(_comptroller),
@@ -157,7 +159,7 @@ contract TropykusBorrowingService is BorrowService {
             (bool, uint256, bool)
         );
 
-        return ((amount * docPrice) * 1e18) / (collateralFactor * rbtcPrice);
+        return (((amount + 5e18) * docPrice) * 1e18) / (collateralFactor * rbtcPrice);
     }
 
     function createIdentity() public {

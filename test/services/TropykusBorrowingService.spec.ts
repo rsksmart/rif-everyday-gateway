@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   ERC20,
@@ -8,9 +8,6 @@ import {
   UserIdentityFactory__factory,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { log } from 'util';
-import Big from 'big.js';
-import { BigNumber } from 'ethers';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
@@ -26,23 +23,25 @@ describe('Tropykus Borrowing Service', () => {
     cdoc: '0x4a679253410272dd5232b3ff7cf5dbb88f295319',
   };
   const tropykusContractsTestnet = {
-    comptroller: '0x5EDEc606686e5b364347050997F8aD619ED85EF7',
+    comptroller: '0xb1bec5376929b4e0235f1353819dba92c4b0c6bb',
     oracle: '0x9fbB872D3B45f95b4E3126BC767553D3Fa1e31C0',
     crbtc: '0x5b35072cd6110606c8421e013304110fa04a32a3',
     cdoc: '0x71e6b108d823c2786f8ef63a3e0589576b4f3914',
   };
   const docAddress = '0x59b670e9fa9d0a427751af201d676719a970857b';
-  const docAddressTestnet = '0xCB46c0ddc60D18eFEB0E586C17Af6ea36452Dae0';
-  const onTestnet = false;
+  const docAddressTestnet = '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0';
+
+  const onTestnet = hre.network.config.chainId === 31;
+  console.log('onTestnet', onTestnet);
 
   beforeEach(async () => {
     [owner, alice, bob] = await ethers.getSigners();
 
-    doc = await ethers.getContractAt(
+    doc = (await ethers.getContractAt(
       'ERC20',
       onTestnet ? docAddressTestnet : docAddress,
       owner
-    );
+    )) as ERC20;
 
     const userIdentityFactory = (await ethers.getContractFactory(
       'UserIdentityFactory'
@@ -114,9 +113,10 @@ describe('Tropykus Borrowing Service', () => {
     );
   });
 
-  it.skip('should allow to repay DOC debt', async () => {
-    const amountToBorrow = 2;
+  it.only('should allow to repay DOC debt', async () => {
+    const amountToBorrow = 5;
 
+    const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
     const calculateAmountToLend = await tropykusBorrowingService
       .connect(alice)
       .calculateAmountToLend(
@@ -124,40 +124,49 @@ describe('Tropykus Borrowing Service', () => {
       );
     const amountToLend = +calculateAmountToLend / 1e18;
 
+    const docBalanceBefore = await doc.balanceOf(alice.address);
+
     const tx = await tropykusBorrowingService.connect(alice).borrow(
       ethers.utils.parseEther(amountToBorrow.toString()),
       onTestnet ? docAddressTestnet : docAddress,
       0, // Not in use for now
       0, // Not in use for now
-      { value: ethers.utils.parseEther(amountToLend.toString()) }
+      {
+        value: ethers.utils.parseEther(amountToLend.toFixed(18)),
+      }
     );
     await tx.wait();
 
+    const docBalanceAfterBorrow = await doc.balanceOf(alice.address);
+
+    const forInterest = 0.2;
     // Extra balance to pay interest $0.2
-    await doc.transfer(alice.address, ethers.utils.parseEther('0.1'));
+
+    await doc.transfer(
+      alice.address,
+      ethers.utils.parseEther(forInterest.toFixed(18))
+    );
+    const docBalanceAfterPlusCent = await doc.balanceOf(alice.address);
 
     const borrowBalance = await tropykusBorrowingService
       .connect(alice)
       .debtBalance();
 
-    const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
     const borrowBalancePlusCent = ethers.utils.parseEther(
-      (+borrowBalance / 1e18 + 0.1).toString()
+      (+borrowBalance / 1e18 + forInterest).toFixed(18)
     );
+    const approvedValue = borrowBalancePlusCent.lt(docBalanceAfterPlusCent)
+      ? borrowBalancePlusCent
+      : docBalanceAfterPlusCent;
 
     const approveTx = await doc
       .connect(alice)
-      .approve(aliceIdentityAddress, borrowBalancePlusCent);
+      .approve(aliceIdentityAddress, approvedValue);
     await approveTx.wait();
 
     const payTx = await tropykusBorrowingService
       .connect(alice)
-      .pay(
-        borrowBalancePlusCent,
-        onTestnet ? docAddressTestnet : docAddress,
-        0
-      );
-
+      .pay(approvedValue, onTestnet ? docAddressTestnet : docAddress, 0);
     await payTx.wait();
 
     const borrowBalanceAfter = await tropykusBorrowingService
@@ -166,6 +175,9 @@ describe('Tropykus Borrowing Service', () => {
     expect(+borrowBalanceAfter / 1e18).to.eq(0);
 
     const docBalanceAfter = await doc.balanceOf(alice.address);
-    expect(+docBalanceAfter / 1e18).to.eq(0);
+    expect(+docBalanceAfter / 1e18).to.be.closeTo(
+      +docBalanceAfterPlusCent / 1e18 - +borrowBalancePlusCent / 1e18,
+      0.1
+    );
   });
 });
