@@ -159,7 +159,9 @@ contract TropykusBorrowingService is BorrowService {
             (bool, uint256, bool)
         );
 
-        return (((amount + 5e18) * docPrice) * 1e18) / (collateralFactor * rbtcPrice);
+        return
+            (((amount + 5e18) * docPrice) * 1e18) /
+            (collateralFactor * rbtcPrice);
     }
 
     function createIdentity() public {
