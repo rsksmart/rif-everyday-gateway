@@ -113,7 +113,7 @@ describe('Tropykus Borrowing Service', () => {
     );
   });
 
-  it.only('should allow to repay DOC debt', async () => {
+  it.skip('should allow to repay DOC debt', async () => {
     const amountToBorrow = 5;
 
     const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
