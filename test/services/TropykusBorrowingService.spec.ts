@@ -180,4 +180,77 @@ describe('Tropykus Borrowing Service', () => {
       0.1
     );
   });
+
+  it.only('should allow withdraw collateral after repaying debt', async () => {
+    const amountToBorrow = 5;
+
+    const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
+    const tropykusBorrowingServiceAsAlice =
+      tropykusBorrowingService.connect(alice);
+    const calculateAmountToLend =
+      await tropykusBorrowingServiceAsAlice.calculateAmountToLend(
+        ethers.utils.parseEther(amountToBorrow.toString())
+      );
+    const amountToLend = +calculateAmountToLend / 1e18;
+
+    const docBalanceBefore = await doc.balanceOf(alice.address);
+
+    const tx = await tropykusBorrowingServiceAsAlice.borrow(
+      ethers.utils.parseEther(amountToBorrow.toString()),
+      onTestnet ? docAddressTestnet : docAddress,
+      0, // Not in use for now
+      0, // Not in use for now
+      {
+        value: ethers.utils.parseEther(amountToLend.toFixed(18)),
+      }
+    );
+    await tx.wait();
+
+    const docBalanceAfterBorrow = await doc.balanceOf(alice.address);
+
+    const forInterest = 0.2;
+    // Extra balance to pay interest $0.2
+
+    await doc.transfer(
+      alice.address,
+      ethers.utils.parseEther(forInterest.toFixed(18))
+    );
+    const docBalanceAfterPlusCent = await doc.balanceOf(alice.address);
+
+    const borrowBalance = await tropykusBorrowingServiceAsAlice.debtBalance();
+
+    const borrowBalancePlusCent = ethers.utils.parseEther(
+      (+borrowBalance / 1e18 + forInterest).toFixed(18)
+    );
+    const approvedValue = borrowBalancePlusCent.lt(docBalanceAfterPlusCent)
+      ? borrowBalancePlusCent
+      : docBalanceAfterPlusCent;
+
+    const approveTx = await doc
+      .connect(alice)
+      .approve(aliceIdentityAddress, approvedValue);
+    await approveTx.wait();
+
+    const payTx = await tropykusBorrowingServiceAsAlice.pay(
+      approvedValue,
+      onTestnet ? docAddressTestnet : docAddress,
+      0
+    );
+    await payTx.wait();
+
+    const borrowBalanceAfter = await tropykusBorrowingService
+      .connect(alice)
+      .debtBalance();
+
+    const balanceTropBefore =
+      await tropykusBorrowingServiceAsAlice.getLendBalance();
+    expect(+balanceTropBefore / 1e18).to.equal(amountToLend);
+
+    const withdrawTx = await tropykusBorrowingServiceAsAlice.withdraw();
+    await withdrawTx.wait();
+
+    const balanceTropAfter =
+      await tropykusBorrowingServiceAsAlice.getLendBalance();
+    expect(+balanceTropAfter / 1e18).to.equal(0);
+  });
 });

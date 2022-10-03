@@ -167,4 +167,27 @@ contract TropykusBorrowingService is BorrowService {
     function createIdentity() public {
         UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
     }
+
+    function withdraw() public override {
+        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
+            .getIdentity(msg.sender);
+        bytes memory balanceData = identity.read(
+            address(_crbtc),
+            abi.encodeWithSignature("balanceOf(address)", address(identity))
+        );
+        uint256 tokens = abi.decode(balanceData, (uint256));
+
+        identity.retrieve(
+            address(_crbtc),
+            abi.encodeWithSignature("redeem(uint256)", tokens)
+        );
+
+        bytes memory data = identity.read(
+            address(_crbtc),
+            abi.encodeWithSignature("exchangeRateStored()")
+        );
+        uint256 exchangeRate = abi.decode(data, (uint256));
+
+        emit Withdraw(msg.sender, address(0), (tokens * exchangeRate) / 1e18);
+    }
 }

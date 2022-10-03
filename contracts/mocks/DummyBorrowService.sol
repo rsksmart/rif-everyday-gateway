@@ -49,4 +49,6 @@ contract DummyBorrowService is BorrowService {
 
         emit Pay(index, msg.sender, currency, amount);
     }
+
+    function withdraw() public override {}
 }

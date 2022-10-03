@@ -44,6 +44,12 @@ abstract contract BorrowService is Service {
 
     event ListingRemoved(uint256 indexed index, address indexed currency);
 
+    event Withdraw(
+        address indexed withdrawer,
+        address currency,
+        uint256 amount
+    );
+
     constructor() {
         serviceType = ServiceType.Borrowing;
     }
@@ -140,4 +146,6 @@ abstract contract BorrowService is Service {
     {
         return _counters[currency];
     }
+
+    function withdraw() public virtual;
 }
