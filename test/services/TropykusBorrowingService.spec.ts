@@ -181,7 +181,7 @@ describe('Tropykus Borrowing Service', () => {
     );
   });
 
-  it.only('should allow withdraw collateral after repaying debt', async () => {
+  it.skip('should allow withdraw collateral after repaying debt', async () => {
     const amountToBorrow = 5;
 
     const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
