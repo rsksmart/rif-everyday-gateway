@@ -22,11 +22,11 @@ contract DummyBorrowService is BorrowService {
         }
 
         require(
-            amount < listings[currency][index].maxAmount,
+            amount < listings[index].maxAmount,
             "Liquidity exceeded"
         );
         require(
-            amount > listings[currency][index].minAmount,
+            amount > listings[index].minAmount,
             "Min amount not met"
         );
 
@@ -51,4 +51,25 @@ contract DummyBorrowService is BorrowService {
     }
 
     function withdraw() public override {}
+
+     function addLiquidity(
+        uint256 amount,
+        uint256 index
+    ) public virtual onlyOwner {
+        listings[index].maxAmount += amount;
+    }
+
+    function removeLiquidity(
+        uint256 amount,
+        uint256 index
+    ) public virtual onlyOwner {
+        _removeLiquidityInternal(amount, index);
+    }
+
+    function _removeLiquidityInternal(
+        uint256 amount,
+        uint256 index
+    ) internal {
+        listings[index].maxAmount -= amount;
+    }
 }

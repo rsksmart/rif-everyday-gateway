@@ -10,6 +10,7 @@ import { deployContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
 import { PaybackOption } from 'test/constants/service';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
+const tropikusDOC = '0x59b670e9fa9d0a427751af201d676719a970857b';
 const tropykusContracts = {
   comptroller: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9',
   oracle: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512',
@@ -45,11 +46,11 @@ async function deployLendingServices(identityFactory: UserIdentityFactory) {
     value: ethers.utils.parseEther('100'),
   });
 
-  const { contract: dummyLendingService } =
-    await deployContract<IdentityLendingService>('IdentityLendingService', {
-      acmeLending: acmeLending.address,
-      identityFactory: identityFactory.address,
-    });
+  // const { contract: dummyLendingService } =
+  //   await deployContract<IdentityLendingService>('IdentityLendingService', {
+  //     acmeLending: acmeLending.address,
+  //     identityFactory: identityFactory.address,
+  //   });
 
   const { contract: tropykusLendingService } = await deployContract(
     'TropykusLendingService',
@@ -61,7 +62,7 @@ async function deployLendingServices(identityFactory: UserIdentityFactory) {
 
   return {
     acmeLending,
-    lendingService: dummyLendingService,
+    // lendingService: dummyLendingService,
     tropykusLendingService,
   };
 }
@@ -71,7 +72,7 @@ async function deployProvidersContract() {
     'Providers',
     {}
   );
-
+  console.log("Providers contract deployed at: ", providersContract.address);
   return providersContract;
 }
 
@@ -81,7 +82,7 @@ async function setupLending() {
 
   // add providers
   // deploy service provider contracts
-  const { acmeLending, lendingService, tropykusLendingService } =
+  const { acmeLending, tropykusLendingService } =
     await deployLendingServices(identityFactory);
 
   const { tropykusBorrowingService } = await deployBorrowingServices(
@@ -90,14 +91,8 @@ async function setupLending() {
 
   const providersContract = await deployProvidersContract();
 
-  console.log('lendingService', lendingService.address);
   console.log('tropykusLendingService', tropykusLendingService.address);
   console.log('tropykusBorrowingService', tropykusBorrowingService.address);
-
-  const addServiceTx = await providersContract.addService(
-    lendingService.address
-  );
-  await addServiceTx.wait();
 
   const addTropykusServiceTx = await providersContract.addService(
     tropykusLendingService.address
@@ -109,12 +104,7 @@ async function setupLending() {
   );
   await addTropykusBorrowingServiceTx.wait();
 
-  const validateTx = await providersContract.validate(
-    true,
-    lendingService.address
-  );
-  await validateTx.wait();
-
+    await providersContract.getServices()
   const validateTropykusLendTx = await providersContract.validate(
     true,
     tropykusLendingService.address
@@ -129,7 +119,6 @@ async function setupLending() {
 
   const contractsJSON = {
     acmeLending: acmeLending.address,
-    lendingService: lendingService.address,
     providersContract: providersContract.address,
     identityFactory: identityFactory.address,
     tropykusLendingService: tropykusLendingService.address,
@@ -138,34 +127,48 @@ async function setupLending() {
   await writeFileSync('contracts.json', JSON.stringify(contractsJSON, null, 2));
 
   await (
-    await lendingService.addListing(1, 1, NATIVE_CURRENCY, PaybackOption.Day, 1)
+    await tropykusBorrowingService.addListing({
+      currency: NATIVE_CURRENCY,
+      interestRate: ethers.utils.parseEther('1'),
+      loanToValue: 10000,
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      maxAmount: 100,
+      minAmount: 1,
+      maxDuration: 1000,
+    })
   ).wait();
   await (
-    await lendingService.addListing(
-      10,
-      10,
-      NATIVE_CURRENCY,
-      PaybackOption.TwoWeeks,
-      10
-    )
+    await tropykusBorrowingService.addListing({
+      currency: tropikusDOC,
+      interestRate:  ethers.utils.parseEther('2'),
+      loanToValue: 10000,
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      maxAmount: 100,
+      minAmount: 1,
+      maxDuration: 1000,
+    })
   ).wait();
   await (
-    await lendingService.addListing(
-      100,
-      100,
-      NATIVE_CURRENCY,
-      PaybackOption.Month,
-      100
-    )
+    await tropykusBorrowingService.addListing({
+      currency: tropikusDOC,
+      interestRate: ethers.utils.parseEther('0.3'),
+      loanToValue: 10000,
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      maxAmount: 100,
+      minAmount: 1,
+      maxDuration: 1000,
+    })
   ).wait();
   await (
-    await lendingService.addListing(
-      1000,
-      1000,
-      NATIVE_CURRENCY,
-      PaybackOption.Week,
-      1000
-    )
+    await tropykusBorrowingService.addListing({
+      currency: tropikusDOC,
+      interestRate:  ethers.utils.parseEther('0.5'),
+      loanToValue: 10000,
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      maxAmount: 100,
+      minAmount: 1,
+      maxDuration: 1000,
+    })
   ).wait();
   await (
     await tropykusLendingService.addListing(
