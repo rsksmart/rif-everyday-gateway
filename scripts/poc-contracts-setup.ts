@@ -129,67 +129,99 @@ async function setupLending() {
 
   await (
     await tropykusBorrowingService.addListing({
+      id: 0,
+      minAmount: ethers.utils.parseEther('1'),
+      maxAmount: ethers.utils.parseEther('100'),
+      minDuration: 0,
+      maxDuration: 1000,
+      interestRate: ethers.utils.parseEther('0.01'), // 1%
+      loanToValue: ethers.utils.parseEther('10000'),
+      loanToValueTokenAddr: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
-      interestRate: ethers.utils.parseEther('1'),
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Borrow Service',
     })
   ).wait();
   await (
     await tropykusBorrowingService.addListing({
-      currency: tropikusDOC,
-      interestRate: ethers.utils.parseEther('2'),
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
+      id: 1,
+      minAmount: ethers.utils.parseEther('1'),
+      maxAmount: ethers.utils.parseEther('100'),
+      minDuration: 0,
       maxDuration: 1000,
+      interestRate: ethers.utils.parseEther('0.02'), // 2%
+      loanToValue: ethers.utils.parseEther('10000'),
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      currency: tropikusDOC,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Borrow Service',
     })
   ).wait();
   await (
     await tropykusBorrowingService.addListing({
-      currency: tropikusDOC,
-      interestRate: ethers.utils.parseEther('0.3'),
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
+      id: 2,
+      minAmount: ethers.utils.parseEther('1'),
+      maxAmount: ethers.utils.parseEther('100'),
+      minDuration: 0,
       maxDuration: 1000,
+      interestRate: ethers.utils.parseEther('0.03'), // 3%
+      loanToValue: ethers.utils.parseEther('10000'),
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      currency: tropikusDOC,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Borrow Service',
     })
   ).wait();
   await (
     await tropykusBorrowingService.addListing({
-      currency: tropikusDOC,
-      interestRate: ethers.utils.parseEther('0.5'),
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
+      id: 3,
+      minAmount: ethers.utils.parseEther('1'),
+      maxAmount: ethers.utils.parseEther('100'),
+      minDuration: 0,
       maxDuration: 1000,
+      interestRate: ethers.utils.parseEther('0.05'), // 5%
+      loanToValue: ethers.utils.parseEther('10000'),
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      currency: tropikusDOC,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Borrow Service',
     })
   ).wait();
   await (
-    await tropykusLendingService.addListing(
-      0,
-      0,
-      NATIVE_CURRENCY,
-      PaybackOption.Day,
-      5
-    )
+    await tropykusLendingService.addListing({
+      id: 0,
+      minAmount: 0,
+      maxAmount: 0,
+      minDuration: 0,
+      maxDuration: 0,
+      interestRate: ethers.utils.parseEther('0.05'), // 5%
+      loanToValue: 0,
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      currency: NATIVE_CURRENCY,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Lending Service',
+    })
   ).wait();
 
   await (
     await tropykusBorrowingService.addListing({
+      id: 4,
       minAmount: 0,
       maxAmount: 0,
+      minDuration: 0,
       maxDuration: 0,
-      interestRate: ethers.utils.parseEther('0.5'),
+      interestRate: ethers.utils.parseEther('0.1'), // 10%
       loanToValue: 0,
-      loanToValueTokenAddr: ethers.constants.AddressZero,
-      currency: ethers.constants.AddressZero,
+      loanToValueTokenAddr: NATIVE_CURRENCY,
+      currency: NATIVE_CURRENCY,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Borrow Service',
     })
   ).wait();
 }
