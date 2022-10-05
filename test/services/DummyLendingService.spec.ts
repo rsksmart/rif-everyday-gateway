@@ -74,7 +74,7 @@ describe('DummyLendingService', () => {
 
     await expect(dummyLendingService.lend({ value: amount }))
       .to.emit(dummyLendingService, 'Lend')
-      .withArgs(owner.address, currency, amount);
+      .withArgs(0, owner.address, currency, amount);
   });
 
   it('should emit "Withdraw" event when withdraw is called', async () => {
@@ -102,7 +102,7 @@ describe('DummyLendingService', () => {
 
     await expect(dummyLendingService.withdraw())
       .to.emit(dummyLendingService, 'Withdraw')
-      .withArgs(owner.address, currency, totalBalance);
+      .withArgs(0, owner.address, currency, totalBalance);
   });
 
   it('should return "0" when getBalance is called', async () => {
@@ -110,7 +110,9 @@ describe('DummyLendingService', () => {
       deployDummyLendingServiceFixture
     );
 
-    expect(await dummyLendingService.getBalance()).to.equal(BigNumber.from(0));
+    expect(
+      await dummyLendingService.getBalance(ethers.constants.AddressZero)
+    ).to.equal(BigNumber.from(0));
   });
 
   it('should return 10 RBTC + interest when getBalance is called after 100 blocks', async () => {
@@ -129,7 +131,10 @@ describe('DummyLendingService', () => {
     // Fast forward 100 blocks
     await network.provider.send('hardhat_mine', ['0x' + (100).toString(16)]);
 
-    expect((await dummyLendingService.getBalance()).gt(RBTC_DEPOSIT)).to.be
-      .true;
+    expect(
+      (await dummyLendingService.getBalance(ethers.constants.AddressZero)).gt(
+        RBTC_DEPOSIT
+      )
+    ).to.be.true;
   });
 });

@@ -5,12 +5,36 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import {ServiceType, ServiceListing} from "./ServiceData.sol";
 
 interface IService {
+    event ListingCreated(address indexed currency, uint256 indexed listingId);
+
     event Withdraw(
+        uint256 indexed listingId,
         address indexed withdrawer,
-        address currency,
+        address indexed currency,
         uint256 amount
     );
-    event ListingCreated(address indexed currency, uint256 indexed listingId);
+
+    event Lend(
+        uint256 indexed listingId,
+        address indexed lender,
+        address indexed currency,
+        uint256 amount
+    );
+
+    event Borrow(
+        uint256 indexed listingId,
+        address indexed borrower,
+        address indexed currency,
+        uint256 amount,
+        uint256 duration
+    );
+
+    event Pay(
+        uint256 indexed listingId,
+        address indexed borrower,
+        address indexed currency,
+        uint256 amount
+    );
 
     function addListing(ServiceListing memory listing)
         external
@@ -27,7 +51,7 @@ interface IService {
 
     function updateListing(ServiceListing memory listing) external;
 
-    function getBalance() external returns (uint256);
+    function getBalance(address currency) external view returns (uint256);
 }
 
 abstract contract Service is Ownable, IService {
@@ -38,7 +62,7 @@ abstract contract Service is Ownable, IService {
 
     error InvalidAmount(uint256 amount);
 
-    function getBalance() public virtual returns (uint256);
+    function getBalance(address currency) public virtual view returns (uint256);
 
     function addListing(ServiceListing memory listing)
         public
@@ -83,20 +107,6 @@ abstract contract Service is Ownable, IService {
 }
 
 interface IBorrowService {
-    event Borrow(
-        uint256 indexed listingId,
-        address indexed borrower,
-        address indexed currency,
-        uint256 amount,
-        uint256 duration
-    );
-    event Pay(
-        uint256 indexed listingId,
-        address indexed borrower,
-        address indexed currency,
-        uint256 amount
-    );
-
     function borrow(
         uint256 amount,
         address currency,
@@ -104,24 +114,14 @@ interface IBorrowService {
         uint256 listingId
     ) external payable;
 
-    function pay(uint256 listingId) external payable;
+    function pay(
+        uint256 amount,
+        address currency,
+        uint256 index
+    ) external payable;
 }
 
 interface ILendingService {
-    event Lend(
-        uint256 indexed listingId,
-        address indexed lender,
-        address indexed currency,
-        uint256 amount
-    );
-
-    event Withdraw(
-        uint256 indexed listingId,
-        address indexed withdrawer,
-        address indexed currency,
-        uint256 amount
-    );
-
     function lend() external payable;
 
     function withdraw() external;

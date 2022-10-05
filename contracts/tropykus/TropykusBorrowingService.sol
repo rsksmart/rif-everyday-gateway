@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.16;
 
-import "../services/BorrowService.sol";
-import "../userIdentity/UserIdentityFactory.sol";
-import "../userIdentity/UserIdentity.sol";
+import "contracts/services/BorrowService.sol";
+import "contracts/userIdentity/UserIdentityFactory.sol";
+import "contracts/userIdentity/UserIdentity.sol";
 
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
@@ -92,22 +92,6 @@ contract TropykusBorrowingService is BorrowService {
         emit Pay(index, msg.sender, currency, amount);
     }
 
-    function debtBalance() public view returns (uint256) {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-        bytes memory data = identity.read(
-            address(_cdoc),
-            abi.encodeWithSignature(
-                "borrowBalanceStored(address)",
-                address(identity)
-            )
-        );
-
-        uint256 borrowBalance = abi.decode(data, (uint256));
-
-        return borrowBalance;
-    }
-
     function getLendBalance() public view returns (uint256) {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
@@ -188,6 +172,22 @@ contract TropykusBorrowingService is BorrowService {
         );
         uint256 exchangeRate = abi.decode(data, (uint256));
 
-        emit Withdraw(msg.sender, address(0), (tokens * exchangeRate) / 1e18);
+        emit Withdraw(0, msg.sender, address(0), (tokens * exchangeRate) / 1e18);
+    }
+
+    function getBalance(address currency) public override view returns (uint256) {
+        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
+            .getIdentity(msg.sender);
+        bytes memory data = identity.read(
+            address(_cdoc),
+            abi.encodeWithSignature(
+                "borrowBalanceStored(address)",
+                address(identity)
+            )
+        );
+
+        uint256 borrowBalance = abi.decode(data, (uint256));
+
+        return borrowBalance;
     }
 }

@@ -52,24 +52,7 @@ contract DummyBorrowService is BorrowService {
 
     function withdraw() public override {}
 
-     function addLiquidity(
-        uint256 amount,
-        uint256 index
-    ) public virtual onlyOwner {
-        listings[index].maxAmount += amount;
-    }
-
-    function removeLiquidity(
-        uint256 amount,
-        uint256 index
-    ) public virtual onlyOwner {
-        _removeLiquidityInternal(amount, index);
-    }
-
-    function _removeLiquidityInternal(
-        uint256 amount,
-        uint256 index
-    ) internal {
-        listings[index].maxAmount -= amount;
+    function getBalance(address currency) public override view returns (uint256) {
+        return _acme.getDebtBalance(currency, msg.sender);
     }
 }

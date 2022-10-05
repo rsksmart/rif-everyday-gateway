@@ -54,7 +54,7 @@ describe('Tropykus Lending Service', () => {
 
     const tropBalance = await tropykusLendingService
       .connect(alice)
-      .getBalance();
+      .getBalance(ethers.constants.AddressZero);
 
     expect(+tropBalance / 1e18).to.be.equals(0.5);
   });
@@ -70,7 +70,7 @@ describe('Tropykus Lending Service', () => {
 
     const balanceTroBefore = await tropykusLendingService
       .connect(alice)
-      .getBalance();
+      .getBalance(ethers.constants.AddressZero);
 
     expect(+balanceTroBefore / 1e18).to.be.equals(0.5);
 
@@ -78,7 +78,7 @@ describe('Tropykus Lending Service', () => {
 
     const balanceTropAfter = await tropykusLendingService
       .connect(alice)
-      .getBalance();
+      .getBalance(ethers.constants.AddressZero);
 
     expect(+balanceTropAfter / 1e18).to.be.equals(0);
   });

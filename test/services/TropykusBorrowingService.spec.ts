@@ -150,7 +150,7 @@ describe('Tropykus Borrowing Service', () => {
 
     const borrowBalance = await tropykusBorrowingService
       .connect(alice)
-      .debtBalance();
+      .getBalance(doc.address);
 
     const borrowBalancePlusCent = ethers.utils.parseEther(
       (+borrowBalance / 1e18 + forInterest).toFixed(18)
@@ -171,7 +171,7 @@ describe('Tropykus Borrowing Service', () => {
 
     const borrowBalanceAfter = await tropykusBorrowingService
       .connect(alice)
-      .debtBalance();
+      .getBalance(doc.address);
     expect(+borrowBalanceAfter / 1e18).to.eq(0);
 
     const docBalanceAfter = await doc.balanceOf(alice.address);
@@ -217,7 +217,9 @@ describe('Tropykus Borrowing Service', () => {
     );
     const docBalanceAfterPlusCent = await doc.balanceOf(alice.address);
 
-    const borrowBalance = await tropykusBorrowingServiceAsAlice.debtBalance();
+    const borrowBalance = await tropykusBorrowingServiceAsAlice.getBalance(
+      doc.address
+    );
 
     const borrowBalancePlusCent = ethers.utils.parseEther(
       (+borrowBalance / 1e18 + forInterest).toFixed(18)
@@ -240,7 +242,7 @@ describe('Tropykus Borrowing Service', () => {
 
     const borrowBalanceAfter = await tropykusBorrowingService
       .connect(alice)
-      .debtBalance();
+      .getBalance(doc.address);
 
     const balanceTropBefore =
       await tropykusBorrowingServiceAsAlice.getLendBalance();
