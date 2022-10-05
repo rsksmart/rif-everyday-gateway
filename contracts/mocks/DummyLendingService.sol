@@ -28,7 +28,12 @@ contract DummyLendingService is LendingService {
         emit Withdraw(0, msg.sender, address(0), deposited + interest);
     }
 
-    function getBalance(address currency) public view override returns (uint256) {
+    function getBalance(address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
         (uint256 deposited, uint256 interest) = _acme.getBalance(msg.sender);
         return deposited + interest;
     }

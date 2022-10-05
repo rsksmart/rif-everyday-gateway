@@ -21,19 +21,13 @@ contract DummyBorrowService is BorrowService {
             revert InvalidAmount(msg.value);
         }
 
-        require(
-            amount < listings[index].maxAmount,
-            "Liquidity exceeded"
-        );
-        require(
-            amount > listings[index].minAmount,
-            "Min amount not met"
-        );
+        require(amount < listings[index].maxAmount, "Liquidity exceeded");
+        require(amount > listings[index].minAmount, "Min amount not met");
 
         _acme.deposit{value: msg.value}(msg.sender);
         _acme.loan(currency, amount, msg.sender);
 
-        _removeLiquidityInternal(amount,  index);
+        _removeLiquidityInternal(amount, index);
 
         emit Borrow(index, msg.sender, currency, amount, duration);
     }
@@ -52,7 +46,12 @@ contract DummyBorrowService is BorrowService {
 
     function withdraw() public override {}
 
-    function getBalance(address currency) public override view returns (uint256) {
+    function getBalance(address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
         return _acme.getDebtBalance(currency, msg.sender);
     }
 }

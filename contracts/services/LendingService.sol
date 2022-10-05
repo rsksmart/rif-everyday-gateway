@@ -12,5 +12,4 @@ abstract contract LendingService is Service, ILendingService {
     function lend() public payable virtual;
 
     function withdraw() public virtual;
-
 }

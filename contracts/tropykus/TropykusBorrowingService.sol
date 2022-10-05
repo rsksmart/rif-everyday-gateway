@@ -172,10 +172,20 @@ contract TropykusBorrowingService is BorrowService {
         );
         uint256 exchangeRate = abi.decode(data, (uint256));
 
-        emit Withdraw(0, msg.sender, address(0), (tokens * exchangeRate) / 1e18);
+        emit Withdraw(
+            0,
+            msg.sender,
+            address(0),
+            (tokens * exchangeRate) / 1e18
+        );
     }
 
-    function getBalance(address currency) public override view returns (uint256) {
+    function getBalance(address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
         bytes memory data = identity.read(

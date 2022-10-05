@@ -233,11 +233,19 @@ contract ACME is Ownable {
         return _getDebtBalance(currency, msg.sender);
     }
 
-    function getDebtBalance(address currency, address loaner) external view returns(uint256) {
+    function getDebtBalance(address currency, address loaner)
+        external
+        view
+        returns (uint256)
+    {
         return _getDebtBalance(currency, loaner);
     }
 
-    function _getDebtBalance(address currency, address loaner) internal view returns(uint256) {
+    function _getDebtBalance(address currency, address loaner)
+        internal
+        view
+        returns (uint256)
+    {
         return _debts[loaner][currency].amount;
     }
 }

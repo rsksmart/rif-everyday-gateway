@@ -72,7 +72,7 @@ async function deployProvidersContract() {
     'Providers',
     {}
   );
-  console.log("Providers contract deployed at: ", providersContract.address);
+  console.log('Providers contract deployed at: ', providersContract.address);
   return providersContract;
 }
 
@@ -82,8 +82,9 @@ async function setupLending() {
 
   // add providers
   // deploy service provider contracts
-  const { acmeLending, tropykusLendingService } =
-    await deployLendingServices(identityFactory);
+  const { acmeLending, tropykusLendingService } = await deployLendingServices(
+    identityFactory
+  );
 
   const { tropykusBorrowingService } = await deployBorrowingServices(
     identityFactory
@@ -104,7 +105,7 @@ async function setupLending() {
   );
   await addTropykusBorrowingServiceTx.wait();
 
-    await providersContract.getServices()
+  await providersContract.getServices();
   const validateTropykusLendTx = await providersContract.validate(
     true,
     tropykusLendingService.address
@@ -140,7 +141,7 @@ async function setupLending() {
   await (
     await tropykusBorrowingService.addListing({
       currency: tropikusDOC,
-      interestRate:  ethers.utils.parseEther('2'),
+      interestRate: ethers.utils.parseEther('2'),
       loanToValue: 10000,
       loanToValueTokenAddr: NATIVE_CURRENCY,
       maxAmount: 100,
@@ -162,7 +163,7 @@ async function setupLending() {
   await (
     await tropykusBorrowingService.addListing({
       currency: tropikusDOC,
-      interestRate:  ethers.utils.parseEther('0.5'),
+      interestRate: ethers.utils.parseEther('0.5'),
       loanToValue: 10000,
       loanToValueTokenAddr: NATIVE_CURRENCY,
       maxAmount: 100,

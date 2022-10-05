@@ -23,30 +23,32 @@ abstract contract BorrowService is Service, IBorrowService {
 
     function withdraw() public virtual;
 
-    function currentLiquidity(
-        uint256 index
-    ) public view virtual returns (uint256 liquidity) {
+    function currentLiquidity(uint256 index)
+        public
+        view
+        virtual
+        returns (uint256 liquidity)
+    {
         return listings[index].maxAmount;
     }
 
-    function addLiquidity(
-        uint256 amount,
-        uint256 index
-    ) public virtual onlyOwner {
+    function addLiquidity(uint256 amount, uint256 index)
+        public
+        virtual
+        onlyOwner
+    {
         listings[index].maxAmount += amount;
     }
 
-    function removeLiquidity(
-        uint256 amount,
-        uint256 index
-    ) public virtual onlyOwner {
+    function removeLiquidity(uint256 amount, uint256 index)
+        public
+        virtual
+        onlyOwner
+    {
         _removeLiquidityInternal(amount, index);
     }
 
-    function _removeLiquidityInternal(
-        uint256 amount,
-        uint256 index
-    ) internal {
+    function _removeLiquidityInternal(uint256 amount, uint256 index) internal {
         listings[index].maxAmount -= amount;
     }
 }
