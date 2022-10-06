@@ -41,6 +41,8 @@ contract TropykusBorrowingService is BorrowService {
         require(amount > 0, "Non zero borrows");
         require(msg.value > 0, "Non zero collateral");
 
+        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
+
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
@@ -78,6 +80,7 @@ contract TropykusBorrowingService is BorrowService {
         uint256 index
     ) public payable override {
         require(amount > 0, "Non zero borrows");
+        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
@@ -153,6 +156,7 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     function withdraw() public override {
+        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
         bytes memory balanceData = identity.read(

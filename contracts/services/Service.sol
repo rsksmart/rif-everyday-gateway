@@ -55,4 +55,3 @@ abstract contract Service is Ownable, IService {
         listings[listing.id] = listing;
     }
 }
-
