@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "contracts/userIdentity/IUserIdentityACL.sol";
+import "hardhat/console.sol";
 
 /**
   @title User Identity Access Control List
@@ -48,5 +49,9 @@ contract UserIdentityACL is IUserIdentityACL {
     // to improve readability
     function authorize(address serviceProvider, bool approval) public override {
         _allowedContractCalls[msg.sender][serviceProvider] = approval;
+    }
+
+    fallback() external {
+        console.log("Fallback called");
     }
 }

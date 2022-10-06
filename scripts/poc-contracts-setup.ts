@@ -21,7 +21,7 @@ const tropykusContracts = {
 async function deployIdentityFactory() {
   const { contract: identityFactory } =
     await deployContract<UserIdentityFactory>('UserIdentityFactory', {});
-
+  console.log('UserIdentityFactory deployed at: ', identityFactory.address);
   return identityFactory;
 }
 

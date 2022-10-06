@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "contracts/services/Service.sol";
+import "contracts/services/IBorrowService.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
     constructor() {
