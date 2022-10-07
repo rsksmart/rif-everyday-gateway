@@ -33,6 +33,12 @@ export default <HardhatUserConfig>{
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
     },
+    testnet: {
+      url: 'https://public-node.testnet.rsk.co',
+      accounts: {
+        mnemonic: process.env.HDWALLET_MNEMONIC,
+      },
+    },
   },
   typechain: {
     target: 'ethers-v5',

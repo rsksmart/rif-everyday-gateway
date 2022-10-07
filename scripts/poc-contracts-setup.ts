@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import {
   ACME,
   IdentityLendingService,
@@ -17,6 +17,15 @@ const tropykusContracts = {
   crbtc: '0x7bc06c482dead17c0e297afbc32f6e63d3846650',
   cdoc: '0x4a679253410272dd5232b3ff7cf5dbb88f295319',
 };
+const tropykusContractsTestnet = {
+  comptroller: '0xb1bec5376929b4e0235f1353819dba92c4b0c6bb',
+  oracle: '0x9fbB872D3B45f95b4E3126BC767553D3Fa1e31C0',
+  crbtc: '0x5b35072cd6110606c8421e013304110fa04a32a3',
+  cdoc: '0x71e6b108d823c2786f8ef63a3e0589576b4f3914',
+};
+const docAddressTestnet = '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0';
+const onTestnet = false; // hre.network.config.chainId === 31;
+console.log('onTestnet', onTestnet);
 
 async function deployIdentityFactory() {
   const { contract: identityFactory } =
@@ -29,7 +38,9 @@ async function deployBorrowingServices(identityFactory: UserIdentityFactory) {
   const { contract: tropykusBorrowingService } =
     await deployContract<TropykusBorrowingService>('TropykusBorrowingService', {
       identityFactory: identityFactory.address,
-      tropykusContracts,
+      tropykusContracts: onTestnet
+        ? tropykusContractsTestnet
+        : tropykusContracts,
     });
   return { tropykusBorrowingService };
 }
@@ -40,10 +51,10 @@ async function deployLendingServices(identityFactory: UserIdentityFactory) {
     signers: [owner],
   } = await deployContract<ACME>('ACME', {});
 
-  // Add initial liquidity of 100 RBTC
+  // Add initial liquidity of 0.001 RBTC
   await owner.sendTransaction({
     to: acmeLending.address,
-    value: ethers.utils.parseEther('100'),
+    value: ethers.utils.parseEther('0.001'),
   });
 
   // const { contract: dummyLendingService } =
@@ -55,7 +66,9 @@ async function deployLendingServices(identityFactory: UserIdentityFactory) {
   const { contract: tropykusLendingService } = await deployContract(
     'TropykusLendingService',
     {
-      crbtc: '0x7bc06c482dead17c0e297afbc32f6e63d3846650',
+      crbtc: onTestnet
+        ? tropykusContractsTestnet.crbtc
+        : tropykusContracts.crbtc,
       userIdentityFactory: identityFactory.address,
     }
   );
@@ -153,7 +166,7 @@ async function setupLending() {
       interestRate: ethers.utils.parseEther('0.02'), // 2%
       loanToValue: ethers.utils.parseEther('10000'),
       loanToValueTokenAddr: NATIVE_CURRENCY,
-      currency: tropikusDOC,
+      currency: onTestnet ? docAddressTestnet : tropikusDOC,
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
@@ -169,7 +182,7 @@ async function setupLending() {
       interestRate: ethers.utils.parseEther('0.03'), // 3%
       loanToValue: ethers.utils.parseEther('10000'),
       loanToValueTokenAddr: NATIVE_CURRENCY,
-      currency: tropikusDOC,
+      currency: onTestnet ? docAddressTestnet : tropikusDOC,
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
@@ -185,7 +198,7 @@ async function setupLending() {
       interestRate: ethers.utils.parseEther('0.05'), // 5%
       loanToValue: ethers.utils.parseEther('10000'),
       loanToValueTokenAddr: NATIVE_CURRENCY,
-      currency: tropikusDOC,
+      currency: onTestnet ? docAddressTestnet : tropikusDOC,
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
