@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/services/LendingService.sol";
-import "contracts/mocks/ACME.sol";
+import "../services/LendingService.sol";
+import "./ACME.sol";
 
 contract DummyLendingService is LendingService {
     ACME private _acme;
 
-    constructor(ACME acme) {
+    constructor(ACME acme) LendingService("ACME") {
         _acme = acme;
     }
 

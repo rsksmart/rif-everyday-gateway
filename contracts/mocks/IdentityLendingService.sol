@@ -9,7 +9,9 @@ contract IdentityLendingService is LendingService {
     ACME private _acmeLending;
     UserIdentityFactory private _userIdentityFactory;
 
-    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory) {
+    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory)
+        LendingService("ACME")
+    {
         _acmeLending = acmeLending;
         _userIdentityFactory = userIdentityFactory;
     }

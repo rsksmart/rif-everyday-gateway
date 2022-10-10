@@ -7,5 +7,5 @@ import "contracts/userIdentity/IUserIdentityACL.sol";
 interface IUserIdentityFactory is IUserIdentityACL {
     function getIdentity(address user) external view returns (UserIdentity);
 
-    function createIdentity(address user) external;
+    function createIdentity(address user) external returns (UserIdentity);
 }

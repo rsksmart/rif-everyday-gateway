@@ -5,8 +5,9 @@ import "contracts/services/Service.sol";
 import "contracts/services/IBorrowService.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
-    constructor() {
+    constructor(string memory serviceProviderName) {
         serviceType = ServiceType.Borrowing;
+        serviceProviderName = serviceProviderName;
     }
 
     function borrow(
@@ -23,6 +24,12 @@ abstract contract BorrowService is Service, IBorrowService {
     ) public payable virtual;
 
     function withdraw() public virtual;
+
+    function calculateRequiredCollateral(uint256 amount, address currency)
+        external
+        view
+        virtual
+        returns (uint256);
 
     function currentLiquidity(uint256 index)
         public

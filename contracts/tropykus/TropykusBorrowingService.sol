@@ -4,9 +4,11 @@ pragma solidity ^0.8.16;
 import "contracts/services/BorrowService.sol";
 import "contracts/userIdentity/UserIdentityFactory.sol";
 import "contracts/userIdentity/UserIdentity.sol";
+import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
 
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
+    error MissingIdentity(address user);
 
     address private _comptroller;
     address private _oracle;
@@ -24,7 +26,7 @@ contract TropykusBorrowingService is BorrowService {
     constructor(
         UserIdentityFactory userIdentityFactory,
         TropykusContracts memory contracts
-    ) {
+    ) BorrowService("Tropykus") {
         _comptroller = contracts.comptroller;
         _oracle = contracts.oracle;
         _crbtc = contracts.crbtc;
@@ -41,12 +43,16 @@ contract TropykusBorrowingService is BorrowService {
         require(amount > 0, "Non zero borrows");
         require(msg.value > 0, "Non zero collateral");
 
-        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
-
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
-        uint256 amountToLend = calculateAmountToLend(amount);
+        if (address(identity) == address(0)) {
+            identity = UserIdentityFactory(_userIdentityFactory).createIdentity(
+                    msg.sender
+                );
+        }
+
+        uint256 amountToLend = calculateRequiredCollateral(amount, currency);
         if (msg.value < amountToLend)
             revert InvalidCollateralAmount(msg.value, amountToLend);
 
@@ -80,9 +86,12 @@ contract TropykusBorrowingService is BorrowService {
         uint256 index
     ) public payable override {
         require(amount > 0, "Non zero borrows");
-        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
+
+        if (address(identity) == address(0)) {
+            revert MissingIdentity(msg.sender);
+        }
 
         identity.sendTokens(
             address(_cdoc),
@@ -95,9 +104,13 @@ contract TropykusBorrowingService is BorrowService {
         emit Pay(index, msg.sender, currency, amount);
     }
 
-    function getLendBalance() public view returns (uint256) {
+    function getCollateralBalance() public view returns (uint256) {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
+        // If identity is 0 then The user has n't ever interacted with the protocol
+        if (address(identity) == address(0)) {
+            return 0;
+        }
 
         bytes memory data = identity.read(
             address(_crbtc),
@@ -114,36 +127,18 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     // Only using RBTC as collateral after will be defining by the listing loanToValueTokenAddr
-    function calculateAmountToLend(uint256 amount)
+    function calculateRequiredCollateral(uint256 amount, address currency)
         public
         view
+        override
         returns (uint256)
     {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-
-        bytes memory priceCollateralData = identity.read(
-            address(_oracle),
-            abi.encodeWithSignature("getUnderlyingPrice(address)", _crbtc)
+        uint256 rbtcPrice = IPriceOracleProxy(_oracle).getUnderlyingPrice(
+            _crbtc
         );
-
-        uint256 rbtcPrice = abi.decode(priceCollateralData, (uint256));
-
-        bytes memory priceCurrencyData = identity.read(
-            address(_oracle),
-            abi.encodeWithSignature("getUnderlyingPrice(address)", _cdoc)
-        );
-
-        uint256 docPrice = abi.decode(priceCurrencyData, (uint256));
-
-        bytes memory collateralMarketData = identity.read(
-            address(_comptroller),
-            abi.encodeWithSignature("markets(address)", address(_crbtc))
-        );
-
-        (, uint256 collateralFactor, ) = abi.decode(
-            collateralMarketData,
-            (bool, uint256, bool)
+        uint256 docPrice = IPriceOracleProxy(_oracle).getUnderlyingPrice(_cdoc);
+        (, uint256 collateralFactor) = IComptrollerG6(_comptroller).markets(
+            _crbtc
         );
 
         return
@@ -151,14 +146,13 @@ contract TropykusBorrowingService is BorrowService {
             (collateralFactor * rbtcPrice);
     }
 
-    function createIdentity() public {
-        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
-    }
-
     function withdraw() public override {
-        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
+
+        if (address(identity) == address(0)) {
+            revert MissingIdentity(msg.sender);
+        }
         bytes memory balanceData = identity.read(
             address(_crbtc),
             abi.encodeWithSignature("balanceOf(address)", address(identity))
@@ -192,6 +186,10 @@ contract TropykusBorrowingService is BorrowService {
     {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
+        if (address(identity) == address(0)) {
+            return 0;
+        }
+
         bytes memory data = identity.read(
             address(_cdoc),
             abi.encodeWithSignature(

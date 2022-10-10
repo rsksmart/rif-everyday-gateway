@@ -24,7 +24,7 @@ const tropykusContractsTestnet = {
   cdoc: '0x71e6b108d823c2786f8ef63a3e0589576b4f3914',
 };
 const docAddressTestnet = '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0';
-const onTestnet = false; // hre.network.config.chainId === 31;
+const onTestnet = true; // hre.network.config.chainId === 31;
 console.log('onTestnet', onTestnet);
 
 async function deployIdentityFactory() {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/services/BorrowService.sol";
-import "contracts/mocks/ACME.sol";
+import "../services/BorrowService.sol";
+import "./ACME.sol";
 
 contract DummyBorrowService is BorrowService {
     ACME private _acme;
 
-    constructor(ACME acme) {
+    constructor(ACME acme) BorrowService("ACME") {
         _acme = acme;
     }
 
@@ -45,6 +45,19 @@ contract DummyBorrowService is BorrowService {
     }
 
     function withdraw() public override {}
+
+    function calculateRequiredCollateral(uint256 amount, address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return 0;
+    }
+
+    function getCollateralBalance() external view override returns (uint256) {
+        return 0;
+    }
 
     function getBalance(address currency)
         public

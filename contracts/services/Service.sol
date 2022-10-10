@@ -3,9 +3,11 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IService.sol";
+import {ServiceType, ServiceListing} from "./ServiceData.sol";
 
 abstract contract Service is Ownable, IService {
     ServiceType public serviceType;
+    string public serviceProviderName;
     mapping(uint256 => ServiceListing) public listings;
 
     uint256 private _listingCounter;

@@ -10,7 +10,9 @@ contract TropykusLendingService is LendingService {
     address private _crbtc;
     UserIdentityFactory private _userIdentityFactory;
 
-    constructor(address crbtc, UserIdentityFactory userIdentityFactory) {
+    constructor(address crbtc, UserIdentityFactory userIdentityFactory)
+        LendingService("Tropykus")
+    {
         _crbtc = crbtc;
         _userIdentityFactory = userIdentityFactory;
     }
