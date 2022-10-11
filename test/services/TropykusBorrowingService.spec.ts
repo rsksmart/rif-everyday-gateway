@@ -69,10 +69,6 @@ describe('Tropykus Borrowing Service', () => {
         .connect(alice)
         .authorize(tropykusBorrowingService.address, true)
     ).wait();
-
-    await (
-      await tropykusBorrowingService.connect(alice).createIdentity()
-    ).wait();
   });
 
   it.skip('should allow to borrow DOC after lending RBTC on tropykus', async () => {
@@ -80,8 +76,9 @@ describe('Tropykus Borrowing Service', () => {
 
     const calculateAmountToLend = await tropykusBorrowingService
       .connect(alice)
-      .calculateAmountToLend(
-        ethers.utils.parseEther(amountToBorrow.toString())
+      .calculateRequiredCollateral(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        ethers.constants.AddressZero
       );
     const amountToLend = +calculateAmountToLend / 1e18;
 
@@ -100,7 +97,7 @@ describe('Tropykus Borrowing Service', () => {
 
     const balanceTropAfter = await tropykusBorrowingService
       .connect(alice)
-      .getLendBalance();
+      .getCollateralBalance();
 
     expect(+balanceTropAfter / 1e18).to.equal(amountToLend);
 
@@ -119,8 +116,9 @@ describe('Tropykus Borrowing Service', () => {
     const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
     const calculateAmountToLend = await tropykusBorrowingService
       .connect(alice)
-      .calculateAmountToLend(
-        ethers.utils.parseEther(amountToBorrow.toString())
+      .calculateRequiredCollateral(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        ethers.constants.AddressZero
       );
     const amountToLend = +calculateAmountToLend / 1e18;
 
@@ -188,8 +186,9 @@ describe('Tropykus Borrowing Service', () => {
     const tropykusBorrowingServiceAsAlice =
       tropykusBorrowingService.connect(alice);
     const calculateAmountToLend =
-      await tropykusBorrowingServiceAsAlice.calculateAmountToLend(
-        ethers.utils.parseEther(amountToBorrow.toString())
+      await tropykusBorrowingServiceAsAlice.calculateRequiredCollateral(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        ethers.constants.AddressZero
       );
     const amountToLend = +calculateAmountToLend / 1e18;
 
@@ -245,14 +244,14 @@ describe('Tropykus Borrowing Service', () => {
       .getBalance(doc.address);
 
     const balanceTropBefore =
-      await tropykusBorrowingServiceAsAlice.getLendBalance();
+      await tropykusBorrowingServiceAsAlice.getCollateralBalance();
     expect(+balanceTropBefore / 1e18).to.equal(amountToLend);
 
     const withdrawTx = await tropykusBorrowingServiceAsAlice.withdraw();
     await withdrawTx.wait();
 
     const balanceTropAfter =
-      await tropykusBorrowingServiceAsAlice.getLendBalance();
+      await tropykusBorrowingServiceAsAlice.getCollateralBalance();
     expect(+balanceTropAfter / 1e18).to.equal(0);
   });
 });
