@@ -9,6 +9,7 @@ import "../userIdentity/UserIdentity.sol";
 contract TropykusLendingService is LendingService {
     address private _crbtc;
     UserIdentityFactory private _userIdentityFactory;
+    uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
 
     constructor(address crbtc, UserIdentityFactory userIdentityFactory)
         LendingService("Tropykus")
@@ -31,7 +32,12 @@ contract TropykusLendingService is LendingService {
             abi.encodeWithSignature("mint()")
         );
 
-        emit Lend(0, msg.sender, address(0), msg.value);
+        emit Lend({
+            listingId: 0,
+            lender: msg.sender,
+            currency: address(0),
+            amount: msg.value
+        });
     }
 
     function withdraw() public override {
@@ -54,12 +60,12 @@ contract TropykusLendingService is LendingService {
         );
         uint256 exchangeRate = abi.decode(data, (uint256));
 
-        emit Withdraw(
-            0,
-            msg.sender,
-            address(0),
-            (tokens * exchangeRate) / 1e18
-        );
+        emit Withdraw({
+            listingId: 0,
+            withdrawer: msg.sender,
+            currency: address(0),
+            amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
+        });
     }
 
     function getBalance(address currency)
@@ -82,6 +88,6 @@ contract TropykusLendingService is LendingService {
             abi.encodeWithSignature("balanceOf(address)", address(identity))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
-        return (exchangeRate * tokens) / 1e18;
+        return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 }

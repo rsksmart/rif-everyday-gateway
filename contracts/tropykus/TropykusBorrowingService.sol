@@ -9,6 +9,12 @@ import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.so
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
+    error NonZeroAmountAllowed();
+    error NonZeroCollateralAllowed();
+
+    uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
+    // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
+    uint256 constant _DELTA_COLLATERAL_WITH_PRECISION = 5e18;
 
     address private _comptroller;
     address private _oracle;
@@ -40,8 +46,8 @@ contract TropykusBorrowingService is BorrowService {
         uint256 index,
         uint256 duration
     ) public payable override {
-        require(amount > 0, "Non zero borrows");
-        require(msg.value > 0, "Non zero collateral");
+        if (amount <= 0) revert NonZeroAmountAllowed();
+        if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
@@ -77,7 +83,13 @@ contract TropykusBorrowingService is BorrowService {
             currency
         );
 
-        emit Borrow(index, msg.sender, currency, amount, duration);
+        emit Borrow({
+            listingId: index,
+            borrower: msg.sender,
+            currency: currency,
+            amount: amount,
+            duration: duration
+        });
     }
 
     function pay(
@@ -85,7 +97,7 @@ contract TropykusBorrowingService is BorrowService {
         address currency,
         uint256 index
     ) public payable override {
-        require(amount > 0, "Non zero borrows");
+        if (amount <= 0) revert NonZeroAmountAllowed();
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
@@ -101,7 +113,12 @@ contract TropykusBorrowingService is BorrowService {
             _cdoc
         );
 
-        emit Pay(index, msg.sender, currency, amount);
+        emit Pay({
+            listingId: index,
+            borrower: msg.sender,
+            currency: currency,
+            amount: amount
+        });
     }
 
     function getCollateralBalance() public view returns (uint256) {
@@ -123,7 +140,7 @@ contract TropykusBorrowingService is BorrowService {
             abi.encodeWithSignature("balanceOf(address)", address(identity))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
-        return (exchangeRate * tokens) / 1e18;
+        return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
     // Only using RBTC as collateral after will be defining by the listing loanToValueTokenAddr
@@ -142,8 +159,8 @@ contract TropykusBorrowingService is BorrowService {
         );
 
         return
-            (((amount + 5e18) * docPrice) * 1e18) /
-            (collateralFactor * rbtcPrice);
+            (((amount + _DELTA_COLLATERAL_WITH_PRECISION) * docPrice) *
+                _UNIT_DECIMAL_PRECISION) / (collateralFactor * rbtcPrice);
     }
 
     function withdraw() public override {
@@ -170,12 +187,12 @@ contract TropykusBorrowingService is BorrowService {
         );
         uint256 exchangeRate = abi.decode(data, (uint256));
 
-        emit Withdraw(
-            0,
-            msg.sender,
-            address(0),
-            (tokens * exchangeRate) / 1e18
-        );
+        emit Withdraw({
+            listingId: 0,
+            withdrawer: msg.sender,
+            currency: address(0),
+            amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
+        });
     }
 
     function getBalance(address currency)
