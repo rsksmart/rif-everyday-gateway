@@ -14,7 +14,7 @@ describe('Tropykus Lending Service', () => {
   let bob: SignerWithAddress;
   let tropykusLendingService: TropykusLendingService;
   let userIdentity: UserIdentityFactory;
-  const crbtc = '0x5b35072cd6110606c8421e013304110fa04a32a3';
+  const crbtc = '0x7bc06c482dead17c0e297afbc32f6e63d3846650';
 
   beforeEach(async () => {
     [owner, alice, bob] = await ethers.getSigners();
@@ -28,7 +28,6 @@ describe('Tropykus Lending Service', () => {
       .deploy()) as UserIdentityFactory;
 
     await userIdentity.deployed();
-    console.log('userIdentity:', userIdentity.address);
 
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
@@ -38,7 +37,6 @@ describe('Tropykus Lending Service', () => {
       crbtc,
       userIdentity.address
     )) as TropykusLendingService;
-    console.log('topykusLendingService:', tropykusLendingService.address);
 
     await tropykusLendingService.deployed();
 
@@ -50,20 +48,13 @@ describe('Tropykus Lending Service', () => {
   });
 
   it.skip('should allow to lend RBTC on tropykus', async () => {
-    const balanceBefore =
-      +(await ethers.provider.getBalance(alice.address)) / 1e18;
-    console.log('balanceBefore', balanceBefore);
     await tropykusLendingService
       .connect(alice)
       .lend({ value: ethers.utils.parseEther('0.5') });
-    const balanceAfter =
-      +(await ethers.provider.getBalance(alice.address)) / 1e18;
-    console.log('balanceAfter', balanceAfter);
 
     const tropBalance = await tropykusLendingService
       .connect(alice)
-      .getBalance();
-    console.log('balance:', +tropBalance / 1e18);
+      .getBalance(ethers.constants.AddressZero);
 
     expect(+tropBalance / 1e18).to.be.equals(0.5);
   });
@@ -76,28 +67,18 @@ describe('Tropykus Lending Service', () => {
     const aliceId = await userIdentity
       .connect(alice)
       .getIdentity(alice.address);
-    console.log('alice identity', aliceId);
 
     const balanceTroBefore = await tropykusLendingService
       .connect(alice)
-      .getBalance();
-    console.log('balance:', +balanceTroBefore / 1e18);
+      .getBalance(ethers.constants.AddressZero);
 
     expect(+balanceTroBefore / 1e18).to.be.equals(0.5);
-    const balanceBefore =
-      +(await ethers.provider.getBalance(alice.address)) / 1e18;
-    console.log('balanceBefore', balanceBefore);
 
     await tropykusLendingService.connect(alice).withdraw();
 
-    const balanceAfter =
-      +(await ethers.provider.getBalance(alice.address)) / 1e18;
-    console.log('balanceAfter', balanceAfter);
-
     const balanceTropAfter = await tropykusLendingService
       .connect(alice)
-      .getBalance();
-    console.log('balance:', +balanceTropAfter / 1e18);
+      .getBalance(ethers.constants.AddressZero);
 
     expect(+balanceTropAfter / 1e18).to.be.equals(0);
   });

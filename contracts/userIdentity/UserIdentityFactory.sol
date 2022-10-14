@@ -16,9 +16,14 @@ contract UserIdentityFactory is UserIdentityACL, IUserIdentityFactory {
         return _identities[user];
     }
 
-    function createIdentity(address user) public canRetrieveIdentity(user) {
+    function createIdentity(address user)
+        public
+        canRetrieveIdentity(user)
+        returns (UserIdentity)
+    {
         if (address(_identities[user]) == address(0x0)) {
             _identities[user] = new UserIdentity(user, address(this));
         }
+        return _identities[user];
     }
 }

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/services/BorrowService.sol";
-import "contracts/mocks/ACME.sol";
+import "../services/BorrowService.sol";
+import "./ACME.sol";
 
 contract DummyBorrowService is BorrowService {
     ACME private _acme;
 
-    constructor(ACME acme) {
+    constructor(ACME acme) BorrowService("ACME") {
         _acme = acme;
     }
 
@@ -21,19 +21,13 @@ contract DummyBorrowService is BorrowService {
             revert InvalidAmount(msg.value);
         }
 
-        require(
-            amount < listings[currency][index].maxAmount,
-            "Liquidity exceeded"
-        );
-        require(
-            amount > listings[currency][index].minAmount,
-            "Min amount not met"
-        );
+        require(amount < listings[index].maxAmount, "Liquidity exceeded");
+        require(amount > listings[index].minAmount, "Min amount not met");
 
         _acme.deposit{value: msg.value}(msg.sender);
         _acme.loan(currency, amount, msg.sender);
 
-        _removeLiquidityInternal(amount, currency, index);
+        _removeLiquidityInternal(amount, index);
 
         emit Borrow(index, msg.sender, currency, amount, duration);
     }
@@ -48,5 +42,29 @@ contract DummyBorrowService is BorrowService {
         _acme.repay(currency, amount, address(this), msg.sender);
 
         emit Pay(index, msg.sender, currency, amount);
+    }
+
+    function withdraw() public override {}
+
+    function calculateRequiredCollateral(uint256 amount, address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return 0;
+    }
+
+    function getCollateralBalance() external view override returns (uint256) {
+        return 0;
+    }
+
+    function getBalance(address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
+        return _acme.getDebtBalance(currency, msg.sender);
     }
 }

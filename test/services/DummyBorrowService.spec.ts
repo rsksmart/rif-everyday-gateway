@@ -11,6 +11,7 @@ import {
   ERC677__factory,
 } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { PaybackOption } from '../constants/service';
 
 const NATIVE_CURRENCY = constants.AddressZero;
 
@@ -44,201 +45,128 @@ describe('BorrowService', () => {
 
     expect(deployed.address).not.equal(constants.AddressZero);
   });
-  it('should add a new listing', async () => {
-    const listing = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
-      interestRate: 5,
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
-    });
-
-    await listing.wait();
-
-    const listingsCount = await borrowService.getListingsCount(NATIVE_CURRENCY);
-
-    expect(listingsCount).equal(1);
-  });
   it('should return borrow service listings current liquidity', async () => {
-    const initialLiquidity = await borrowService.currentLiquidity(
-      NATIVE_CURRENCY,
-      0
-    );
+    const initialLiquidity = await borrowService.currentLiquidity(0);
 
     const listing = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
+      id: 0,
+      minAmount: 1,
+      maxAmount: 100,
+      minDuration: 0,
+      maxDuration: 1000,
       interestRate: 5,
       loanToValue: 10000,
       loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+      currency: NATIVE_CURRENCY,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'ACME Borrow Service',
     });
 
     await listing.wait();
 
-    const resultLiquidity = await borrowService.currentLiquidity(
-      NATIVE_CURRENCY,
-      0
-    );
+    const resultLiquidity = await borrowService.currentLiquidity(0);
 
     expect(initialLiquidity).equal(0);
     expect(resultLiquidity).equal(100);
   });
-  it('should add liquidity to the borrow service listing', async () => {
+  it('should add a new listing', async () => {
     const listing = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
+      id: 0,
+      minAmount: 0,
+      maxAmount: 100,
+      minDuration: 0,
+      maxDuration: 1000,
       interestRate: 5,
       loanToValue: 10000,
       loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+      currency: NATIVE_CURRENCY,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'ACME Borrow Service',
     });
 
     await listing.wait();
 
-    const initialLiquidity = await borrowService.currentLiquidity(
-      NATIVE_CURRENCY,
-      0
-    );
+    const listingsCount = await borrowService.getListingsCount();
 
-    const liquidityTx = await borrowService.addLiquidity(
-      100,
-      NATIVE_CURRENCY,
-      0
-    );
-
-    await liquidityTx.wait();
-
-    const resultLiquidity = await borrowService.currentLiquidity(
-      NATIVE_CURRENCY,
-      0
-    );
-
-    expect(initialLiquidity).equal(100);
-    expect(resultLiquidity).equal(200);
+    expect(listingsCount).equal(1);
   });
-  it('should remove liquidity from the borrow service listing', async () => {
-    const listing = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
-      interestRate: 5,
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+
+  describe('Borrow Listings', () => {
+    beforeEach(async () => {
+      const listingTx = await borrowService.addListing({
+        id: 0,
+        minAmount: 1,
+        maxAmount: 100,
+        minDuration: 0,
+        maxDuration: 1000,
+        interestRate: 5,
+        loanToValue: 10000,
+        loanToValueTokenAddr: NATIVE_CURRENCY,
+        currency: NATIVE_CURRENCY,
+        payBackOption: PaybackOption.Day,
+        enabled: true,
+        name: 'ACME Borrow Service',
+      });
+
+      await listingTx.wait();
     });
+    it('should add liquidity to the borrow service listing', async () => {
+      const initialLiquidity = await borrowService.currentLiquidity(0);
 
-    await listing.wait();
+      const liquidityTx = await borrowService.addLiquidity(100, 0);
 
-    const initialLiquidity = await borrowService.currentLiquidity(
-      NATIVE_CURRENCY,
-      0
-    );
+      await liquidityTx.wait();
 
-    const liquidityTx = await borrowService.removeLiquidity(
-      50,
-      NATIVE_CURRENCY,
-      0
-    );
+      const resultLiquidity = await borrowService.currentLiquidity(0);
 
-    await liquidityTx.wait();
-
-    const resultLiquidity = await borrowService.currentLiquidity(
-      NATIVE_CURRENCY,
-      0
-    );
-
-    expect(initialLiquidity).equal(100);
-    expect(resultLiquidity).equal(50);
-  });
-  it('should remove a listing', async () => {
-    const listing = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
-      interestRate: 5,
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+      expect(initialLiquidity).equal(100);
+      expect(resultLiquidity).equal(200);
     });
+    it('should remove liquidity from the borrow service listing', async () => {
+      const initialLiquidity = await borrowService.currentLiquidity(0);
 
-    await listing.wait();
+      const liquidityTx = await borrowService.removeLiquidity(50, 0);
 
-    const initialListingsCount = await borrowService.getListingsCount(
-      NATIVE_CURRENCY
-    );
+      await liquidityTx.wait();
 
-    const removeListingTx = await borrowService.removeListing(
-      0,
-      NATIVE_CURRENCY
-    );
+      const resultLiquidity = await borrowService.currentLiquidity(0);
 
-    await removeListingTx.wait();
-
-    const resultListingsCount = await borrowService.getListingsCount(
-      NATIVE_CURRENCY
-    );
-
-    expect(initialListingsCount).equal(1);
-    expect(resultListingsCount).equal(0);
-  });
-  it('should return a listing', async () => {
-    const listing = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
-      interestRate: 5,
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+      expect(initialLiquidity).equal(100);
+      expect(resultLiquidity).equal(50);
     });
+    it('should disable a listing', async () => {
+      const initialListingsCount = await borrowService.getListingsCount();
 
-    await listing.wait();
+      const disableListingTx = await borrowService.disableListing(0);
 
-    const initialListingsCount = await borrowService.getListingsCount(
-      NATIVE_CURRENCY
-    );
+      await disableListingTx.wait();
 
-    const removeListingTx = await borrowService.removeListing(
-      0,
-      NATIVE_CURRENCY
-    );
+      const resultListingsCount = await borrowService.getListingsCount();
 
-    await removeListingTx.wait();
+      expect(initialListingsCount).equal(1);
+      expect(resultListingsCount).equal(1);
 
-    const resultListingsCount = await borrowService.getListingsCount(
-      NATIVE_CURRENCY
-    );
-
-    expect(initialListingsCount).equal(1);
-    expect(resultListingsCount).equal(0);
-  });
-  it('should return borrow service count of a given currency', async () => {
-    const listingTx = await borrowService.addListing({
-      currency: NATIVE_CURRENCY,
-      interestRate: 5,
-      loanToValue: 10000,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
-      maxAmount: 100,
-      minAmount: 1,
-      maxDuration: 1000,
+      const listing = await borrowService.getListing(0);
+      expect(listing.enabled).equal(false);
     });
+    it('should return a listing', async () => {
+      const listing = await borrowService.getListing(0);
 
-    await listingTx.wait();
-
-    const listing = await borrowService.getListing(0, NATIVE_CURRENCY);
-
-    expect(listing.currency).equal(NATIVE_CURRENCY);
-    expect(listing.interestRate).equal(5);
-    expect(listing.loanToValue).equal(10000);
-    expect(listing.loanToValueTokenAddr).equal(NATIVE_CURRENCY);
-    expect(listing.maxAmount).equal(100);
-    expect(listing.minAmount).equal(1);
-    expect(listing.maxDuration).equal(1000);
+      expect(listing.id).equal(0);
+      expect(listing.minAmount).equal(1);
+      expect(listing.maxAmount).equal(100);
+      expect(listing.minDuration).equal(0);
+      expect(listing.maxDuration).equal(1000);
+      expect(listing.interestRate).equal(5);
+      expect(listing.loanToValue).equal(10000);
+      expect(listing.loanToValueTokenAddr).equal(NATIVE_CURRENCY);
+      expect(listing.currency).equal(NATIVE_CURRENCY);
+      expect(listing.payBackOption).equal(PaybackOption.Day);
+      expect(listing.enabled).equal(true);
+      expect(listing.name).equal('ACME Borrow Service');
+    });
   });
 
   describe('Borrow', () => {
@@ -272,13 +200,18 @@ describe('BorrowService', () => {
         +(await acme.getCetCollateralFactor(doc.address)) / 1e18;
 
       const listingTx = await borrowService.addListing({
-        currency: doc.address,
+        id: 0,
+        minAmount: ethers.utils.parseEther('1'),
+        maxAmount: ethers.utils.parseEther('10000'),
+        minDuration: 0,
+        maxDuration: 1000,
         interestRate: 5,
         loanToValue: ethers.utils.parseEther(collateralFactor.toString()),
         loanToValueTokenAddr: NATIVE_CURRENCY,
-        maxAmount: ethers.utils.parseEther('10000'),
-        minAmount: ethers.utils.parseEther('1'),
-        maxDuration: 1000,
+        currency: doc.address,
+        payBackOption: PaybackOption.Day,
+        enabled: true,
+        name: 'ACME Borrow Service',
       });
 
       await listingTx.wait();

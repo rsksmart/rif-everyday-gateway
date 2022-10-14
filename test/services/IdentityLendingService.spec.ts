@@ -78,7 +78,9 @@ describe('Dummier Lending Service', () => {
         .fulfilled;
 
       // Check balance for account1
-      expect(await DLSAsAccount1.getBalance()).to.be.equals(RBTC_TO_LEND);
+      expect(
+        await DLSAsAccount1.getBalance(ethers.constants.AddressZero)
+      ).to.be.equals(RBTC_TO_LEND);
     });
 
     it('should allow account1 to withdraw after lending', async () => {
@@ -93,15 +95,17 @@ describe('Dummier Lending Service', () => {
       expect(DLSAsAccount1.lend({ value: RBTC_TO_LEND })).to.be.fulfilled;
 
       // Check balance for account1
-      expect(await DLSAsAccount1.getBalance()).to.be.equals(RBTC_TO_LEND);
+      expect(
+        await DLSAsAccount1.getBalance(ethers.constants.AddressZero)
+      ).to.be.equals(RBTC_TO_LEND);
 
       // Withdraw from service provider
       await expect(DLSAsAccount1.withdraw()).to.eventually.be.fulfilled;
 
       // Check balance for account1
-      expect(await DLSAsAccount1.getBalance()).to.be.equals(
-        ethers.constants.Zero
-      );
+      expect(
+        await DLSAsAccount1.getBalance(ethers.constants.AddressZero)
+      ).to.be.equals(ethers.constants.Zero);
     });
   });
 });
