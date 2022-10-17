@@ -1,36 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import {ServiceType, ServiceListing} from "./ServiceData.sol";
+import { ServiceListing} from "./ServiceData.sol";
+import "./ERC165.sol";
 
-interface IService {
+interface IService is ERC165 {
     event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     event Withdraw(
         uint256 indexed listingId,
         address indexed withdrawer,
-        address indexed currency,
-        uint256 amount
-    );
-
-    event Lend(
-        uint256 indexed listingId,
-        address indexed lender,
-        address indexed currency,
-        uint256 amount
-    );
-
-    event Borrow(
-        uint256 indexed listingId,
-        address indexed borrower,
-        address indexed currency,
-        uint256 amount,
-        uint256 duration
-    );
-
-    event Pay(
-        uint256 indexed listingId,
-        address indexed borrower,
         address indexed currency,
         uint256 amount
     );
@@ -51,4 +30,8 @@ interface IService {
     function updateListing(ServiceListing memory listing) external;
 
     function getBalance(address currency) external view returns (uint256);
+
+    function getServiceType() external view returns (bytes4);
+
+    function getServiceProviderName() external view returns (string memory);
 }

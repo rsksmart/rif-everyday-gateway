@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/services/Service.sol";
-import "contracts/services/IBorrowService.sol";
+import "../services/Service.sol";
+import "../services/IBorrowService.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
     constructor(string memory serviceProviderName) {
-        serviceType = ServiceType.Borrowing;
+        serviceType = 1; //borrowing/loan
         serviceProviderName = serviceProviderName;
     }
 

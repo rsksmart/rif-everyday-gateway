@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.16;
 
-import "contracts/services/BorrowService.sol";
-import "contracts/userIdentity/UserIdentityFactory.sol";
-import "contracts/userIdentity/UserIdentity.sol";
+import "../services/BorrowService.sol";
+import "../userIdentity/UserIdentityFactory.sol";
+import "../userIdentity/UserIdentity.sol";
 import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
 
 contract TropykusBorrowingService is BorrowService {
@@ -198,7 +198,7 @@ contract TropykusBorrowingService is BorrowService {
     function getBalance(address currency)
         public
         view
-        override
+        override(IService, Service)
         returns (uint256)
     {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
@@ -218,5 +218,30 @@ contract TropykusBorrowingService is BorrowService {
         uint256 borrowBalance = abi.decode(data, (uint256));
 
         return borrowBalance;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override
+        returns (bool)
+    {
+        return
+            interfaceId ==
+            this.getBalance.selector ^
+                this.addListing.selector ^
+                this.disableListing.selector ^
+                this.getListing.selector ^
+                this.getListingsCount.selector ^
+                this.updateListing.selector ^
+                this.getServiceProviderName.selector ^
+                this.getServiceType.selector ^
+                this.borrow.selector ^
+                this.withdraw.selector ^
+                this.pay.selector ^
+                this.calculateRequiredCollateral.selector ^
+                this.getCollateralBalance.selector ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

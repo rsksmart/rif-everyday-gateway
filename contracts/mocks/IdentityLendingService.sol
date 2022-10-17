@@ -59,7 +59,7 @@ contract IdentityLendingService is LendingService {
     function getBalance(address currency)
         public
         view
-        override
+        override(IService, Service)
         returns (uint256)
     {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
@@ -80,5 +80,27 @@ contract IdentityLendingService is LendingService {
         );
 
         return deposited + interest;
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC165)
+        returns (bool)
+    {
+        return
+            interfaceId ==
+            this.getBalance.selector ^
+                this.addListing.selector ^
+                this.disableListing.selector ^
+                this.getListing.selector ^
+                this.getListingsCount.selector ^
+                this.updateListing.selector ^
+                this.getServiceProviderName.selector ^
+                this.getServiceType.selector ^
+                this.lend.selector ^
+                this.withdraw.selector ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

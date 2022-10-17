@@ -3,10 +3,11 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IService.sol";
-import {ServiceType, ServiceListing} from "./ServiceData.sol";
+import {ServiceListing} from "./ServiceData.sol";
+
 
 abstract contract Service is Ownable, IService {
-    ServiceType public serviceType;
+    bytes4 public serviceType;
     string public serviceProviderName;
     mapping(uint256 => ServiceListing) public listings;
 
@@ -55,5 +56,18 @@ abstract contract Service is Ownable, IService {
         onlyOwner
     {
         listings[listing.id] = listing;
+    }
+
+    function getServiceType() external view override returns (bytes4) {
+        return serviceType;
+    }
+
+    function getServiceProviderName()
+        external
+        view
+        override
+        returns (string memory)
+    {
+        return serviceProviderName;
     }
 }

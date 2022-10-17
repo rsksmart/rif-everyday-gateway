@@ -8,11 +8,6 @@ enum PayBackOption {
     year
 }
 
-enum ServiceType {
-    Lending,
-    Borrowing
-}
-
 struct ServiceListing {
     uint256 id;
     uint256 minAmount;

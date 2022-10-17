@@ -7,7 +7,7 @@ import "./ILendingService.sol";
 
 abstract contract LendingService is Service, ILendingService {
     constructor(string memory serviceProviderName) {
-        serviceType = ServiceType.Lending;
+        serviceType = 0; //lending/savings
         serviceProviderName = serviceProviderName;
     }
 

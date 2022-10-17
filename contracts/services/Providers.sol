@@ -1,19 +1,33 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Service.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ServiceTypeManager.sol";
 
 contract Providers is Ownable {
     error InvalidProviderAddress(address provider);
+    error InvalidServiceImplementation(Service service, uint256 serviceType);
 
     mapping(address => Service[]) private _servicesByProvider;
     mapping(address => Service[]) private _pendingServicesByProvider;
     address[] private _providers;
     address[] private _pendingProviders;
     uint256 private _totalServices;
+    ServiceTypeManager private _serviceTypeManager;
+
+    constructor(ServiceTypeManager stm) {
+        _serviceTypeManager = stm;
+    }
 
     function addService(Service service) external {
+        if (!_serviceTypeManager.supportsService(service)) {
+            revert InvalidServiceImplementation(
+                service,
+                service.getServiceType()
+            );
+        }
+
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
         if (!_isOnAddressArray(_pendingProviders, provider))
