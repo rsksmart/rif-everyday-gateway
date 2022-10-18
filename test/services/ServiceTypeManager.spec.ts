@@ -46,7 +46,7 @@ describe('Service Type Manager', () => {
     expect(serviceType).to.equal('Lending');
   });
 
-  it('Should check if the service implements the interface', async () => {
+  it('Should return true if the service implements the interface', async () => {
     const { ServiceTypeManager, DummyLendingService } = await loadFixture(
       initialFixture
     );
@@ -67,5 +67,28 @@ describe('Service Type Manager', () => {
     expect(
       await ServiceTypeManager.supportsService(DummyLendingService.address)
     ).to.be.true;
+  });
+
+  it('Should return false if the service does not implement the interface', async () => {
+    const { ServiceTypeManager, DummyLendingService } = await loadFixture(
+      initialFixture
+    );
+
+    const tx = await ServiceTypeManager.addServiceType('Lending', '0x01ffc9a7');
+
+    await tx.wait();
+
+    const serviceType = await ServiceTypeManager.serviceTypes('0x01ffc9a7');
+
+    expect(serviceType).to.equal('Lending');
+
+    await DummyLendingService.mock.supportsInterface.returns(false);
+    await DummyLendingService.mock.getServiceType.returns(
+      arrayify('0x01ffc9a7')
+    );
+
+    expect(
+      await ServiceTypeManager.supportsService(DummyLendingService.address)
+    ).to.be.false;
   });
 });
