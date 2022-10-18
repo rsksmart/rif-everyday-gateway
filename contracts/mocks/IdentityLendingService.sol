@@ -9,7 +9,9 @@ contract IdentityLendingService is LendingService {
     ACME private _acmeLending;
     UserIdentityFactory private _userIdentityFactory;
 
-    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory) {
+    constructor(ACME acmeLending, UserIdentityFactory userIdentityFactory)
+        LendingService("ACME")
+    {
         _acmeLending = acmeLending;
         _userIdentityFactory = userIdentityFactory;
     }
@@ -28,7 +30,7 @@ contract IdentityLendingService is LendingService {
             abi.encodeWithSignature("deposit()")
         );
 
-        emit Lend(msg.sender, address(0), msg.value);
+        emit Lend(0, msg.sender, address(0), msg.value);
     }
 
     function withdraw() public override {
@@ -51,10 +53,15 @@ contract IdentityLendingService is LendingService {
             abi.encodeWithSignature("withdraw(uint256)", deposited)
         );
 
-        emit Withdraw(msg.sender, address(0), deposited + interest);
+        emit Withdraw(0, msg.sender, address(0), deposited + interest);
     }
 
-    function getBalance() public view override returns (uint256) {
+    function getBalance(address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
             .getIdentity(msg.sender);
 
