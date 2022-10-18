@@ -6,7 +6,7 @@ import "../services/IBorrowService.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
     constructor(string memory serviceProviderName) {
-        serviceType = 1; //borrowing/loan
+        serviceType = type(IBorrowService).interfaceId; //borrowing/loan
         serviceProviderName = serviceProviderName;
     }
 

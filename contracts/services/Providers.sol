@@ -7,7 +7,7 @@ import "./ServiceTypeManager.sol";
 
 contract Providers is Ownable {
     error InvalidProviderAddress(address provider);
-    error InvalidServiceImplementation(Service service, uint256 serviceType);
+    error InvalidServiceImplementation(Service service, bytes4 serviceType);
 
     mapping(address => Service[]) private _servicesByProvider;
     mapping(address => Service[]) private _pendingServicesByProvider;
