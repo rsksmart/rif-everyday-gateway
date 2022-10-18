@@ -8,7 +8,13 @@ import { arrayify, toUtf8Bytes } from 'ethers/lib/utils';
 import { $ServiceTypeManager } from '../../typechain-types/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager';
 import { IService } from '../../typechain-types/contracts/services/IService';
 import { expect } from 'chairc';
-import { ACME, DummyLendingService } from '../../typechain-types';
+import {
+  ACME,
+  DummyLendingService,
+} from '../../typechain-types/contracts/mocks';
+
+const SERVICE_TYPE_NAME = 'Lending';
+const SERVICE_TYPE_INTERFACE_ID = '0x01ffc9a7';
 
 describe('Service Type Manager', () => {
   const initialFixture = async () => {
@@ -37,13 +43,18 @@ describe('Service Type Manager', () => {
       initialFixture
     );
 
-    const tx = await ServiceTypeManager.addServiceType('Lending', '0x01ffc9a7');
+    const tx = await ServiceTypeManager.addServiceType(
+      SERVICE_TYPE_NAME,
+      SERVICE_TYPE_INTERFACE_ID
+    );
 
     await tx.wait();
 
-    const serviceType = await ServiceTypeManager.serviceTypes('0x01ffc9a7');
+    const serviceType = await ServiceTypeManager.serviceTypes(
+      SERVICE_TYPE_INTERFACE_ID
+    );
 
-    expect(serviceType).to.equal('Lending');
+    expect(serviceType).to.equal(SERVICE_TYPE_NAME);
   });
 
   it('Should return true if the service implements the interface', async () => {
@@ -51,17 +62,22 @@ describe('Service Type Manager', () => {
       initialFixture
     );
 
-    const tx = await ServiceTypeManager.addServiceType('Lending', '0x01ffc9a7');
+    const tx = await ServiceTypeManager.addServiceType(
+      SERVICE_TYPE_NAME,
+      SERVICE_TYPE_INTERFACE_ID
+    );
 
     await tx.wait();
 
-    const serviceType = await ServiceTypeManager.serviceTypes('0x01ffc9a7');
+    const serviceType = await ServiceTypeManager.serviceTypes(
+      SERVICE_TYPE_INTERFACE_ID
+    );
 
-    expect(serviceType).to.equal('Lending');
+    expect(serviceType).to.equal(SERVICE_TYPE_NAME);
 
     await DummyLendingService.mock.supportsInterface.returns(true);
     await DummyLendingService.mock.getServiceType.returns(
-      arrayify('0x01ffc9a7')
+      arrayify(SERVICE_TYPE_INTERFACE_ID)
     );
 
     expect(
@@ -74,17 +90,22 @@ describe('Service Type Manager', () => {
       initialFixture
     );
 
-    const tx = await ServiceTypeManager.addServiceType('Lending', '0x01ffc9a7');
+    const tx = await ServiceTypeManager.addServiceType(
+      SERVICE_TYPE_NAME,
+      SERVICE_TYPE_INTERFACE_ID
+    );
 
     await tx.wait();
 
-    const serviceType = await ServiceTypeManager.serviceTypes('0x01ffc9a7');
+    const serviceType = await ServiceTypeManager.serviceTypes(
+      SERVICE_TYPE_INTERFACE_ID
+    );
 
-    expect(serviceType).to.equal('Lending');
+    expect(serviceType).to.equal(SERVICE_TYPE_NAME);
 
     await DummyLendingService.mock.supportsInterface.returns(false);
     await DummyLendingService.mock.getServiceType.returns(
-      arrayify('0x01ffc9a7')
+      arrayify(SERVICE_TYPE_INTERFACE_ID)
     );
 
     expect(
