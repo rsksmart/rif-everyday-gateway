@@ -24,7 +24,7 @@ contract ServiceTypeManager is Ownable {
     }
 
     function supportsService(IService service) public view returns (bool) {
-        //checks if the interfaceId(unique for every service type interface) is 
+        //checks if the interfaceId(unique for every service type interface) is
         //registered and double checks
         //that it actually implements erc165
         return

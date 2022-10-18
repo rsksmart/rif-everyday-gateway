@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import { ServiceListing} from "./ServiceData.sol";
+import {ServiceListing} from "./ServiceData.sol";
 import "./ERC165.sol";
 
 interface IService is ERC165 {

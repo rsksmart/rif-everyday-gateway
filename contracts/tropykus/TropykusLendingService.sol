@@ -91,7 +91,7 @@ contract TropykusLendingService is LendingService {
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
-      function supportsInterface(bytes4 interfaceId)
+    function supportsInterface(bytes4 interfaceId)
         public
         view
         virtual

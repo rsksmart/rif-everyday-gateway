@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IService.sol";
 import {ServiceListing} from "./ServiceData.sol";
 
-
 abstract contract Service is Ownable, IService {
     bytes4 public serviceType;
     string public serviceProviderName;
