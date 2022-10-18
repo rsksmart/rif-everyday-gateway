@@ -1,15 +1,14 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { ethers } from 'hardhat';
-import {
-  IService,
-  // ServiceTypeManager,
-  // ServiceTypeManager__factory,
-} from 'typechain-types';
-import Service from 'artifacts/contracts/services/Service.sol/Service.json';
-import { deployContract, Factory } from 'utils/deployment.utils';
+import DummyLendingServiceJson from '../../artifacts/contracts/mocks/DummyLendingService.sol/DummyLendingService.json';
+import AcmeJson from '../../artifacts/contracts/mocks/ACME.sol/ACME.json';
+import { deployContract } from 'utils/deployment.utils';
 import { deployMockContract } from 'test/utils/mock.utils';
-import { $ServiceTypeManager } from 'typechain-types/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager';
-import { toUtf8Bytes } from 'ethers/lib/utils';
+import { arrayify, toUtf8Bytes } from 'ethers/lib/utils';
+import { $ServiceTypeManager } from '../../typechain-types/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager';
+import { IService } from '../../typechain-types/contracts/services/IService';
+import { expect } from 'chairc';
+import { ACME, DummyLendingService } from '../../typechain-types';
 
 describe('Service Type Manager', () => {
   const initialFixture = async () => {
@@ -18,45 +17,55 @@ describe('Service Type Manager', () => {
     const serviceOwner = signers[1];
 
     const { contract: ServiceTypeManager } =
-      await deployContract<$ServiceTypeManager>(
-        '$ServiceTypeManager',
-        {},
-        (await ethers.getContractFactory(
-          '$ServiceTypeManager',
-          {}
-        )) as Factory<$ServiceTypeManager>
-      );
+      await deployContract<$ServiceTypeManager>('$ServiceTypeManager', {});
 
-    const MockService = await deployMockContract<IService>(
+    const DummyLendingService = await deployMockContract<DummyLendingService>(
       serviceOwner,
-      Service.abi
+      DummyLendingServiceJson.abi
     );
 
     return {
       ServiceTypeManager,
-      MockService,
+      DummyLendingService,
       gatewayOwner,
       serviceOwner,
     };
   };
 
   it('Should add a new service type', async () => {
-    const {
-      ServiceTypeManager,
-      // MockService,
-      // gatewayOwner,
-      // serviceOwner
-    } = await loadFixture(initialFixture);
-
-    const tx = await ServiceTypeManager.addServiceType(
-      'Lending',
-      '0x01ffc9a7'
-    ).then(async (t) => await t.wait());
-    const serviceType = await ServiceTypeManager.serviceTypes(
-      toUtf8Bytes('0x01ffc9a7')
+    const { ServiceTypeManager, DummyLendingService } = await loadFixture(
+      initialFixture
     );
-    console.log(serviceType);
 
-    // expect(serviceType.name).to.equal('0x01ffc9a7');
+    const tx = await ServiceTypeManager.addServiceType('Lending', '0x01ffc9a7');
+
+    await tx.wait();
+
+    const serviceType = await ServiceTypeManager.serviceTypes('0x01ffc9a7');
+
+    expect(serviceType).to.equal('Lending');
+  });
+
+  it('Should check if the service implements the interface', async () => {
+    const { ServiceTypeManager, DummyLendingService } = await loadFixture(
+      initialFixture
+    );
+
+    const tx = await ServiceTypeManager.addServiceType('Lending', '0x01ffc9a7');
+
+    await tx.wait();
+
+    const serviceType = await ServiceTypeManager.serviceTypes('0x01ffc9a7');
+
+    expect(serviceType).to.equal('Lending');
+
+    await DummyLendingService.mock.supportsInterface.returns(true);
+    await DummyLendingService.mock.getServiceType.returns(
+      arrayify('0x01ffc9a7')
+    );
+
+    expect(
+      await ServiceTypeManager.supportsService(DummyLendingService.address)
+    ).to.be.true;
   });
 });
