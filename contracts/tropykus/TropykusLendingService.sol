@@ -98,6 +98,7 @@ contract TropykusLendingService is LendingService {
         override(ERC165)
         returns (bool)
     {
+        // Refactor to use interfaceid == type(I).interfaceId
         return
             interfaceId ==
             this.getBalance.selector ^
