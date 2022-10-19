@@ -29,10 +29,7 @@ contract Providers is Ownable {
             );
         }
 
-        console.log("here");
         address provider = service.owner();
-        console.log("not here");
-
         if (provider == address(0)) revert InvalidProviderAddress(provider);
         if (!_isOnAddressArray(_pendingProviders, provider))
             _pendingProviders.push(provider);
