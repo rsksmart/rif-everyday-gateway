@@ -9,9 +9,6 @@ contract ServiceTypeManager is Ownable {
         string name;
     }
 
-    //0 = lending/savings
-    //1 = borrowing/loan
-
     mapping(bytes4 => ServiceType) public serviceTypes;
     uint256 public serviceTypeCount;
 
