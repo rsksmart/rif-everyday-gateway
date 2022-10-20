@@ -8,7 +8,6 @@ import ServiceTypeManagerJson from '../../artifacts/contracts-exposed/services/S
 import LendingServiceJson from '../../artifacts/contracts-exposed/services/LendingService.sol/$LendingService.json';
 import { $ServiceTypeManager } from '../../typechain-types/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager';
 import { $LendingService } from '../../typechain-types/contracts-exposed/services/LendingService.sol/$LendingService';
-
 describe('Providers', () => {
   const initialFixture = async () => {
     const signers = await ethers.getSigners();

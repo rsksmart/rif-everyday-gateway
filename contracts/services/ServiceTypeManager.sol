@@ -16,7 +16,6 @@ contract ServiceTypeManager is Ownable {
         external
         onlyOwner
     {
-        serviceTypeCount++;
         serviceTypes[interfaceId] = ServiceType(name);
     }
 
