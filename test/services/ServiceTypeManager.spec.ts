@@ -10,6 +10,7 @@ import { ILendingService } from '../../typechain-types/contracts/services/ILendi
 
 const SERVICE_TYPE_NAME = 'Lending';
 const SERVICE_TYPE_INTERFACE_ID = '0x01ffc9a7';
+const UNIMPLEMENTED_SERVICE_TYPE_INTERFACE_ID = '0x01ffc6f2';
 
 describe('Service Type Manager', () => {
   const initialFixture = async () => {
@@ -100,6 +101,20 @@ describe('Service Type Manager', () => {
     await LendingService.mock.supportsInterface.returns(false);
     await LendingService.mock.getServiceType.returns(
       arrayify(SERVICE_TYPE_INTERFACE_ID)
+    );
+
+    expect(await ServiceTypeManager.supportsService(LendingService.address)).to
+      .be.false;
+  });
+
+  it('Should return false when the service type does not exist on the service type manager', async () => {
+    const { ServiceTypeManager, LendingService } = await loadFixture(
+      initialFixture
+    );
+
+    await LendingService.mock.supportsInterface.returns(true);
+    await LendingService.mock.getServiceType.returns(
+      arrayify(UNIMPLEMENTED_SERVICE_TYPE_INTERFACE_ID)
     );
 
     expect(await ServiceTypeManager.supportsService(LendingService.address)).to
