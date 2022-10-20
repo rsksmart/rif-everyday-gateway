@@ -73,42 +73,42 @@ describe('Providers', () => {
     await expect(Providers.addService(LendingService.address)).to.be.reverted;
   });
 
-  // it('Should add multiple services for the same provider', async () => {
-  //   const { Providers, ServiceTypeManager, LendingService, signer } =
-  //     await loadFixture(initialFixture);
-  //
-  //   await ServiceTypeManager.mock.supportsService.returns(true);
-  //   await LendingService.mock.owner.returns(signer.address);
-  //
-  //   const tx = await Providers.addService(LendingService.address);
-  //
-  //   await tx.wait();
-  //
-  //   await expect(Providers.addService(LendingService.address)).to.not.be
-  //     .reverted;
-  // });
+  it('Should add multiple services for the same provider', async () => {
+    const { Providers, ServiceTypeManager, LendingService, signer } =
+      await loadFixture(initialFixture);
 
-  // it('Should return all services', async () => {
-  //   const { Providers, ServiceTypeManager, LendingService, signer } =
-  //     await loadFixture(initialFixture);
-  //
-  //   await ServiceTypeManager.mock.supportsService.returns(true);
-  //   await LendingService.mock.owner.returns(signer.address);
-  //
-  //   let tx = await Providers.addService(LendingService.address);
-  //   await tx.wait();
-  //
-  //   tx = await Providers.validate(true, LendingService.address);
-  //   await tx.wait();
-  //
-  //   tx = await Providers.addService(LendingService.address);
-  //   await tx.wait();
-  //
-  //   const services = await Providers.getServices();
-  //
-  //   expect(services).to.deep.equal([
-  //     LendingService.address,
-  //     LendingService.address,
-  //   ]);
-  // });
+    await ServiceTypeManager.mock.supportsService.returns(true);
+    await LendingService.mock.owner.returns(signer.address);
+
+    const tx = await Providers.addService(LendingService.address);
+
+    await tx.wait();
+
+    await expect(Providers.addService(LendingService.address)).to.not.be
+      .reverted;
+  });
+
+  it('Should return all services', async () => {
+    const { Providers, ServiceTypeManager, LendingService, signer } =
+      await loadFixture(initialFixture);
+
+    await ServiceTypeManager.mock.supportsService.returns(true);
+    await LendingService.mock.owner.returns(signer.address);
+
+    let tx = await Providers.addService(LendingService.address);
+    await tx.wait();
+
+    tx = await Providers.validate(true, LendingService.address);
+    await tx.wait();
+
+    tx = await Providers.addService(LendingService.address);
+    await tx.wait();
+
+    const services = await Providers.getServices();
+
+    expect(services).to.deep.equal([
+      LendingService.address,
+      LendingService.address,
+    ]);
+  });
 });
