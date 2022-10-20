@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "./Service.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ServiceTypeManager.sol";
-import "hardhat/console.sol";
 
 contract Providers is Ownable {
     error InvalidProviderAddress(address provider);

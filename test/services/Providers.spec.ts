@@ -9,9 +9,6 @@ import LendingServiceJson from '../../artifacts/contracts-exposed/services/Lendi
 import { $ServiceTypeManager } from '../../typechain-types/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager';
 import { $LendingService } from '../../typechain-types/contracts-exposed/services/LendingService.sol/$LendingService';
 
-// const SERVICE_TYPE_NAME = 'Lending';
-// const SERVICE_TYPE_INTERFACE_ID = '0x01ffc9a7';
-
 describe('Providers', () => {
   const initialFixture = async () => {
     const signers = await ethers.getSigners();
