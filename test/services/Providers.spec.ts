@@ -104,6 +104,9 @@ describe('Providers', () => {
     tx = await Providers.addService(LendingService.address);
     await tx.wait();
 
+    tx = await Providers.validate(true, LendingService.address);
+    await tx.wait();
+
     const services = await Providers.getServices();
 
     expect(services).to.deep.equal([
