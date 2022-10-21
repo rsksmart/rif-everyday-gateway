@@ -95,7 +95,7 @@ contract TropykusLendingService is LendingService {
         public
         view
         virtual
-        override(ERC165)
+        override(IERC165)
         returns (bool)
     {
         // Refactor to use interfaceid == type(I).interfaceId

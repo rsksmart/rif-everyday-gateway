@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./ERC165.sol";
+import "@openzeppelin/contracts/interfaces/IERC165.sol";
+
 import "./IService.sol";
 
 contract ServiceTypeManager is Ownable {

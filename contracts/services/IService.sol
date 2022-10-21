@@ -2,9 +2,9 @@
 pragma solidity ^0.8.16;
 
 import {ServiceListing} from "./ServiceData.sol";
-import "./ERC165.sol";
+import "@openzeppelin/contracts/interfaces/IERC165.sol";
 
-interface IService is ERC165 {
+interface IService is IERC165 {
     event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     event Withdraw(
