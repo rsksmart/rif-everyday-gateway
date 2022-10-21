@@ -12,10 +12,7 @@ contract SmartWalletFactory is ISmartWalletFactory {
     /**
      * Calculates the Smart Wallet address for an owner EOA
      * @param owner - EOA of the owner of the smart wallet
-     * @param recoverer - Address of that can be used by some contracts to give specific roles to the caller (e.g, a recoverer)
-     * @param index - Allows to create many addresses for the same owner|recoverer
      */
-
     function getSmartWalletAddress(address owner)
         external
         view
@@ -30,7 +27,7 @@ contract SmartWalletFactory is ISmartWalletFactory {
                             abi.encodePacked(
                                 bytes1(0xff),
                                 address(this),
-                                keccak256(abi.encodePacked(owner, 0)) // salt
+                                keccak256(abi.encodePacked(owner, "0")) // salt
                             )
                         )
                     )
@@ -40,19 +37,23 @@ contract SmartWalletFactory is ISmartWalletFactory {
 
     function createUserSmartWallet(address owner) external override {
         _deploy(
+            owner,
             keccak256(
                 abi.encodePacked(
                     owner,
                     address(this),
-                    0 /* INDEX */
+                    "0" /* INDEX */
                 ) // salt
             )
         );
     }
 
-    function _deploy(bytes32 salt) internal returns (address addr) {
+    function _deploy(address owner, bytes32 salt)
+        internal
+        returns (address addr)
+    {
         //Deployment of the Smart Wallet
-        addr = address(new SmartWallet{salt: salt}());
+        addr = address(new SmartWallet{salt: salt}(owner));
         //No info is returned, an event is emitted to inform the new deployment
         emit Deployed(addr, uint256(salt));
     }
