@@ -14,8 +14,6 @@ abstract contract Service is Ownable, IService {
 
     error InvalidAmount(uint256 amount);
 
-    function getBalance(address currency) public view virtual returns (uint256);
-
     function addListing(ServiceListing memory listing)
         public
         override
