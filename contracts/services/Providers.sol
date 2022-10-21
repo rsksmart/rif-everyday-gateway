@@ -11,9 +11,7 @@ contract Providers is Ownable {
     error NonConformity(string NonConformityErrMsg);
 
     mapping(address => Service[]) private _servicesByProvider;
-    mapping(address => Service[]) private _pendingServicesByProvider;
     address[] private _providers;
-    address[] private _pendingProviders;
     uint256 private _totalServices;
     ServiceTypeManager private _serviceTypeManager;
 
@@ -43,17 +41,6 @@ contract Providers is Ownable {
             _pendingProviders.push(provider);
         _pendingServicesByProvider[provider].push(service);
         _totalServices++;
-    }
-
-    function validate(bool approved, Service service) external onlyOwner {
-        address provider = service.owner();
-        if (approved) {
-            if (!_isOnAddressArray(_providers, provider)) {
-                _providers.push(provider);
-            }
-            _servicesByProvider[provider].push(service);
-        }
-        //TODO: else clean _pendingProviders & _pendingServices
     }
 
     function getServices() external view returns (Service[] memory) {
