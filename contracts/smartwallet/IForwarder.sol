@@ -27,6 +27,8 @@ interface IForwarder {
      * @param forwardRequest - all transaction parameters
      * @param suffixData - the extension data used when signing this request.
      * @param signature - signature to validate.
+     * @param data - function call data
+     * @param to - target contract to call
      *
      * the transaction is verified, and then executed.
      * the success and ret of "call" are returned.
@@ -35,8 +37,9 @@ interface IForwarder {
      */
     function execute(
         bytes32 suffixData,
-        ForwardRequest calldata forwardRequest,
-        address feesReceiver,
-        bytes calldata signature
+        ForwardRequest memory forwardRequest,
+        bytes calldata signature,
+        bytes calldata data,
+        address to
     ) external payable returns (bool success, bytes memory ret);
 }
