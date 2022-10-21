@@ -198,7 +198,7 @@ contract TropykusBorrowingService is BorrowService {
     function getBalance(address currency)
         public
         view
-        override(IService, Service)
+        override(IService)
         returns (uint256)
     {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
