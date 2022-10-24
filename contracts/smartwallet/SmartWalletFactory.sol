@@ -27,12 +27,21 @@ contract SmartWalletFactory is ISmartWalletFactory {
                             abi.encodePacked(
                                 bytes1(0xff),
                                 address(this),
-                                keccak256(abi.encodePacked(owner, "0")) // salt
+                                keccak256(
+                                    abi.encodePacked(owner, address(this), "0")
+                                ), // salt
+                                keccak256(_getBytecode(owner))
                             )
                         )
                     )
                 )
             );
+    }
+
+    function _getBytecode(address owner) private view returns (bytes memory) {
+        bytes memory bytecode = type(SmartWallet).creationCode;
+
+        return abi.encodePacked(bytecode, abi.encode(owner));
     }
 
     function createUserSmartWallet(address owner) external override {
