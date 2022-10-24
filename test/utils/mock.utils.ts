@@ -99,3 +99,29 @@ export const deployMockContract = async <C extends Contract<C>>(
 ): Promise<MockContract<C>> => {
   return (await deployWaffleContract(signer, abi as any)) as MockContract<C>;
 };
+
+export const computeSalt = (
+  owner: SignerWithAddress,
+  factoryAddress: string
+): string => {
+  return ethers.utils.id(owner.address + factoryAddress + '0');
+};
+
+export const computeCREATE2Addr = (
+  factoryAddress: string,
+  salt: string,
+  bytecode: string
+): string => {
+  const baseData = [
+    'ff',
+    factoryAddress,
+    salt,
+    ethers.utils.keccak256(bytecode),
+  ]
+    .map((x) => x.replace(/0x/, ''))
+    .join('');
+
+  const computed = ethers.utils.id(baseData).slice(-40).toLocaleLowerCase();
+
+  return `0x${computed}`;
+};
