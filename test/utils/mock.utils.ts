@@ -14,7 +14,7 @@ import {
   Signer,
   Wallet,
 } from 'ethers';
-import { Fragment } from 'ethers/lib/utils';
+import { Fragment, ParamType } from 'ethers/lib/utils';
 import { ethers, network, waffle } from 'hardhat';
 import NetworkHelpers from '@nomicfoundation/hardhat-network-helpers';
 
@@ -104,24 +104,19 @@ export const computeSalt = (
   owner: SignerWithAddress,
   factoryAddress: string
 ): string => {
-  return ethers.utils.id(owner.address + factoryAddress + '0');
+  return ethers.utils.keccak256(
+    ethers.utils.solidityPack(
+      ['address', 'address', 'string'],
+      [owner.address, factoryAddress, '0']
+    )
+  );
 };
 
-export const computeCREATE2Addr = (
-  factoryAddress: string,
-  salt: string,
-  bytecode: string
-): string => {
-  const baseData = [
-    'ff',
-    factoryAddress,
-    salt,
-    ethers.utils.keccak256(bytecode),
-  ]
-    .map((x) => x.replace(/0x/, ''))
-    .join('');
-
-  const computed = ethers.utils.id(baseData).slice(-40).toLocaleLowerCase();
-
-  return `0x${computed}`;
+export const encoder = (
+  types: readonly (string | ParamType)[],
+  values: readonly (string | ParamType)[]
+) => {
+  const abiCoder = ethers.utils.defaultAbiCoder;
+  const encodedParams = abiCoder.encode(types, values);
+  return encodedParams.slice(2);
 };
