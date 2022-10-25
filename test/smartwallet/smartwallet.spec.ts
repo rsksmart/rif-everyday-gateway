@@ -66,7 +66,6 @@ describe('RIF Gateway SmartWallet', () => {
     let externalWallet: Wallet;
 
     beforeEach(async () => {
-      console.log('sadfhkjdsfh');
       // await (
       //   await smartwalletFactory.createUserSmartWallet(smartwalletOwner.address)
       // ).wait();
