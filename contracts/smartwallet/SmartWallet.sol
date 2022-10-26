@@ -35,6 +35,21 @@ contract SmartWallet is IForwarder {
         );
     }
 
+    function getDomainSeparator() public view returns (bytes32) {
+        return
+            keccak256(
+                abi.encode(
+                    keccak256(
+                        "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
+                    ), //hex"8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f",
+                    keccak256("RSK RIF GATEWAY"), //DOMAIN_NAME hex"d41b7f69f4d7734774d21b5548d74704ad02f9f1545db63927a1d58479c576c8"
+                    DATA_VERSION_HASH,
+                    _getChainID(),
+                    address(this)
+                )
+            );
+    }
+
     function _setOwner(address owner) private {
         //To avoid re-entrancy attacks by external contracts, the first thing we do is set
         //the variable that controls "is initialized"
@@ -123,6 +138,21 @@ contract SmartWallet is IForwarder {
             ),
             "Signature mismatch"
         );
+    }
+
+    function recov(
+        bytes32 suffixData,
+        ForwardRequest memory req,
+        bytes memory sig
+    ) public view returns (address) {
+        return
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    domainSeparator,
+                    keccak256(_getEncoded(suffixData, req))
+                )
+            ).recover(sig);
     }
 
     function _getEncoded(bytes32 suffixData, ForwardRequest memory req)
