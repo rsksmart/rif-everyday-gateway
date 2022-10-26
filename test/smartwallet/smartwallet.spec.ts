@@ -1,23 +1,23 @@
 import { expect } from 'chairc';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { loadFixture } from 'ethereum-waffle';
-import {
-  SmartWalletFactory,
-  ForwardRequestStruct,
-  SmartWallet,
-} from 'typechain-types';
+import { SmartWalletFactory, IForwarder, SmartWallet } from 'typechain-types';
 import { smartwalletFactoryFixture } from './fixtures';
 import {
   computeSalt,
   encoder,
   getLocalEip712Signature,
+  getSuffixData,
+  HARDHAT_CHAIN_ID,
   TypedRequestData,
-} from 'test/utils/mock.utils';
+} from './utils';
 import { ethers } from 'hardhat';
-import { SignTypedDataVersion, TypedDataUtils } from '@metamask/eth-sig-util';
 import { Wallet } from 'ethers';
-const ONE_FIELD_IN_BYTES = 32;
-const HARDHAT_CHAIN_ID = 31337;
+
+import {
+  recoverTypedSignature,
+  SignTypedDataVersion,
+} from '@metamask/eth-sig-util';
 
 describe('RIF Gateway SmartWallet', () => {
   let smartwalletFactory: SmartWalletFactory;
@@ -59,6 +59,7 @@ describe('RIF Gateway SmartWallet', () => {
       expect(deployedAddress).to.be.equals(computedAddrOnChain);
     });
   });
+
   describe('Message signing', () => {
     let smartWalletAddress: string;
     let smartWallet: SmartWallet;
@@ -66,68 +67,70 @@ describe('RIF Gateway SmartWallet', () => {
     let externalWallet: Wallet;
 
     beforeEach(async () => {
-      // await (
-      //   await smartwalletFactory.createUserSmartWallet(smartwalletOwner.address)
-      // ).wait();
+      externalWallet = ethers.Wallet.createRandom();
+      privateKey = Buffer.from(
+        externalWallet.privateKey.substring(2, 66),
+        'hex'
+      );
+
+      await (
+        await smartwalletFactory.createUserSmartWallet(externalWallet.address)
+      ).wait();
+
       smartWalletAddress = await smartwalletFactory.getSmartWalletAddress(
-        smartwalletOwner.address
+        externalWallet.address
       );
       console.log('smartWalletAddress', smartWalletAddress);
       smartWallet = await ethers.getContractAt(
         'SmartWallet',
         smartWalletAddress,
-        smartwalletOwner
+        externalWallet
       );
-      // console.log('smartWallet', smartWallet);
-      externalWallet = ethers.Wallet.createRandom();
-      console.log('externalWallet', externalWallet);
-      privateKey = Buffer.from(
-        externalWallet.privateKey.substring(2, 66),
-        'hex'
-      );
-      console.log('privateKey', privateKey);
     });
 
-    function getSuffixData(typedRequestData: TypedRequestData): string {
-      const encoded = TypedDataUtils.encodeData(
-        typedRequestData.primaryType,
-        typedRequestData.message,
-        typedRequestData.types,
-        SignTypedDataVersion.V4
-      );
-
-      const messageSize = Object.keys(typedRequestData.message).length;
-
-      return (
-        '0x' + encoded.slice(messageSize * ONE_FIELD_IN_BYTES).toString('hex')
-      );
-    }
-
-    it('should allowed to sign a message', async () => {
-      const forwardRequest: ForwardRequestStruct = {
-        from: ethers.constants.AddressZero, // smartwalletOwner.address,
+    it.only('should allowed to sign a message', async () => {
+      const forwardRequest: IForwarder.ForwardRequestStruct = {
+        from: externalWallet.address, // ethers.constants.AddressZero
         nonce: '0',
-        executor: ethers.constants.AddressZero, // smartWalletAddress,
+        executor: smartWalletAddress, //ethers.constants.AddressZero,
       };
-      console.log('forwardRequest', forwardRequest);
 
       const typedRequestData = new TypedRequestData(
         HARDHAT_CHAIN_ID,
         smartWallet.address,
         forwardRequest
       );
-      console.log('typedRequestData', typedRequestData);
+      // console.log(typedRequestData);
 
       const suffixData = getSuffixData(typedRequestData);
-      console.log('suffixData', suffixData);
+      // console.log('suffixData', suffixData);
 
       const signature = getLocalEip712Signature(typedRequestData, privateKey);
-      console.log('signature', signature);
+      // console.log('signature', signature);
 
-      await expect(
-        smartWallet.verify(suffixData, forwardRequest, signature),
-        'Verification failed'
-      ).not.to.be.rejected;
+      // await expect(
+      //   smartWallet.verify(suffixData, forwardRequest, signature),
+      //   'Verification failed'
+      // ).not.to.be.rejected;
+
+      console.log(externalWallet.address);
+      console.log(
+        await smartWallet.recov(suffixData, forwardRequest, signature)
+      );
+
+      const recovered = recoverTypedSignature({
+        data: typedRequestData,
+        signature: signature,
+        version: SignTypedDataVersion.V4,
+      });
+
+      console.log(recovered);
+
+      // const domain = getDomainSeparator(smartWallet.address, HARDHAT_CHAIN_ID);
+      // const onChainDomain = await smartWallet.getDomainSeparator();
+
+      // console.log(domain);
+      // console.log(domain);
     });
   });
 });

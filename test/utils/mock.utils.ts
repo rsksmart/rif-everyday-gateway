@@ -14,17 +14,9 @@ import {
   Signer,
   Wallet,
 } from 'ethers';
-import { Fragment, ParamType } from 'ethers/lib/utils';
+import { Fragment } from 'ethers/lib/utils';
 import { ethers, network, waffle } from 'hardhat';
 import NetworkHelpers from '@nomicfoundation/hardhat-network-helpers';
-import {
-  MessageTypeProperty,
-  MessageTypes,
-  signTypedData,
-  SignTypedDataVersion,
-  TypedMessage,
-} from '@metamask/eth-sig-util';
-import { ForwardRequestStruct } from 'typechain-types';
 
 export const oneRBTC = BigNumber.from(10).pow(18);
 // mock contract default balance set to a very
@@ -107,105 +99,3 @@ export const deployMockContract = async <C extends Contract<C>>(
 ): Promise<MockContract<C>> => {
   return (await deployWaffleContract(signer, abi as any)) as MockContract<C>;
 };
-
-export const computeSalt = (
-  owner: SignerWithAddress,
-  factoryAddress: string
-): string => {
-  return ethers.utils.keccak256(
-    ethers.utils.solidityPack(
-      ['address', 'address', 'string'],
-      [owner.address, factoryAddress, '0']
-    )
-  );
-};
-
-export const encoder = (
-  types: readonly (string | ParamType)[],
-  values: readonly (string | ParamType)[]
-) => {
-  const encodedParams = ethers.utils.defaultAbiCoder.encode(types, values);
-  return encodedParams.slice(2);
-};
-
-interface Types extends MessageTypes {
-  EIP712Domain: MessageTypeProperty[];
-  ForwardRequest: MessageTypeProperty[];
-}
-
-type Domain = {
-  name: string;
-  version: string;
-  chainId: number;
-  verifyingContract: string;
-};
-
-export const domainSeparatorType = {
-  prefix: 'string name,string version',
-  name: 'RSK RIF GATEWAY',
-  version: '1',
-};
-
-export const eIP712DomainType: MessageTypeProperty[] = [
-  { name: 'name', type: 'string' },
-  { name: 'version', type: 'string' },
-  { name: 'chainId', type: 'uint256' },
-  { name: 'verifyingContract', type: 'address' },
-];
-
-export const forwardRequestType: MessageTypeProperty[] = [
-  { name: 'from', type: 'address' },
-  { name: 'nonce', type: 'uint256' },
-  { name: 'executor', type: 'address' },
-];
-
-function getDomainSeparator(
-  verifyingContract: string,
-  chainId: number
-): Domain {
-  return {
-    name: domainSeparatorType.name,
-    version: domainSeparatorType.version,
-    chainId: chainId,
-    verifyingContract: verifyingContract,
-  };
-}
-
-export function getLocalEip712Signature(
-  typedRequestData: TypedMessage<Types>,
-  privateKey: Buffer
-): string {
-  return signTypedData({
-    privateKey: privateKey,
-    data: typedRequestData,
-    version: SignTypedDataVersion.V4,
-  });
-}
-
-export class TypedRequestData implements TypedMessage<Types> {
-  readonly types: Types;
-
-  readonly domain: Domain;
-
-  readonly primaryType: string;
-
-  readonly message: Record<string, unknown>;
-
-  constructor(
-    chainId: number,
-    verifier: string,
-    forwardRequest: ForwardRequestStruct
-  ) {
-    this.types = {
-      EIP712Domain: eIP712DomainType,
-      ForwardRequest: forwardRequestType,
-    };
-    this.domain = getDomainSeparator(verifier, chainId);
-    this.primaryType = 'ForwardRequest';
-    // in the signature, all "request" fields are flattened out at the top structure.
-    // other params are inside "relayData" sub-type
-    this.message = {
-      ...forwardRequest,
-    };
-  }
-}
