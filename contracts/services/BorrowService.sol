@@ -59,4 +59,10 @@ abstract contract BorrowService is Service, IBorrowService {
     function _removeLiquidityInternal(uint256 amount, uint256 index) internal {
         listings[index].maxAmount -= amount;
     }
+
+    function supportsInterface(bytes4 interfaceId) public view returns (bool) {
+        return
+            interfaceId == serviceType ||
+            interfaceId == this.supportsInterface.selector;
+    }
 }

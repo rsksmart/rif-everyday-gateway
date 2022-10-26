@@ -90,27 +90,4 @@ contract TropykusLendingService is LendingService {
         uint256 tokens = abi.decode(balanceData, (uint256));
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(IERC165)
-        returns (bool)
-    {
-        // Refactor to use interfaceid == type(I).interfaceId
-        return
-            interfaceId ==
-            this.getBalance.selector ^
-                this.addListing.selector ^
-                this.disableListing.selector ^
-                this.getListing.selector ^
-                this.getListingsCount.selector ^
-                this.updateListing.selector ^
-                this.getServiceProviderName.selector ^
-                this.getServiceType.selector ^
-                this.lend.selector ^
-                this.withdraw.selector ||
-            interfaceId == this.supportsInterface.selector;
-    }
 }

@@ -67,4 +67,8 @@ abstract contract Service is Ownable, IService {
     {
         return serviceProviderName;
     }
+
+    function getThisAddress() public view returns (address) {
+        return address(this);
+    }
 }

@@ -219,29 +219,4 @@ contract TropykusBorrowingService is BorrowService {
 
         return borrowBalance;
     }
-
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override
-        returns (bool)
-    {
-        return
-            interfaceId ==
-            this.getBalance.selector ^
-                this.addListing.selector ^
-                this.disableListing.selector ^
-                this.getListing.selector ^
-                this.getListingsCount.selector ^
-                this.updateListing.selector ^
-                this.getServiceProviderName.selector ^
-                this.getServiceType.selector ^
-                this.borrow.selector ^
-                this.withdraw.selector ^
-                this.pay.selector ^
-                this.calculateRequiredCollateral.selector ^
-                this.getCollateralBalance.selector ||
-            interfaceId == this.supportsInterface.selector;
-    }
 }

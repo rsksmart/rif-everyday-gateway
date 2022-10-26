@@ -14,4 +14,10 @@ abstract contract LendingService is Service, ILendingService {
     function lend() public payable virtual;
 
     function withdraw() public virtual;
+
+    function supportsInterface(bytes4 interfaceId) public view returns (bool) {
+        return
+            interfaceId == serviceType ||
+            interfaceId == this.supportsInterface.selector;
+    }
 }
