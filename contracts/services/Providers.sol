@@ -4,7 +4,6 @@ pragma solidity ^0.8.4;
 import "./Service.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ServiceTypeManager.sol";
-import "hardhat/console.sol";
 
 contract Providers is Ownable {
     error InvalidProviderAddress(address provider);
@@ -29,7 +28,7 @@ contract Providers is Ownable {
         if (!service.supportsInterface(_InterfaceId_ERC165)) {
             revert NonConformity("Service does not implement ERC165");
         }
-        // console.log("passes erc165");
+
         // Checks that the provider adheres to the service interface
         if (!_serviceTypeManager.supportsInterface(service.getServiceType())) {
             revert InvalidServiceImplementation(
