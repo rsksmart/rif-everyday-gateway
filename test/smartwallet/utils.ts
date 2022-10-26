@@ -126,5 +126,7 @@ export const getSuffixData = (typedRequestData: TypedRequestData): string => {
 
   const messageSize = Object.keys(typedRequestData.message).length;
 
+  console.log(ethers.utils.keccak256(encoded));
+
   return '0x' + encoded.slice(messageSize * ONE_FIELD_IN_BYTES).toString('hex');
 };
