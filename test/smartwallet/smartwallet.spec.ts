@@ -108,23 +108,25 @@ describe('RIF Gateway SmartWallet', () => {
       const signature = getLocalEip712Signature(typedRequestData, privateKey);
       // console.log('signature', signature);
 
+      console.log(ethers.utils.keccak256(suffixData));
+
       // await expect(
       //   smartWallet.verify(suffixData, forwardRequest, signature),
       //   'Verification failed'
       // ).not.to.be.rejected;
 
-      console.log(externalWallet.address);
-      console.log(
-        await smartWallet.recov(suffixData, forwardRequest, signature)
-      );
+      // console.log(externalWallet.address);
+      // console.log(
+      //   await smartWallet.recov(suffixData, forwardRequest, signature)
+      // );
 
-      const recovered = recoverTypedSignature({
-        data: typedRequestData,
-        signature: signature,
-        version: SignTypedDataVersion.V4,
-      });
+      // const recovered = recoverTypedSignature({
+      //   data: typedRequestData,
+      //   signature: signature,
+      //   version: SignTypedDataVersion.V4,
+      // });
 
-      console.log(recovered);
+      // console.log(recovered);
 
       // const domain = getDomainSeparator(smartWallet.address, HARDHAT_CHAIN_ID);
       // const onChainDomain = await smartWallet.getDomainSeparator();
