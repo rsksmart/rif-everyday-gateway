@@ -12,9 +12,15 @@ import "./RSKAddrValidator.sol";
 contract SmartWallet is IForwarder {
     using ECDSA for bytes32;
 
+    error InvalidNonce(uint256 nonce);
+    error InvalidBlockForNonce(uint256 nonce);
+    error InvalidExecutor(address executor);
+
     uint256 public override nonce;
     bytes32 public constant DATA_VERSION_HASH = keccak256("1");
     bytes32 public domainSeparator;
+
+    uint256 private _currentBlockForNonce;
 
     constructor(address owner) {
         _setOwner(owner);
@@ -92,8 +98,8 @@ contract SmartWallet is IForwarder {
     ) external payable override returns (bool success, bytes memory ret) {
         (sig); // This is line saves gas TODO: Research why this saves gas 🤷‍♂️
 
+        _verifyNonce(req);
         _verifySig(suffixData, req, sig);
-        nonce++;
 
         (success, ret) = to.call{value: msg.value}(data);
 
@@ -111,6 +117,22 @@ contract SmartWallet is IForwarder {
         }
     }
 
+    function _verifyNonce(ForwardRequest memory req) private {
+        //Verify nonce
+        if (nonce == req.nonce) {
+            // example: current nonce = 4 and req.nonce = 4
+            nonce++;
+        } else if (nonce > req.nonce && _currentBlockForNonce != block.number) {
+            // example: current nonce = 5 and req.nonce = 4
+            // and we are not in the same transaction
+            revert InvalidBlockForNonce(req.nonce);
+        } else if (nonce < req.nonce) {
+            // example: current nonce = 5 and req.nonce = 10, must increment by one in each
+            // transaction
+            revert InvalidNonce(req.nonce);
+        }
+    }
+
     function _verifySig(
         bytes32 suffixData,
         ForwardRequest memory req,
@@ -122,9 +144,12 @@ contract SmartWallet is IForwarder {
             "Not the owner of the SmartWallet"
         );
 
-        //Verify nonce
-        require(nonce == req.nonce, "nonce mismatch");
+        //Verify executor
+        if (req.executor != msg.sender) {
+            revert InvalidExecutor(msg.sender);
+        }
 
+        // Verify current block number
         require(
             RSKAddrValidator.safeEquals(
                 keccak256(
@@ -140,21 +165,6 @@ contract SmartWallet is IForwarder {
         );
     }
 
-    function recov(
-        bytes32 suffixData,
-        ForwardRequest memory req,
-        bytes memory sig
-    ) public view returns (address) {
-        return
-            keccak256(
-                abi.encodePacked(
-                    "\x19\x01",
-                    domainSeparator,
-                    keccak256(_getEncoded(suffixData, req))
-                )
-            ).recover(sig);
-    }
-
     function _getEncoded(bytes32 suffixData, ForwardRequest memory req)
         private
         pure
@@ -165,8 +175,8 @@ contract SmartWallet is IForwarder {
                 keccak256(
                     "ForwardRequest(address from,uint256 nonce,address executor)"
                 ), //requestTypeHash,
-                abi.encode(req.from, req.nonce, req.executor),
-                suffixData
+                abi.encode(req.from, req.nonce, req.executor)
+                //suffixData
             );
     }
 
