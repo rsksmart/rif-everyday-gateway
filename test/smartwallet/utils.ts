@@ -1,5 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ParamType } from 'ethers/lib/utils';
+import { isAddress, ParamType } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
 import {
   MessageTypeProperty,
@@ -9,7 +9,8 @@ import {
   TypedMessage,
   TypedDataUtils,
 } from '@metamask/eth-sig-util';
-import { IForwarder } from 'typechain-types';
+import { IForwarder, ISmartWalletFactory } from 'typechain-types';
+import { Contract } from 'ethers';
 
 export const ONE_FIELD_IN_BYTES = 32;
 export const HARDHAT_CHAIN_ID = 31337;
@@ -126,7 +127,40 @@ export const getSuffixData = (typedRequestData: TypedRequestData): string => {
 
   const messageSize = Object.keys(typedRequestData.message).length;
 
-  console.log(ethers.utils.keccak256(encoded));
-
   return '0x' + encoded.slice(messageSize * ONE_FIELD_IN_BYTES).toString('hex');
+};
+
+export const signTransactionForExecutor = async (
+  from: string,
+  privateKey: string,
+  executor: string,
+  smartwalletFactory: ISmartWalletFactory
+): Promise<{
+  forwardRequest: IForwarder.ForwardRequestStruct;
+  signature: string;
+  suffixData: string;
+}> => {
+  const smartWalletAddress = await smartwalletFactory.getSmartWalletAddress(
+    from
+  );
+
+  const forwardRequest: IForwarder.ForwardRequestStruct = {
+    from: from,
+    nonce: '0',
+    executor: executor,
+  };
+
+  const typedRequestData = new TypedRequestData(
+    HARDHAT_CHAIN_ID,
+    smartWalletAddress,
+    forwardRequest
+  );
+
+  const privateKeyBuf = Buffer.from(privateKey.substring(2, 66), 'hex');
+
+  const suffixData = getSuffixData(typedRequestData);
+
+  const signature = getLocalEip712Signature(typedRequestData, privateKeyBuf);
+
+  return { forwardRequest, signature, suffixData };
 };
