@@ -134,7 +134,8 @@ export const signTransactionForExecutor = async (
   from: string,
   privateKey: string,
   executor: string,
-  smartwalletFactory: ISmartWalletFactory
+  smartwalletFactory: ISmartWalletFactory,
+  nonce?: string
 ): Promise<{
   forwardRequest: IForwarder.ForwardRequestStruct;
   signature: string;
@@ -144,9 +145,16 @@ export const signTransactionForExecutor = async (
     from
   );
 
+  if (!nonce) {
+    const onChainNonce = await (
+      await ethers.getContractAt('SmartWallet', smartWalletAddress)
+    ).nonce();
+    nonce = onChainNonce.toString();
+  }
+
   const forwardRequest: IForwarder.ForwardRequestStruct = {
     from: from,
-    nonce: '0',
+    nonce: nonce,
     executor: executor,
   };
 

@@ -2,7 +2,10 @@ import { expect } from 'chairc';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { loadFixture } from 'ethereum-waffle';
 import { SmartWalletFactory, IForwarder, SmartWallet } from 'typechain-types';
-import { smartwalletFactoryFixture } from './fixtures';
+import {
+  externalSmartwalletFixture,
+  smartwalletFactoryFixture,
+} from './fixtures';
 import {
   computeSalt,
   encoder,
@@ -56,28 +59,15 @@ describe('RIF Gateway SmartWallet', () => {
     });
   });
 
-  describe('Message signing', () => {
-    let smartWalletAddress: string;
+  describe('Message signing and nonce verification', () => {
     let smartWallet: SmartWallet;
     let privateKey: string;
     let externalWallet: Wallet;
 
     beforeEach(async () => {
-      externalWallet = ethers.Wallet.createRandom().connect(ethers.provider);
-      privateKey = externalWallet.privateKey;
-
-      await (
-        await smartwalletFactory.createUserSmartWallet(externalWallet.address)
-      ).wait();
-
-      smartWalletAddress = await smartwalletFactory.getSmartWalletAddress(
-        externalWallet.address
-      );
-      smartWallet = await ethers.getContractAt(
-        'SmartWallet',
-        smartWalletAddress,
-        externalWallet
-      );
+      ({ smartWallet, privateKey, externalWallet } = await loadFixture(
+        externalSmartwalletFixture.bind(null, smartwalletFactory, signers)
+      ));
     });
 
     it('should allow to sign a message', async () => {
@@ -100,7 +90,7 @@ describe('RIF Gateway SmartWallet', () => {
         await signTransactionForExecutor(
           externalWallet.address,
           privateKey,
-          ethers.constants.AddressZero,
+          ethers.constants.AddressZero, // wrong executor specified
           smartwalletFactory
         );
 
@@ -108,6 +98,59 @@ describe('RIF Gateway SmartWallet', () => {
         smartWallet.verify(suffixData, forwardRequest, signature),
         'Executor verification failed'
       ).to.be.rejected;
+    });
+
+    it('should revert if nonce is too high', async () => {
+      const { forwardRequest, suffixData, signature } =
+        await signTransactionForExecutor(
+          externalWallet.address,
+          privateKey,
+          externalWallet.address,
+          smartwalletFactory,
+          '5'
+        );
+
+      await expect(
+        smartWallet.execute(
+          suffixData,
+          forwardRequest,
+          signature,
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero
+        ),
+        'Nonce verification failed'
+      ).to.revertedWith('InvalidNonce(5)');
+    });
+
+    it('should revert if nonce used twice', async () => {
+      const { forwardRequest, suffixData, signature } =
+        await signTransactionForExecutor(
+          externalWallet.address,
+          privateKey,
+          externalWallet.address,
+          smartwalletFactory
+        );
+
+      await expect(
+        smartWallet.execute(
+          suffixData,
+          forwardRequest,
+          signature,
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero
+        )
+      ).not.to.be.rejected;
+
+      await expect(
+        smartWallet.execute(
+          suffixData,
+          forwardRequest,
+          signature,
+          ethers.constants.AddressZero,
+          ethers.constants.AddressZero
+        ),
+        'Executor verification failed'
+      ).to.revertedWith('InvalidBlockForNonce(0)');
     });
   });
 });
