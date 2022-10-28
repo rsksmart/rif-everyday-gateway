@@ -112,6 +112,7 @@ describe('RIF Gateway SmartWallet', () => {
           privateKey,
           externalWallet.address,
           smartWalletFactory,
+          undefined,
           '5'
         );
 
