@@ -25,6 +25,9 @@ export default <HardhatUserConfig>{
       },
     ],
   },
+  // mocha: {
+  //   timeout: 5000000000000000,
+  // },
   networks: {
     regtest: {
       url: 'http://localhost:4444',
@@ -38,6 +41,7 @@ export default <HardhatUserConfig>{
     //   accounts: {
     //     mnemonic: process.env.HDWALLET_MNEMONIC,
     //   },
+    //   chainId: 31,
     // },
   },
   typechain: {

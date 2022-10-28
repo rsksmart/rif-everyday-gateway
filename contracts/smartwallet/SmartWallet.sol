@@ -15,6 +15,7 @@ contract SmartWallet is IForwarder {
     error InvalidNonce(uint256 nonce);
     error InvalidBlockForNonce(uint256 nonce);
     error InvalidExecutor(address executor);
+    error UnexpectedError(bytes data);
 
     uint256 public override nonce;
     bytes32 public constant DATA_VERSION_HASH = keccak256("1");
@@ -103,12 +104,32 @@ contract SmartWallet is IForwarder {
 
         (success, ret) = to.call{value: msg.value}(data);
 
-        //If any balance has been added then trasfer it to the owner EOA
+        //If any balance has been added then transfer it to the owner EOA
         uint256 balanceToTransfer = address(this).balance;
         if (balanceToTransfer > 0) {
             //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
             payable(req.from).transfer(balanceToTransfer);
         }
+    }
+
+    function read(
+        //        bytes32 suffixData,
+        //        ForwardRequest memory req,
+        //        bytes calldata sig,
+        address targetContract,
+        bytes calldata functionToCall
+    ) external view returns (bytes memory) {
+        //        _verifyNonce(req);
+        //        _verifySig(suffixData, req, sig);
+        (bool success, bytes memory data) = targetContract.staticcall(
+            functionToCall
+        );
+
+        if (!success) {
+            revert UnexpectedError(data);
+        }
+
+        return data;
     }
 
     function _getChainID() private view returns (uint256 id) {

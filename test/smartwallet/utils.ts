@@ -135,6 +135,7 @@ export const signTransactionForExecutor = async (
   privateKey: string,
   executor: string,
   smartwalletFactory: ISmartWalletFactory,
+  chainId: number = HARDHAT_CHAIN_ID,
   nonce?: string
 ): Promise<{
   forwardRequest: IForwarder.ForwardRequestStruct;
@@ -154,12 +155,12 @@ export const signTransactionForExecutor = async (
 
   const forwardRequest: IForwarder.ForwardRequestStruct = {
     from: from,
-    nonce: nonce,
+    nonce: nonce!,
     executor: executor,
   };
 
   const typedRequestData = new TypedRequestData(
-    HARDHAT_CHAIN_ID,
+    chainId,
     smartWalletAddress,
     forwardRequest
   );
