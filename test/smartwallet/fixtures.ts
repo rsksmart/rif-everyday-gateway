@@ -1,10 +1,14 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { ethers } from 'hardhat';
-import { ISmartWalletFactory, SmartWalletFactory } from 'typechain-types';
+import {
+  ISmartWalletFactory,
+  SmartWallet,
+  SmartWalletFactory,
+} from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
 
 export const smartwalletFactoryFixture = async () => {
-  const { contract: smartwalletFactory, signers } =
+  const { contract: smartWalletFactory, signers } =
     await deployContract<ISmartWalletFactory>(
       'SmartWalletFactory',
       {},
@@ -14,33 +18,41 @@ export const smartwalletFactoryFixture = async () => {
       )) as Factory<ISmartWalletFactory>
     );
 
-  return { smartwalletFactory, signers };
+  return { smartWalletFactory, signers };
 };
 
 export const externalSmartwalletFixture = async (
-  smartwalletFactory: ISmartWalletFactory,
-  signers: SignerWithAddress[]
+  smartWalletFactory: ISmartWalletFactory,
+  signers: SignerWithAddress[],
+  testnet: boolean,
+  privateKeys: string[]
 ) => {
-  const externalWallet = ethers.Wallet.createRandom().connect(ethers.provider);
-  const privateKey = externalWallet.privateKey;
+  let externalWallet;
+  let privateKey;
+  if (testnet) {
+    externalWallet = signers[1];
+    privateKey = privateKeys[1];
+  } else {
+    externalWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+    privateKey = externalWallet.privateKey;
 
+    await signers[0].sendTransaction({
+      to: externalWallet.address,
+      value: ethers.utils.parseEther('1'),
+    });
+  }
   await (
-    await smartwalletFactory.createUserSmartWallet(externalWallet.address)
+    await smartWalletFactory.createUserSmartWallet(externalWallet.address)
   ).wait();
 
-  const smartWalletAddress = await smartwalletFactory.getSmartWalletAddress(
+  const smartWalletAddress = await smartWalletFactory.getSmartWalletAddress(
     externalWallet.address
   );
-  const smartWallet = await ethers.getContractAt(
+  const smartWallet = (await ethers.getContractAt(
     'SmartWallet',
     smartWalletAddress,
     externalWallet
-  );
-
-  await signers[0].sendTransaction({
-    to: externalWallet.address,
-    value: ethers.utils.parseEther('1.0'),
-  });
+  )) as SmartWallet;
 
   return {
     externalWallet,

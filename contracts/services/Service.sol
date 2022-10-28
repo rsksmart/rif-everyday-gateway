@@ -13,6 +13,7 @@ abstract contract Service is Ownable, IService {
     uint256 private _listingCounter;
 
     error InvalidAmount(uint256 amount);
+    error FailedOperation(bytes data);
 
     function addListing(ServiceListing memory listing)
         public

@@ -1,7 +1,7 @@
 import { expect } from 'chairc';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { loadFixture } from 'ethereum-waffle';
-import { SmartWalletFactory, IForwarder, SmartWallet } from 'typechain-types';
+import { SmartWalletFactory, SmartWallet } from 'typechain-types';
 import {
   externalSmartwalletFixture,
   smartwalletFactoryFixture,
@@ -13,18 +13,17 @@ import {
   getSuffixData,
   HARDHAT_CHAIN_ID,
   signTransactionForExecutor,
-  TypedRequestData,
 } from './utils';
 import { ethers } from 'hardhat';
 import { Wallet } from 'ethers';
 
 describe('RIF Gateway SmartWallet', () => {
-  let smartwalletFactory: SmartWalletFactory;
+  let smartWalletFactory: SmartWalletFactory;
   let signers: SignerWithAddress[];
   let smartwalletOwner: SignerWithAddress;
 
   beforeEach(async () => {
-    ({ smartwalletFactory, signers } = await loadFixture(
+    ({ smartWalletFactory, signers } = await loadFixture(
       smartwalletFactoryFixture
     ));
 
@@ -33,20 +32,20 @@ describe('RIF Gateway SmartWallet', () => {
 
   describe('Smart wallet creation', () => {
     it('should generate smart wallet address without deployment', async () => {
-      const salt = computeSalt(smartwalletOwner, smartwalletFactory.address);
+      const salt = computeSalt(smartwalletOwner, smartWalletFactory.address);
       const deployedWallet = await (
-        await smartwalletFactory.createUserSmartWallet(smartwalletOwner.address)
+        await smartWalletFactory.createUserSmartWallet(smartwalletOwner.address)
       ).wait();
       const deployed = deployedWallet.events && deployedWallet.events[0].args;
       const deployedAddress = deployed && deployed['addr'];
 
       const computedAddrOnChain =
-        await smartwalletFactory.getSmartWalletAddress(
+        await smartWalletFactory.getSmartWalletAddress(
           smartwalletOwner.address
         );
 
       const computedAddrOffChain = ethers.utils.getCreate2Address(
-        smartwalletFactory.address,
+        smartWalletFactory.address,
         salt,
         ethers.utils.keccak256(
           (await ethers.getContractFactory('SmartWallet')).bytecode +
@@ -62,11 +61,17 @@ describe('RIF Gateway SmartWallet', () => {
   describe('Message signing and nonce verification', () => {
     let smartWallet: SmartWallet;
     let privateKey: string;
-    let externalWallet: Wallet;
+    let externalWallet: Wallet | SignerWithAddress;
 
     beforeEach(async () => {
       ({ smartWallet, privateKey, externalWallet } = await loadFixture(
-        externalSmartwalletFixture.bind(null, smartwalletFactory, signers)
+        externalSmartwalletFixture.bind(
+          null,
+          smartWalletFactory,
+          signers,
+          false,
+          ['']
+        )
       ));
     });
 
@@ -76,7 +81,7 @@ describe('RIF Gateway SmartWallet', () => {
           externalWallet.address,
           privateKey,
           externalWallet.address,
-          smartwalletFactory
+          smartWalletFactory
         );
 
       await expect(
@@ -91,7 +96,7 @@ describe('RIF Gateway SmartWallet', () => {
           externalWallet.address,
           privateKey,
           ethers.constants.AddressZero, // wrong executor specified
-          smartwalletFactory
+          smartWalletFactory
         );
 
       await expect(
@@ -106,7 +111,7 @@ describe('RIF Gateway SmartWallet', () => {
           externalWallet.address,
           privateKey,
           externalWallet.address,
-          smartwalletFactory,
+          smartWalletFactory,
           '5'
         );
 
@@ -128,7 +133,7 @@ describe('RIF Gateway SmartWallet', () => {
           externalWallet.address,
           privateKey,
           externalWallet.address,
-          smartwalletFactory
+          smartWalletFactory
         );
 
       await expect(
