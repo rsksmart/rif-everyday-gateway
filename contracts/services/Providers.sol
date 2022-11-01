@@ -35,10 +35,9 @@ contract Providers is Ownable {
             );
         }
 
+        // Proceeds to add the provider and service
         address provider = service.owner();
-        // if (provider == address(0)) revert InvalidProviderAddress(provider);
-        // if (!_isOnAddressArray(_pendingProviders, provider))
-        //     _pendingProviders.push(provider);
+        if (provider == address(0)) revert InvalidProviderAddress(provider);
         _providers.push(provider);
         _servicesByProvider[provider].push(service);
         _totalServices++;
@@ -58,15 +57,4 @@ contract Providers is Ownable {
         }
         return allServices;
     }
-
-    // function _isOnAddressArray(address[] memory arr, address add)
-    //     internal
-    //     pure
-    //     returns (bool)
-    // {
-    //     for (uint256 i = 0; i < arr.length; i++) {
-    //         if (arr[i] == add) return true;
-    //     }
-    //     return false;
-    // }
 }
