@@ -1,7 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
+import "./IService.sol";
 
-interface IBorrowService {
+interface IBorrowService is IService {
+    event Borrow(
+        uint256 indexed listingId,
+        address indexed borrower,
+        address indexed currency,
+        uint256 amount,
+        uint256 duration
+    );
+
+    event Pay(
+        uint256 indexed listingId,
+        address indexed borrower,
+        address indexed currency,
+        uint256 amount
+    );
+
     function borrow(
         uint256 amount,
         address currency,

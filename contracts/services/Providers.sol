@@ -1,19 +1,42 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MI T
 pragma solidity ^0.8.4;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Service.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ServiceTypeManager.sol";
 
 contract Providers is Ownable {
     error InvalidProviderAddress(address provider);
+    error InvalidServiceImplementation(Service service, bytes4 serviceType);
+    error NonConformity(string NonConformityErrMsg);
 
     mapping(address => Service[]) private _servicesByProvider;
     mapping(address => Service[]) private _pendingServicesByProvider;
     address[] private _providers;
     address[] private _pendingProviders;
     uint256 private _totalServices;
+    ServiceTypeManager private _serviceTypeManager;
+
+    bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
+
+    constructor(ServiceTypeManager stm) {
+        _serviceTypeManager = stm;
+    }
 
     function addService(Service service) external {
+        // Checks that the service provider implements ERC165
+        if (!service.supportsInterface(_InterfaceId_ERC165)) {
+            revert NonConformity("Service does not implement ERC165");
+        }
+
+        // Checks that the provider adheres to the service interface
+        if (!_serviceTypeManager.supportsInterface(service.getServiceType())) {
+            revert InvalidServiceImplementation(
+                service,
+                service.getServiceType()
+            );
+        }
+
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
         if (!_isOnAddressArray(_pendingProviders, provider))

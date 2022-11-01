@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/services/Service.sol";
-import "contracts/services/IBorrowService.sol";
+import "../services/Service.sol";
+import "../services/IBorrowService.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
     constructor(string memory serviceProviderName) {
-        serviceType = ServiceType.Borrowing;
+        serviceType = type(IBorrowService).interfaceId; //borrowing/loan
         serviceProviderName = serviceProviderName;
     }
 
@@ -58,5 +58,11 @@ abstract contract BorrowService is Service, IBorrowService {
 
     function _removeLiquidityInternal(uint256 amount, uint256 index) internal {
         listings[index].maxAmount -= amount;
+    }
+
+    function supportsInterface(bytes4 interfaceId) public view returns (bool) {
+        return
+            interfaceId == serviceType ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

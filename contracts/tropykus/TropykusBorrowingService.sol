@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.16;
 
-import "contracts/services/BorrowService.sol";
-import "contracts/userIdentity/UserIdentityFactory.sol";
-import "contracts/userIdentity/UserIdentity.sol";
+import "../services/BorrowService.sol";
+import "../userIdentity/UserIdentityFactory.sol";
+import "../userIdentity/UserIdentity.sol";
 import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
 
 contract TropykusBorrowingService is BorrowService {
@@ -198,7 +198,7 @@ contract TropykusBorrowingService is BorrowService {
     function getBalance(address currency)
         public
         view
-        override
+        override(IService)
         returns (uint256)
     {
         UserIdentity identity = UserIdentityFactory(_userIdentityFactory)

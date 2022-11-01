@@ -7,11 +7,17 @@ import "./ILendingService.sol";
 
 abstract contract LendingService is Service, ILendingService {
     constructor(string memory serviceProviderName) {
-        serviceType = ServiceType.Lending;
+        serviceType = type(ILendingService).interfaceId; //lending/savings
         serviceProviderName = serviceProviderName;
     }
 
     function lend() public payable virtual;
 
     function withdraw() public virtual;
+
+    function supportsInterface(bytes4 interfaceId) public view returns (bool) {
+        return
+            interfaceId == serviceType ||
+            interfaceId == this.supportsInterface.selector;
+    }
 }
