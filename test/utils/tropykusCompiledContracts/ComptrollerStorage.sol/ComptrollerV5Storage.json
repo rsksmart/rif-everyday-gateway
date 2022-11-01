@@ -1,0 +1,580 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "ComptrollerV5Storage",
+  "sourceName": "contracts/ComptrollerStorage.sol",
+  "abi": [
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "_borrowGuardianPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "_mintGuardianPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "accountAssets",
+      "outputs": [
+        {
+          "internalType": "contract CToken",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "admin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "name": "allMarkets",
+      "outputs": [
+        {
+          "internalType": "contract CToken",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "borrowCapGuardian",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "borrowCaps",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "borrowGuardianPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "closeFactorMantissa",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compAccrued",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compBorrowState",
+      "outputs": [
+        {
+          "internalType": "uint224",
+          "name": "index",
+          "type": "uint224"
+        },
+        {
+          "internalType": "uint32",
+          "name": "block",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compBorrowerIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compContributorSpeeds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "compRate",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compSpeeds",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compSupplierIndex",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "compSupplyState",
+      "outputs": [
+        {
+          "internalType": "uint224",
+          "name": "index",
+          "type": "uint224"
+        },
+        {
+          "internalType": "uint32",
+          "name": "block",
+          "type": "uint32"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "comptrollerImplementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "lastContributorBlock",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "liquidationIncentiveMantissa",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "markets",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "isListed",
+          "type": "bool"
+        },
+        {
+          "internalType": "uint256",
+          "name": "collateralFactorMantissa",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bool",
+          "name": "isComped",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "maxAssets",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "mintGuardianPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "oracle",
+      "outputs": [
+        {
+          "internalType": "contract PriceOracle",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "pauseGuardian",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "pendingAdmin",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "pendingComptrollerImplementation",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "seizeGuardianPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "transferGuardianPaused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "tropAddress",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x608060405234801561001057600080fd5b506107a5806100206000396000f3fe608060405234801561001057600080fd5b50600436106101da5760003560e01c806394b2294b11610104578063ca0af043116100a2578063dcfbc0c711610071578063dcfbc0c7146104ec578063e6653f3d146104f4578063e8755446146104fc578063f851a44014610504576101da565b8063ca0af04314610464578063cc7ebdc414610492578063d9bbdf38146104b8578063dce15449146104c0576101da565b8063ac0b0bb7116100de578063ac0b0bb714610400578063b21be7fd14610408578063bb82aa5e14610436578063bea6b8b81461043e576101da565b806394b2294b146103ca578063986ab838146103d2578063aa900754146103f8576101da565b806352d84d1e1161017c5780637dc0d1d01161014b5780637dc0d1d01461034c57806387f76303146103545780638c57804e1461035c5780638e8f294b14610382576101da565b806352d84d1e146102955780636b79c38d146102b25780636d154ea514610300578063731f0c2b14610326576101da565b806326782247116101b857806326782247146102435780633c94786f1461024b5780634a584432146102675780634ada90af1461028d576101da565b80631d7b33d7146101df57806321af45691461021757806324a3d6221461023b575b600080fd5b610205600480360360208110156101f557600080fd5b50356001600160a01b031661050c565b60408051918252519081900360200190f35b61021f61051e565b604080516001600160a01b039092168252519081900360200190f35b61021f61052d565b61021f61053c565b61025361054b565b604080519115158252519081900360200190f35b6102056004803603602081101561027d57600080fd5b50356001600160a01b031661055b565b61020561056d565b61021f600480360360208110156102ab57600080fd5b5035610573565b6102d8600480360360208110156102c857600080fd5b50356001600160a01b031661059a565b604080516001600160e01b03909316835263ffffffff90911660208301528051918290030190f35b6102536004803603602081101561031657600080fd5b50356001600160a01b03166105c4565b6102536004803603602081101561033c57600080fd5b50356001600160a01b03166105d9565b61021f6105ee565b6102536105fd565b6102d86004803603602081101561037257600080fd5b50356001600160a01b031661060d565b6103a86004803603602081101561039857600080fd5b50356001600160a01b0316610637565b6040805193151584526020840192909252151582820152519081900360600190f35b61020561065d565b610205600480360360208110156103e857600080fd5b50356001600160a01b0316610663565b610205610675565b61025361067b565b6102056004803603604081101561041e57600080fd5b506001600160a01b038135811691602001351661068b565b61021f6106a8565b6102056004803603602081101561045457600080fd5b50356001600160a01b03166106b7565b6102056004803603604081101561047a57600080fd5b506001600160a01b03813581169160200135166106c9565b610205600480360360208110156104a857600080fd5b50356001600160a01b03166106e6565b61021f6106f8565b61021f600480360360408110156104d657600080fd5b506001600160a01b038135169060200135610707565b61021f61073c565b61025361074b565b61020561075b565b61021f610761565b600f6020526000908152604090205481565b6015546001600160a01b031681565b600a546001600160a01b031681565b6001546001600160a01b031681565b600a54600160a01b900460ff1681565b60166020526000908152604090205481565b60065481565b600d818154811061058057fe5b6000918252602090912001546001600160a01b0316905081565b6010602052600090815260409020546001600160e01b03811690600160e01b900463ffffffff1682565b600c6020526000908152604090205460ff1681565b600b6020526000908152604090205460ff1681565b6004546001600160a01b031681565b600a54600160b01b900460ff1681565b6011602052600090815260409020546001600160e01b03811690600160e01b900463ffffffff1682565b60096020526000908152604090208054600182015460039092015460ff91821692911683565b60075481565b60186020526000908152604090205481565b600e5481565b600a54600160b81b900460ff1681565b601260209081526000928352604080842090915290825290205481565b6002546001600160a01b031681565b60196020526000908152604090205481565b601360209081526000928352604080842090915290825290205481565b60146020526000908152604090205481565b6017546001600160a01b031681565b6008602052816000526040600020818154811061072057fe5b6000918252602090912001546001600160a01b03169150829050565b6003546001600160a01b031681565b600a54600160a81b900460ff1681565b60055481565b6000546001600160a01b03168156fea265627a7a72315820affaf39f51ee6c9928b33af57b2d4933bcd3cf109bcba90a82477fb6b94d488c64736f6c63430005100032",
+  "deployedBytecode": "0x608060405234801561001057600080fd5b50600436106101da5760003560e01c806394b2294b11610104578063ca0af043116100a2578063dcfbc0c711610071578063dcfbc0c7146104ec578063e6653f3d146104f4578063e8755446146104fc578063f851a44014610504576101da565b8063ca0af04314610464578063cc7ebdc414610492578063d9bbdf38146104b8578063dce15449146104c0576101da565b8063ac0b0bb7116100de578063ac0b0bb714610400578063b21be7fd14610408578063bb82aa5e14610436578063bea6b8b81461043e576101da565b806394b2294b146103ca578063986ab838146103d2578063aa900754146103f8576101da565b806352d84d1e1161017c5780637dc0d1d01161014b5780637dc0d1d01461034c57806387f76303146103545780638c57804e1461035c5780638e8f294b14610382576101da565b806352d84d1e146102955780636b79c38d146102b25780636d154ea514610300578063731f0c2b14610326576101da565b806326782247116101b857806326782247146102435780633c94786f1461024b5780634a584432146102675780634ada90af1461028d576101da565b80631d7b33d7146101df57806321af45691461021757806324a3d6221461023b575b600080fd5b610205600480360360208110156101f557600080fd5b50356001600160a01b031661050c565b60408051918252519081900360200190f35b61021f61051e565b604080516001600160a01b039092168252519081900360200190f35b61021f61052d565b61021f61053c565b61025361054b565b604080519115158252519081900360200190f35b6102056004803603602081101561027d57600080fd5b50356001600160a01b031661055b565b61020561056d565b61021f600480360360208110156102ab57600080fd5b5035610573565b6102d8600480360360208110156102c857600080fd5b50356001600160a01b031661059a565b604080516001600160e01b03909316835263ffffffff90911660208301528051918290030190f35b6102536004803603602081101561031657600080fd5b50356001600160a01b03166105c4565b6102536004803603602081101561033c57600080fd5b50356001600160a01b03166105d9565b61021f6105ee565b6102536105fd565b6102d86004803603602081101561037257600080fd5b50356001600160a01b031661060d565b6103a86004803603602081101561039857600080fd5b50356001600160a01b0316610637565b6040805193151584526020840192909252151582820152519081900360600190f35b61020561065d565b610205600480360360208110156103e857600080fd5b50356001600160a01b0316610663565b610205610675565b61025361067b565b6102056004803603604081101561041e57600080fd5b506001600160a01b038135811691602001351661068b565b61021f6106a8565b6102056004803603602081101561045457600080fd5b50356001600160a01b03166106b7565b6102056004803603604081101561047a57600080fd5b506001600160a01b03813581169160200135166106c9565b610205600480360360208110156104a857600080fd5b50356001600160a01b03166106e6565b61021f6106f8565b61021f600480360360408110156104d657600080fd5b506001600160a01b038135169060200135610707565b61021f61073c565b61025361074b565b61020561075b565b61021f610761565b600f6020526000908152604090205481565b6015546001600160a01b031681565b600a546001600160a01b031681565b6001546001600160a01b031681565b600a54600160a01b900460ff1681565b60166020526000908152604090205481565b60065481565b600d818154811061058057fe5b6000918252602090912001546001600160a01b0316905081565b6010602052600090815260409020546001600160e01b03811690600160e01b900463ffffffff1682565b600c6020526000908152604090205460ff1681565b600b6020526000908152604090205460ff1681565b6004546001600160a01b031681565b600a54600160b01b900460ff1681565b6011602052600090815260409020546001600160e01b03811690600160e01b900463ffffffff1682565b60096020526000908152604090208054600182015460039092015460ff91821692911683565b60075481565b60186020526000908152604090205481565b600e5481565b600a54600160b81b900460ff1681565b601260209081526000928352604080842090915290825290205481565b6002546001600160a01b031681565b60196020526000908152604090205481565b601360209081526000928352604080842090915290825290205481565b60146020526000908152604090205481565b6017546001600160a01b031681565b6008602052816000526040600020818154811061072057fe5b6000918252602090912001546001600160a01b03169150829050565b6003546001600160a01b031681565b600a54600160a81b900460ff1681565b60055481565b6000546001600160a01b03168156fea265627a7a72315820affaf39f51ee6c9928b33af57b2d4933bcd3cf109bcba90a82477fb6b94d488c64736f6c63430005100032",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}

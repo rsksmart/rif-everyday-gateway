@@ -36,6 +36,7 @@ export default <HardhatUserConfig>{
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
     },
+    // hh: {},
     // testnet: {
     //   url: 'https://public-node.testnet.rsk.co',
     //   accounts: {
