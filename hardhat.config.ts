@@ -25,9 +25,9 @@ export default <HardhatUserConfig>{
       },
     ],
   },
-  // mocha: {
-  //   timeout: 5000000000000000,
-  // },
+  mocha: {
+    timeout: 5000000000000000,
+  },
   networks: {
     regtest: {
       url: 'http://localhost:4444',

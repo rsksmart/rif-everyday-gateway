@@ -1,10 +1,8 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
-  ISmartWalletFactory,
   SmartWallet,
   SmartWalletFactory,
-  SmartWalletFactory__factory,
   TropykusLendingService,
   TropykusLendingService__factory,
 } from '../../typechain-types';
@@ -57,6 +55,7 @@ describe('Tropykus Lending Service', () => {
         onTestnet,
         onTestnet ? testnetPrivateKeys : localPrivateKeys
       ));
+    console.log('smartWallet', smartWallet.address);
 
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
@@ -97,20 +96,55 @@ describe('Tropykus Lending Service', () => {
   });
 
   // it.only('should allow to withdraw RBTC on tropykus', async () => {
-  //   await tropykusLendingService
-  //     .connect(alice)
-  //     .lend({ value: ethers.utils.parseEther('0.5') });
+  //   const {
+  //     forwardRequest: forwardRequest1,
+  //     suffixData: suffixData1,
+  //     signature: signature1,
+  //   } = await signTransactionForExecutor(
+  //     externalWallet.address,
+  //     privateKey,
+  //     tropykusLendingService.address,
+  //     smartWalletFactory,
+  //     hre.network.config.chainId
+  //   );
+  //
+  //   const lendTx = await tropykusLendingService
+  //     .connect(externalWallet)
+  //     .lend(suffixData1, forwardRequest1, signature1, {
+  //       value: ethers.utils.parseEther('0.0001'),
+  //       gasLimit: 3000000,
+  //     });
+  //   console.log('lendTx', lendTx);
+  //   await lendTx.wait();
   //
   //   const balanceTroBefore = await tropykusLendingService
-  //     .connect(alice)
+  //     .connect(externalWallet)
   //     .getBalance(ethers.constants.AddressZero);
   //
-  //   expect(+balanceTroBefore / 1e18).to.be.equals(0.5);
+  //   expect(+balanceTroBefore / 1e18).to.be.closeTo(0.0001, 0.001);
   //
-  //   await tropykusLendingService.connect(alice).withdraw();
+  //   const {
+  //     forwardRequest: forwardRequest2,
+  //     suffixData: suffixData2,
+  //     signature: signature2,
+  //   } = await signTransactionForExecutor(
+  //     externalWallet.address,
+  //     privateKey,
+  //     tropykusLendingService.address,
+  //     smartWalletFactory,
+  //     hre.network.config.chainId
+  //   );
+  //   const withdrawTx = await tropykusLendingService
+  //     .connect(externalWallet)
+  //     .withdraw(suffixData2, forwardRequest2, signature2, {
+  //       value: ethers.utils.parseEther('0.0001'),
+  //       gasLimit: 3000000,
+  //     });
+  //   console.log('withdrawTx', withdrawTx);
+  //   await withdrawTx.wait();
   //
   //   const balanceTropAfter = await tropykusLendingService
-  //     .connect(alice)
+  //     .connect(externalWallet)
   //     .getBalance(ethers.constants.AddressZero);
   //
   //   expect(+balanceTropAfter / 1e18).to.be.equals(0);
