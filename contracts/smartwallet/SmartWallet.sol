@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
+import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
 
@@ -95,20 +96,43 @@ contract SmartWallet is IForwarder {
         ForwardRequest memory req,
         bytes calldata sig,
         bytes calldata data,
-        address to
+        address to,
+        address currency,
+        uint256 amount
     ) external payable override returns (bool success, bytes memory ret) {
         (sig); // This is line saves gas TODO: Research why this saves gas 🤷‍♂️
 
         _verifyNonce(req);
         _verifySig(suffixData, req, sig);
 
-        (success, ret) = to.call{value: msg.value}(data);
+        if (currency == address(0)) {
+            (success, ret) = to.call{value: msg.value}(data);
 
-        //If any balance has been added then transfer it to the owner EOA
-        uint256 balanceToTransfer = address(this).balance;
-        if (balanceToTransfer > 0) {
-            //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
-            payable(req.from).transfer(balanceToTransfer);
+            //If any balance has been added then transfer it to the owner EOA
+            uint256 balanceToTransfer = address(this).balance;
+            if (balanceToTransfer > 0) {
+                //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
+                payable(req.from).transfer(balanceToTransfer);
+            }
+        } else {
+            if (amount > 0) {
+                uint256 balance = ERC20(currency).balanceOf(req.from);
+                if (balance >= amount) {
+                    ERC20(currency).transferFrom(
+                        req.from,
+                        address(this),
+                        amount
+                    );
+                    ERC20(currency).approve(address(to), amount);
+                }
+            }
+            uint256 balanceToTransfer = ERC20(currency).balanceOf(
+                address(this)
+            );
+            if (balanceToTransfer > 0) {
+                ERC20(currency).transfer(req.from, balanceToTransfer);
+            }
+            success = true;
         }
     }
 

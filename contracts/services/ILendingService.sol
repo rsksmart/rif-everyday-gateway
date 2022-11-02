@@ -10,5 +10,9 @@ interface ILendingService is IService {
         bytes calldata sig
     ) external payable;
 
-    function withdraw() external;
+    function withdraw(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig
+    ) external payable;
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 import "./IService.sol";
+import "../smartwallet/IForwarder.sol";
 
 interface IBorrowService is IService {
     event Borrow(
@@ -19,6 +20,9 @@ interface IBorrowService is IService {
     );
 
     function borrow(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
         uint256 amount,
         address currency,
         uint256 duration,
@@ -26,6 +30,9 @@ interface IBorrowService is IService {
     ) external payable;
 
     function pay(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
         uint256 amount,
         address currency,
         uint256 index

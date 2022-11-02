@@ -18,11 +18,15 @@ abstract contract LendingService is Service, ILendingService {
         bytes calldata sig
     ) public payable virtual;
 
-    function withdraw() public virtual;
-
     function supportsInterface(bytes4 interfaceId) public view returns (bool) {
         return
             interfaceId == serviceType ||
             interfaceId == this.supportsInterface.selector;
     }
+
+    function withdraw(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig
+    ) public payable virtual;
 }

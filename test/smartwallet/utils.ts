@@ -10,7 +10,6 @@ import {
   TypedDataUtils,
 } from '@metamask/eth-sig-util';
 import { IForwarder, ISmartWalletFactory } from 'typechain-types';
-import { Contract } from 'ethers';
 
 export const ONE_FIELD_IN_BYTES = 32;
 export const HARDHAT_CHAIN_ID = 31337;

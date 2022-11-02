@@ -3,6 +3,9 @@ pragma solidity ^0.8.16;
 
 import "../services/Service.sol";
 import "../services/IBorrowService.sol";
+import "contracts/services/Service.sol";
+import "contracts/services/IBorrowService.sol";
+import "../smartwallet/IForwarder.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
     constructor(string memory serviceProviderName) {
@@ -11,6 +14,9 @@ abstract contract BorrowService is Service, IBorrowService {
     }
 
     function borrow(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
         uint256 amount,
         address currency,
         uint256 duration,
@@ -18,12 +24,19 @@ abstract contract BorrowService is Service, IBorrowService {
     ) public payable virtual;
 
     function pay(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
         uint256 amount,
         address currency,
         uint256 index
     ) public payable virtual;
 
-    function withdraw() public virtual;
+    function withdraw(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig
+    ) public payable virtual;
 
     function calculateRequiredCollateral(uint256 amount, address currency)
         external
