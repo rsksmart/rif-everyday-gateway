@@ -13,6 +13,7 @@ import {
 } from '../smartwallet/fixtures';
 import { signTransactionForExecutor } from '../smartwallet/utils';
 import { Wallet } from 'ethers';
+import { tropykusFixture } from 'test/utils/tropykusFixture';
 
 describe('Tropykus Lending Service', () => {
   let owner: SignerWithAddress;
@@ -24,7 +25,8 @@ describe('Tropykus Lending Service', () => {
   let smartWallet: SmartWallet;
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
-  const crbtc = '0x7bc06c482dead17c0e297afbc32f6e63d3846650';
+
+  let crbtc: string;
   const crbtcTestnet = '0x5b35072cd6110606c8421e013304110fa04a32a3';
   const localPrivateKeys = [
     '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
@@ -42,7 +44,7 @@ describe('Tropykus Lending Service', () => {
 
   before(async () => {
     ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
-    console.log('smartWalletFactory', smartWalletFactory.address);
+    // console.log('smartWalletFactory', smartWalletFactory.address);
   });
 
   beforeEach(async () => {
@@ -55,7 +57,9 @@ describe('Tropykus Lending Service', () => {
         onTestnet,
         onTestnet ? testnetPrivateKeys : localPrivateKeys
       ));
-    console.log('smartWallet', smartWallet.address);
+    // console.log('smartWallet', smartWallet.address);
+
+    ({ crbtc: crbtc } = await tropykusFixture());
 
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
@@ -67,10 +71,10 @@ describe('Tropykus Lending Service', () => {
     )) as TropykusLendingService;
 
     await tropykusLendingService.deployed();
-    console.log('tropykusLendingService', tropykusLendingService.address);
+    // console.log('tropykusLendingService', tropykusLendingService.address);
   });
 
-  it.skip('should allow to lend RBTC on tropykus', async () => {
+  it('should allow to lend RBTC on tropykus', async () => {
     const { forwardRequest, suffixData, signature } =
       await signTransactionForExecutor(
         externalWallet.address,
@@ -95,58 +99,58 @@ describe('Tropykus Lending Service', () => {
     expect(+tropBalance / 1e18).to.be.closeTo(0.0001, 0.001);
   });
 
-  // it.only('should allow to withdraw RBTC on tropykus', async () => {
-  //   const {
-  //     forwardRequest: forwardRequest1,
-  //     suffixData: suffixData1,
-  //     signature: signature1,
-  //   } = await signTransactionForExecutor(
-  //     externalWallet.address,
-  //     privateKey,
-  //     tropykusLendingService.address,
-  //     smartWalletFactory,
-  //     hre.network.config.chainId
-  //   );
-  //
-  //   const lendTx = await tropykusLendingService
-  //     .connect(externalWallet)
-  //     .lend(suffixData1, forwardRequest1, signature1, {
-  //       value: ethers.utils.parseEther('0.0001'),
-  //       gasLimit: 3000000,
-  //     });
-  //   console.log('lendTx', lendTx);
-  //   await lendTx.wait();
-  //
-  //   const balanceTroBefore = await tropykusLendingService
-  //     .connect(externalWallet)
-  //     .getBalance(ethers.constants.AddressZero);
-  //
-  //   expect(+balanceTroBefore / 1e18).to.be.closeTo(0.0001, 0.001);
-  //
-  //   const {
-  //     forwardRequest: forwardRequest2,
-  //     suffixData: suffixData2,
-  //     signature: signature2,
-  //   } = await signTransactionForExecutor(
-  //     externalWallet.address,
-  //     privateKey,
-  //     tropykusLendingService.address,
-  //     smartWalletFactory,
-  //     hre.network.config.chainId
-  //   );
-  //   const withdrawTx = await tropykusLendingService
-  //     .connect(externalWallet)
-  //     .withdraw(suffixData2, forwardRequest2, signature2, {
-  //       value: ethers.utils.parseEther('0.0001'),
-  //       gasLimit: 3000000,
-  //     });
-  //   console.log('withdrawTx', withdrawTx);
-  //   await withdrawTx.wait();
-  //
-  //   const balanceTropAfter = await tropykusLendingService
-  //     .connect(externalWallet)
-  //     .getBalance(ethers.constants.AddressZero);
-  //
-  //   expect(+balanceTropAfter / 1e18).to.be.equals(0);
-  // });
+  it('should allow to withdraw RBTC on tropykus', async () => {
+    const {
+      forwardRequest: forwardRequest1,
+      suffixData: suffixData1,
+      signature: signature1,
+    } = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusLendingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
+
+    const lendTx = await tropykusLendingService
+      .connect(externalWallet)
+      .lend(suffixData1, forwardRequest1, signature1, {
+        value: ethers.utils.parseEther('0.0001'),
+        gasLimit: 3000000,
+      });
+
+    await lendTx.wait();
+
+    const balanceTroBefore = await tropykusLendingService
+      .connect(externalWallet)
+      .getBalance(ethers.constants.AddressZero);
+
+    expect(+balanceTroBefore / 1e18).to.be.closeTo(0.0001, 0.001);
+
+    const {
+      forwardRequest: forwardRequest2,
+      suffixData: suffixData2,
+      signature: signature2,
+    } = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusLendingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
+
+    const withdrawTx = await tropykusLendingService
+      .connect(externalWallet)
+      .withdraw(suffixData2, forwardRequest2, signature2, {
+        gasLimit: 3000000,
+      });
+
+    await withdrawTx.wait();
+
+    const balanceTropAfter = await tropykusLendingService
+      .connect(externalWallet)
+      .getBalance(ethers.constants.AddressZero);
+
+    expect(+balanceTropAfter / 1e18).to.be.equals(0);
+  });
 });

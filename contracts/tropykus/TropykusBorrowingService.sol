@@ -69,8 +69,7 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("mint()"),
             address(_crbtc),
-            address(0),
-            0
+            address(0)
         );
 
         address[] memory markets = new address[](2);
@@ -84,8 +83,7 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("enterMarkets(address[])", markets),
             address(_comptroller),
-            address(0),
-            0
+            address(0)
         );
 
         smartWallet.execute(
@@ -94,8 +92,7 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("borrow(uint256)", amount),
             address(_cdoc),
-            currency,
-            amount
+            currency
         );
 
         emit Borrow({
@@ -126,8 +123,7 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
             address(_cdoc),
-            currency,
-            amount
+            currency
         );
 
         emit Pay({
@@ -200,8 +196,7 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             address(_crbtc),
-            address(0),
-            0
+            address(0)
         );
 
         if (success) {

@@ -79,15 +79,11 @@ const deployTropykusContracts = async () => {
       },
     },
   };
-  // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~');
-  // console.log('Tropykus Contracts - Deploy Script');
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n');
 
   const chainId = await getChainId(
     hre.network.config.chainId?.toString() || '1337'
   );
-  // console.log(`Network = ${chainId}`);
-  // console.log(`Deployer = ${deployer.address}`);
+
   const multiSigWalletContract = new ethers.ContractFactory(
     MultiSigWalletJSON.abi,
     MultiSigWalletJSON.bytecode,
@@ -95,7 +91,6 @@ const deployTropykusContracts = async () => {
   );
   const multiSig = await multiSigWalletContract.deploy([deployer.address], 1);
   await multiSig.deployTransaction.wait();
-  console.log(`MultiSig = '${multiSig.address}'`);
 
   const priceOracleProxyContract = new ethers.ContractFactory(
     PriceOracleProxyJSON.abi,
@@ -106,7 +101,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await priceOracleProxyDeploy.deployTransaction.wait();
-  console.log(`PriceOracleProxy = '${priceOracleProxyDeploy.address}';`);
+
   const unitrollerContract = new ethers.ContractFactory(
     UnitrollerJSON.abi,
     UnitrollerJSON.bytecode,
@@ -120,10 +115,11 @@ const deployTropykusContracts = async () => {
     ComptrollerG6JSON.bytecode,
     deployer
   );
+  ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
   const comptrollerDeployed = await comptrollerContract.deploy();
-  await comptrollerDeployed.deployTransaction.wait();
+  ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
 
-  // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~');
+  await comptrollerDeployed.deployTransaction.wait();
 
   const standardTokenContract = new ethers.ContractFactory(
     StandardTokenJSON.abi,
@@ -163,60 +159,42 @@ const deployTropykusContracts = async () => {
   );
   await usdtToken.deployTransaction.wait();
 
-  console.log(`RIF = '${rifToken.address}';`);
-  console.log(`DOC = '${docToken.address}';`);
-  console.log(`RDOC = '${rdocToken.address}';`);
-  console.log(`USDT = '${usdtToken.address}';`);
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~ /TOKENS ~~~~~~~~~~~~~~~~~~~~~~~~\n');
-
-  // console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ ORACLES ~~~~~~~~~~~~~~~~~~~~~~~~');
   const mockPriceProviderMoC = new ethers.ContractFactory(
     MockProviderMOCJSON.abi,
     MockProviderMOCJSON.bytecode,
     deployer
   );
 
-  // let rifOracle = {
-  //   address: namedAccounts.rifOracle[chainId],
-  // };
-  // let rbtcOracle = {
-  //   address: namedAccounts.rbtcOracle[chainId],
-  // };
-  // if (chainId !== 31 && chainId !== 30) {
   const rifOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('0.252')
   );
   await rifOracle.deployTransaction.wait();
-  console.log(`RIFOracle = '${rifOracle.address}';`);
+
   const rbtcOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('54556.9')
   );
   await rbtcOracle.deployTransaction.wait();
-  console.log(`RBTCOracle = '${rbtcOracle.address}';`);
-  // }
+
   const docOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
   await docOracle.deployTransaction.wait();
-  console.log(`DOCOracle = '${docOracle.address}';`);
+
   const rdocOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
   await rdocOracle.deployTransaction.wait();
-  console.log(`RDOCOracle = '${rdocOracle.address}';`);
+
   const usdtOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
   await usdtOracle.deployTransaction.wait();
-  console.log(`USDTOracle = '${usdtOracle.address}';`);
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~ /ORACLES ~~~~~~~~~~~~~~~~~~~~~~~~\n');
 
-  //console.log('\n~~~~~~~~~~~~~~~~~~~~~~~~ ADAPTERS ~~~~~~~~~~~~~~~~~~~~~~~~');
   const priceOracleAdapterMoc = new ethers.ContractFactory(
     PriceOracleAdapterMOCJSON.abi,
     PriceOracleAdapterMOCJSON.bytecode,
@@ -227,40 +205,38 @@ const deployTropykusContracts = async () => {
     rbtcOracle.address
   );
   await rbtcPriceOracleAdapterMoC.deployTransaction.wait();
-  console.log(`RBTCAdapter = '${rbtcPriceOracleAdapterMoC.address}';`);
+
   const satPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rbtcOracle.address
   );
   await satPriceOracleAdapterMoC.deployTransaction.wait();
-  console.log(`SATAdapter = '${satPriceOracleAdapterMoC.address}';`);
+
   const rifPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rifOracle.address
   );
   await rifPriceOracleAdapterMoC.deployTransaction.wait();
-  console.log(`RIFAdapter = '${rifPriceOracleAdapterMoC.address}';`);
+
   const docPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     docOracle.address
   );
   await docPriceOracleAdapterMoC.deployTransaction.wait();
-  console.log(`DOCAdapter = '${docPriceOracleAdapterMoC.address}';`);
+
   const rdocPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rdocOracle.address
   );
   await rdocPriceOracleAdapterMoC.deployTransaction.wait();
-  console.log(`RDOCAdapter = '${rdocPriceOracleAdapterMoC.address}';`);
+
   const usdtPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     usdtOracle.address
   );
-  await usdtPriceOracleAdapterMoC.deployTransaction.wait();
-  console.log(`USDTAdapter = '${usdtPriceOracleAdapterMoC.address}';`);
-  // console.log('~~~~~~~~~~~~~~~~~~~~~~~~ /ADAPTERS ~~~~~~~~~~~~~~~~~~~~~~~~\n');
 
-  // console.log('\n~~~~~~~~~~~~~~~~~~ INTEREST RATE MODELS ~~~~~~~~~~~~~~~~~~');
+  await usdtPriceOracleAdapterMoC.deployTransaction.wait();
+
   const whitePaperInterestRateModel = new ethers.ContractFactory(
     WhitePaperInterestRateJSON.abi,
     WhitePaperInterestRateJSON.bytecode,
@@ -283,7 +259,7 @@ const deployTropykusContracts = async () => {
     rif.multiplier
   );
   await rifInterestRateModel.deployTransaction.wait();
-  console.log(`RIFInterestRateModel = '${rifInterestRateModel.address}';`);
+
   const docInterestRateModel = await jumpInterestRateModelV2.deploy(
     doc.baseBorrowRate,
     doc.multiplier,
@@ -292,7 +268,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await docInterestRateModel.deployTransaction.wait();
-  console.log(`DOCInterestRateModel = '${docInterestRateModel.address}';`);
+
   const rdocInterestRateModel = await jumpInterestRateModelV2.deploy(
     rdoc.baseBorrowRate,
     rdoc.multiplier,
@@ -301,7 +277,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await rdocInterestRateModel.deployTransaction.wait();
-  console.log(`RDOCInterestRateModel = '${rdocInterestRateModel.address}';`);
+
   const usdtInterestRateModel = await jumpInterestRateModelV2.deploy(
     usdt.baseBorrowRate,
     usdt.multiplier,
@@ -310,13 +286,13 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await usdtInterestRateModel.deployTransaction.wait();
-  console.log(`USDTInterestRateModel = '${usdtInterestRateModel.address}';`);
+
   const rbtcInterestRateModel = await whitePaperInterestRateModel.deploy(
     rbtc.baseBorrowRate,
     rbtc.multiplier
   );
   await rbtcInterestRateModel.deployTransaction.wait();
-  console.log(`RBTCInterestRateModel = '${rbtcInterestRateModel.address}';`);
+
   const satInterestRateModel = await hurricaneInterestRateModel.deploy(
     sat.baseBorrowRate,
     sat.promisedBaseReturnRate,
@@ -325,10 +301,7 @@ const deployTropykusContracts = async () => {
     sat.supplyRateSlope
   );
   await satInterestRateModel.deployTransaction.wait();
-  console.log(`SATInterestRateModel = '${satInterestRateModel.address}';`);
-  // console.log('~~~~~~~~~~~~~~~~~~ /INTEREST RATE MODELS ~~~~~~~~~~~~~~~~~\n');
 
-  // console.log('\n~~~~~~~~~~~~~~~~~~~~ MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~');
   const cErc20Immutable = new ethers.ContractFactory(
     CErc20ImmutableJSON.abi,
     CErc20ImmutableJSON.bytecode,
@@ -361,7 +334,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await cRIFdeployed.deployTransaction.wait();
-  console.log(`cRIF = '${cRIFdeployed.address}';`);
+
   const cDOCdeployed = await cErc20Immutable.deploy(
     docToken.address,
     comptrollerDeployed.address,
@@ -373,7 +346,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await cDOCdeployed.deployTransaction.wait();
-  console.log(`cDOC = '${cDOCdeployed.address}';`);
+
   const cRDOCdeployed = await cRDOCContract.deploy(
     rdocToken.address,
     comptrollerDeployed.address,
@@ -385,7 +358,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await cRDOCdeployed.deployTransaction.wait();
-  console.log(`cRDOC = '${cRDOCdeployed.address}';`);
+
   const cUSDTdeployed = await cErc20Immutable.deploy(
     usdtToken.address,
     comptrollerDeployed.address,
@@ -397,7 +370,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await cUSDTdeployed.deployTransaction.wait();
-  console.log(`cUSDT = '${cUSDTdeployed.address}';`);
+
   const cRBTCdeployed = await cRBTCContract.deploy(
     comptrollerDeployed.address,
     rbtcInterestRateModel.address,
@@ -408,7 +381,7 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await cRBTCdeployed.deployTransaction.wait();
-  console.log(`cRBTC = '${cRBTCdeployed.address}';`);
+
   const cSATdeployed = await cRBTCContract.deploy(
     comptrollerDeployed.address,
     satInterestRateModel.address,
@@ -419,15 +392,13 @@ const deployTropykusContracts = async () => {
     deployer.address
   );
   await cSATdeployed.deployTransaction.wait();
-  console.log(`cSAT = '${cSATdeployed.address}';`);
+
   const cRBTCCompanionDeployed = await cRBTCCompanionContract.deploy(
     comptrollerDeployed.address,
     cSATdeployed.address,
     priceOracleProxyDeploy.address
   );
   await cRBTCCompanionDeployed.deployTransaction.wait();
-
-  // console.log('~~~~~~~~~~~~~~~~~~~~ /MARKETS cTOKENS ~~~~~~~~~~~~~~~~~~~~\n');
 
   const tropykusLensContract = new ethers.ContractFactory(
     TropykusLensJSON.abi,
@@ -436,22 +407,21 @@ const deployTropykusContracts = async () => {
   );
   const tropykusLens = await tropykusLensContract.deploy();
   await tropykusLens.deployTransaction.wait();
-  console.log(`TropykusLens = '${tropykusLens.address}';`);
 
-  // console.log('\n~~~~~~~~~~~~~~~~~ UNITROLLER & COMPTROLLER ~~~~~~~~~~~~~~~~');
   const unitroller = new ethers.Contract(
     unitrollerDeployed.address,
     UnitrollerJSON.abi,
     deployer
   );
 
-  console.log(`Unitroller = '${unitroller.address}';`);
+  ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
   const comptroller = new ethers.Contract(
     comptrollerDeployed.address,
     ComptrollerG6JSON.abi,
     deployer
   );
-  console.log(`Comptroller = '${comptroller.address}';`);
+  ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
+
   await unitroller
     ._setPendingImplementation(comptroller.address)
     .then((tx: { wait: () => any }) => tx.wait());
@@ -467,7 +437,6 @@ const deployTropykusContracts = async () => {
   await comptroller
     ._setLiquidationIncentive(config.liquidationIncentiveMantissa)
     .then((tx: { wait: () => any }) => tx.wait());
-  // console.log('~~~~~~~~~~~~~~~~~ /UNITROLLER & COMPTROLLER ~~~~~~~~~~~~~~~~\n');
 
   const priceOracleProxy = new ethers.Contract(
     priceOracleProxyDeploy.address,
@@ -604,14 +573,21 @@ const deployTropykusContracts = async () => {
   await cSAT
     .setCompanion(crbtcCompanion.address)
     .then((tx: { wait: () => any }) => tx.wait());
-  console.log(`cRBTCCompanion = '${crbtcCompanion.address}'`);
-  console.log('// Finished');
+
+  // Supply DOC to the cDOC contract
+  await (
+    await docToken.functions['transfer(address,uint256)'](
+      cDOC.address,
+      parseEther('1000')
+    )
+  ).wait();
 
   return {
     comptroller: comptrollerDeployed.address,
     oracle: priceOracleProxyDeploy.address,
     crbtc: cRBTCdeployed.address,
     cdoc: cDOCdeployed.address,
+    doc: docToken.address,
   };
 };
 
