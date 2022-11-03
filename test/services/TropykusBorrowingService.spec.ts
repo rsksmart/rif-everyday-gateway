@@ -14,6 +14,7 @@ import {
 } from '../smartwallet/fixtures';
 import { signTransactionForExecutor } from '../smartwallet/utils';
 import { Wallet } from 'ethers';
+import { tropykusFixture } from 'test/utils/tropykusFixture';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
@@ -26,6 +27,7 @@ describe('Tropykus Borrowing Service', () => {
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let doc: ERC20;
+  let cdocAddress: string;
   const tropykusContracts = {
     comptroller: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9',
     oracle: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512',
@@ -56,15 +58,17 @@ describe('Tropykus Borrowing Service', () => {
 
   before(async () => {
     ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
-    console.log('smartWalletFactory', smartWalletFactory.address);
   });
 
   beforeEach(async () => {
     [owner, alice, bob] = await ethers.getSigners();
 
+    const tropykusContractsDeployed = await tropykusFixture();
+    cdocAddress = tropykusContractsDeployed.cdoc;
+
     doc = (await ethers.getContractAt(
       'ERC20',
-      onTestnet ? docAddressTestnet : docAddress,
+      onTestnet ? docAddressTestnet : tropykusContractsDeployed.doc,
       owner
     )) as ERC20;
 
@@ -75,7 +79,6 @@ describe('Tropykus Borrowing Service', () => {
         onTestnet,
         onTestnet ? testnetPrivateKeys : localPrivateKeys
       ));
-    console.log('smartWallet', smartWallet.address);
 
     const tropykusBorrowingServiceFactory = (await ethers.getContractFactory(
       'TropykusBorrowingService'
@@ -83,14 +86,13 @@ describe('Tropykus Borrowing Service', () => {
 
     tropykusBorrowingService = (await tropykusBorrowingServiceFactory.deploy(
       smartWalletFactory.address,
-      onTestnet ? tropykusContractsTestnet : tropykusContracts
+      onTestnet ? tropykusContractsTestnet : tropykusContractsDeployed
     )) as TropykusBorrowingService;
 
     await tropykusBorrowingService.deployed();
-    console.log('tropykusBorrowingService', tropykusBorrowingService.address);
   });
 
-  it.skip('should allow to borrow DOC after lending RBTC on tropykus', async () => {
+  it.only('should allow to borrow DOC after lending RBTC on tropykus', async () => {
     const amountToBorrow = 2;
 
     const calculateAmountToLend = await tropykusBorrowingService
@@ -99,10 +101,10 @@ describe('Tropykus Borrowing Service', () => {
         ethers.utils.parseEther(amountToBorrow.toString()),
         ethers.constants.AddressZero
       );
+
     const amountToLend = +calculateAmountToLend / 1e18;
 
-    expect(amountToLend).to.be.closeTo(0.0007, 0.0001);
-    console.log('amountToLend check', amountToLend);
+    expect(amountToLend).to.be.closeTo(0.0002, 0.0001);
 
     const balanceUserBefore = await doc.balanceOf(externalWallet.address);
 
@@ -120,27 +122,26 @@ describe('Tropykus Borrowing Service', () => {
       forwardRequest,
       signature,
       ethers.utils.parseEther(amountToBorrow.toString()),
-      onTestnet ? docAddressTestnet : docAddress,
+      onTestnet ? docAddressTestnet : doc.address,
       0, // Not in use for now
       0, // Not in use for now
       { value: ethers.utils.parseEther(amountToLend.toString()) }
     );
-    console.log('borrow tx', tx);
+
     await tx.wait();
 
     const balanceTropAfter = await tropykusBorrowingService
       .connect(externalWallet)
       .getCollateralBalance();
 
-    console.log('balanceTropAfter', balanceTropAfter);
     expect(+balanceTropAfter / 1e18).to.equal(amountToLend);
 
     const balance = await doc.balanceOf(smartWallet.address);
-    console.log('balance doc', balance);
+
     expect(+balance / 1e18).to.equal(0);
 
     const balanceUserAfter = await doc.balanceOf(externalWallet.address);
-    console.log('balanceUserAfter', balanceUserAfter);
+
     expect(+balanceUserAfter / 1e18).to.equal(
       +balanceUserBefore / 1e18 + amountToBorrow
     );

@@ -35,6 +35,10 @@ export default <HardhatUserConfig>{
     ganache: {
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
+      accounts: {
+        mnemonic:
+          'region camera keep actual absorb drive elegant chronic silver forget mammal enhance',
+      },
     },
     // hh: {},
     // testnet: {

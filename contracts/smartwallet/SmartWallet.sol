@@ -97,42 +97,30 @@ contract SmartWallet is IForwarder {
         bytes calldata sig,
         bytes calldata data,
         address to,
-        address currency,
-        uint256 amount
+        address currency
     ) external payable override returns (bool success, bytes memory ret) {
         (sig); // This is line saves gas TODO: Research why this saves gas 🤷‍♂️
 
         _verifyNonce(req);
         _verifySig(suffixData, req, sig);
 
-        if (currency == address(0)) {
-            (success, ret) = to.call{value: msg.value}(data);
+        (success, ret) = to.call{value: msg.value}(data);
 
-            //If any balance has been added then transfer it to the owner EOA
-            uint256 balanceToTransfer = address(this).balance;
-            if (balanceToTransfer > 0) {
-                //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
-                payable(req.from).transfer(balanceToTransfer);
-            }
-        } else {
-            if (amount > 0) {
-                uint256 balance = ERC20(currency).balanceOf(req.from);
-                if (balance >= amount) {
-                    ERC20(currency).transferFrom(
-                        req.from,
-                        address(this),
-                        amount
-                    );
-                    ERC20(currency).approve(address(to), amount);
-                }
-            }
-            uint256 balanceToTransfer = ERC20(currency).balanceOf(
+        //If any balance has been added then transfer it to the owner EOA
+        uint256 currentBalance = address(this).balance;
+        if (currentBalance > 0) {
+            //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
+            payable(req.from).transfer(currentBalance);
+        }
+
+        //If any given ERC20 had been added tokens then transfer it to the owner EOA
+        if (currency != address(0)) {
+            uint256 currentERC20Balance = ERC20(currency).balanceOf(
                 address(this)
             );
-            if (balanceToTransfer > 0) {
-                ERC20(currency).transfer(req.from, balanceToTransfer);
+            if (currentERC20Balance > 0) {
+                ERC20(currency).transfer(req.from, currentERC20Balance);
             }
-            success = true;
         }
     }
 
@@ -167,6 +155,7 @@ contract SmartWallet is IForwarder {
         if (nonce == req.nonce) {
             // example: current nonce = 4 and req.nonce = 4
             nonce++;
+            _currentBlockForNonce = block.number;
         } else if (nonce > req.nonce && _currentBlockForNonce != block.number) {
             // example: current nonce = 5 and req.nonce = 4
             // and we are not in the same transaction

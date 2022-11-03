@@ -41,7 +41,6 @@ interface IForwarder {
         bytes calldata signature,
         bytes calldata data,
         address to,
-        address currency,
-        uint256 amount
+        address currency
     ) external payable returns (bool success, bytes memory ret);
 }

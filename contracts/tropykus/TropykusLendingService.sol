@@ -42,8 +42,7 @@ contract TropykusLendingService is LendingService {
             sig,
             abi.encodeWithSignature("mint()"),
             address(_crbtc),
-            address(0),
-            0
+            address(0)
         );
 
         if (success) {
@@ -81,8 +80,7 @@ contract TropykusLendingService is LendingService {
             sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             address(_crbtc),
-            address(0),
-            0
+            address(0)
         );
 
         if (success) {
