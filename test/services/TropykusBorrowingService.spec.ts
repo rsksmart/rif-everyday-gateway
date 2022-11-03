@@ -92,7 +92,7 @@ describe('Tropykus Borrowing Service', () => {
     await tropykusBorrowingService.deployed();
   });
 
-  it.only('should allow to borrow DOC after lending RBTC on tropykus', async () => {
+  it('should allow to borrow DOC after lending RBTC on tropykus', async () => {
     const amountToBorrow = 2;
 
     const calculateAmountToLend = await tropykusBorrowingService
