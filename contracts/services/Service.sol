@@ -17,7 +17,6 @@ abstract contract Service is Ownable, IService {
     function addListing(ServiceListing memory listing)
         public
         override
-        onlyOwner
         returns (uint256)
     {
         //todo: check mandatory values.
