@@ -2,8 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "../services/BorrowService.sol";
-import "../userIdentity/UserIdentityFactory.sol";
-import "../userIdentity/UserIdentity.sol";
+import "contracts/services/BorrowService.sol";
 import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
@@ -115,6 +114,33 @@ contract TropykusBorrowingService is BorrowService {
         if (amount <= 0) revert NonZeroAmountAllowed();
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
+
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                req.from,
+                address(smartWallet),
+                amount
+            ), // max uint to repay whole debt
+            currency,
+            address(0)
+        );
+
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature(
+                "approve(address,uint256)",
+                address(_cdoc),
+                amount
+            ), // max uint to repay whole debt
+            currency,
+            address(0)
         );
 
         smartWallet.execute(

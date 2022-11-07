@@ -3,8 +3,6 @@ pragma solidity ^0.8.16;
 
 import "../services/LendingService.sol";
 import "../services/LendingService.sol";
-import "../userIdentity/UserIdentityFactory.sol";
-import "../userIdentity/UserIdentity.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
