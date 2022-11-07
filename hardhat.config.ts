@@ -40,7 +40,6 @@ export default <HardhatUserConfig>{
           'region camera keep actual absorb drive elegant chronic silver forget mammal enhance',
       },
     },
-    // hh: {},
     // testnet: {
     //   url: 'https://public-node.testnet.rsk.co',
     //   accounts: {

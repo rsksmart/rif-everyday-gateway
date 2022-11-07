@@ -123,7 +123,10 @@ describe('RIF Gateway SmartWallet', () => {
           signature,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          {
+            gasLimit: 3000000,
+          }
         ),
         'Nonce verification failed'
       ).to.revertedWith('InvalidNonce(5)');
@@ -145,7 +148,10 @@ describe('RIF Gateway SmartWallet', () => {
           signature,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          {
+            gasLimit: 3000000,
+          }
         )
       ).not.to.be.rejected;
 
@@ -156,7 +162,10 @@ describe('RIF Gateway SmartWallet', () => {
           signature,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero
+          ethers.constants.AddressZero,
+          {
+            gasLimit: 3000000,
+          }
         ),
         'Executor verification failed'
       ).to.revertedWith('InvalidBlockForNonce(0)');

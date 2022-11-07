@@ -13,7 +13,7 @@ import {
   smartwalletFactoryFixture,
 } from '../smartwallet/fixtures';
 import { signTransactionForExecutor } from '../smartwallet/utils';
-import { Wallet } from 'ethers';
+import { BigNumber, Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 
 describe('Tropykus Borrowing Service', () => {
@@ -25,7 +25,8 @@ describe('Tropykus Borrowing Service', () => {
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let doc: ERC20;
-  let cdocAddress: string;
+  let gasPrice: BigNumber;
+
   const tropykusContracts = {
     comptroller: '0xcf7ed3acca5a467e9e704c703e8d87f634fb0fc9',
     oracle: '0xe7f1725e7734ce288f8367e1bb143e90bb3f0512',
@@ -56,13 +57,13 @@ describe('Tropykus Borrowing Service', () => {
 
   before(async () => {
     ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
+    gasPrice = await ethers.provider.getGasPrice();
   });
 
   beforeEach(async () => {
     [owner] = await ethers.getSigners();
 
     const tropykusContractsDeployed = await tropykusFixture();
-    cdocAddress = tropykusContractsDeployed.cdoc;
 
     doc = (await ethers.getContractAt(
       'ERC20',
@@ -123,7 +124,10 @@ describe('Tropykus Borrowing Service', () => {
       onTestnet ? docAddressTestnet : doc.address,
       0, // Not in use for now
       0, // Not in use for now
-      { value: ethers.utils.parseEther(amountToLend.toString()) }
+      {
+        value: ethers.utils.parseEther(amountToLend.toString()),
+        gasLimit: 3000000,
+      }
     );
 
     await tx.wait();
@@ -174,7 +178,7 @@ describe('Tropykus Borrowing Service', () => {
       onTestnet ? docAddressTestnet : doc.address,
       0, // Not in use for now
       0, // Not in use for now
-      { value: amountToLend }
+      { value: amountToLend, gasLimit: 3000000 }
     );
     await tx.wait();
 
@@ -206,7 +210,7 @@ describe('Tropykus Borrowing Service', () => {
 
     const approveTx = await doc
       .connect(externalWallet)
-      .approve(smartWallet.address, approvedValue);
+      .approve(smartWallet.address, approvedValue, { gasLimit: 300000 });
     await approveTx.wait();
 
     const signedMessageForPayment = await signTransactionForExecutor(
@@ -225,7 +229,10 @@ describe('Tropykus Borrowing Service', () => {
         signedMessageForPayment.signature,
         approvedValue,
         onTestnet ? docAddressTestnet : doc.address,
-        0
+        0,
+        {
+          gasLimit: 3000000,
+        }
       );
     await payTx.wait();
 
@@ -271,7 +278,7 @@ describe('Tropykus Borrowing Service', () => {
       onTestnet ? docAddressTestnet : doc.address,
       0, // Not in use for now
       0, // Not in use for now
-      { value: amountToLend }
+      { value: amountToLend, gasLimit: 3000000 }
     );
     await tx.wait();
 
@@ -303,7 +310,9 @@ describe('Tropykus Borrowing Service', () => {
 
     const approveTx = await doc
       .connect(externalWallet)
-      .approve(smartWallet.address, approvedValue);
+      .approve(smartWallet.address, approvedValue, {
+        gasLimit: 300000,
+      });
     await approveTx.wait();
 
     const signedMessageForPayment = await signTransactionForExecutor(
@@ -322,7 +331,8 @@ describe('Tropykus Borrowing Service', () => {
         signedMessageForPayment.signature,
         approvedValue,
         onTestnet ? docAddressTestnet : doc.address,
-        0
+        0,
+        { gasLimit: 5000000 }
       );
     await payTx.wait();
 
@@ -356,7 +366,8 @@ describe('Tropykus Borrowing Service', () => {
       .withdraw(
         signedMessageForWithdraw.suffixData,
         signedMessageForWithdraw.forwardRequest,
-        signedMessageForWithdraw.signature
+        signedMessageForWithdraw.signature,
+        { gasLimit: 3000000 }
       );
     await withdrawTx.wait();
 
