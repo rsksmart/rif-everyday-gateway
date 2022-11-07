@@ -18,8 +18,6 @@ import { tropykusFixture } from 'test/utils/tropykusFixture';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
-  let alice: SignerWithAddress;
-  let bob: SignerWithAddress;
   let tropykusBorrowingService: TropykusBorrowingService;
   let smartWalletFactory: SmartWalletFactory;
   let signers: SignerWithAddress[];
@@ -61,7 +59,7 @@ describe('Tropykus Borrowing Service', () => {
   });
 
   beforeEach(async () => {
-    [owner, alice, bob] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     const tropykusContractsDeployed = await tropykusFixture();
     cdocAddress = tropykusContractsDeployed.cdoc;
@@ -147,148 +145,224 @@ describe('Tropykus Borrowing Service', () => {
     );
   });
 
-  // it.skip('should allow to repay DOC debt', async () => {
-  //   const amountToBorrow = 5;
-  //
-  //   const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
-  //   const calculateAmountToLend = await tropykusBorrowingService
-  //     .connect(alice)
-  //     .calculateRequiredCollateral(
-  //       ethers.utils.parseEther(amountToBorrow.toString()),
-  //       ethers.constants.AddressZero
-  //     );
-  //   const amountToLend = +calculateAmountToLend / 1e18;
-  //
-  //   const docBalanceBefore = await doc.balanceOf(alice.address);
-  //
-  //   const tx = await tropykusBorrowingService.connect(alice).borrow(
-  //     ethers.utils.parseEther(amountToBorrow.toString()),
-  //     onTestnet ? docAddressTestnet : docAddress,
-  //     0, // Not in use for now
-  //     0, // Not in use for now
-  //     {
-  //       value: ethers.utils.parseEther(amountToLend.toFixed(18)),
-  //     }
-  //   );
-  //   await tx.wait();
-  //
-  //   const docBalanceAfterBorrow = await doc.balanceOf(alice.address);
-  //
-  //   const forInterest = 0.2;
-  //   // Extra balance to pay interest $0.2
-  //
-  //   await doc.transfer(
-  //     alice.address,
-  //     ethers.utils.parseEther(forInterest.toFixed(18))
-  //   );
-  //   const docBalanceAfterPlusCent = await doc.balanceOf(alice.address);
-  //
-  //   const borrowBalance = await tropykusBorrowingService
-  //     .connect(alice)
-  //     .getBalance(doc.address);
-  //
-  //   const borrowBalancePlusCent = ethers.utils.parseEther(
-  //     (+borrowBalance / 1e18 + forInterest).toFixed(18)
-  //   );
-  //   const approvedValue = borrowBalancePlusCent.lt(docBalanceAfterPlusCent)
-  //     ? borrowBalancePlusCent
-  //     : docBalanceAfterPlusCent;
-  //
-  //   const approveTx = await doc
-  //     .connect(alice)
-  //     .approve(aliceIdentityAddress, approvedValue);
-  //   await approveTx.wait();
-  //
-  //   const payTx = await tropykusBorrowingService
-  //     .connect(alice)
-  //     .pay(approvedValue, onTestnet ? docAddressTestnet : docAddress, 0);
-  //   await payTx.wait();
-  //
-  //   const borrowBalanceAfter = await tropykusBorrowingService
-  //     .connect(alice)
-  //     .getBalance(doc.address);
-  //   expect(+borrowBalanceAfter / 1e18).to.eq(0);
-  //
-  //   const docBalanceAfter = await doc.balanceOf(alice.address);
-  //   expect(+docBalanceAfter / 1e18).to.be.closeTo(
-  //     +docBalanceAfterPlusCent / 1e18 - +borrowBalancePlusCent / 1e18,
-  //     0.1
-  //   );
-  // });
-  //
-  // it.skip('should allow withdraw collateral after repaying debt', async () => {
-  //   const amountToBorrow = 5;
-  //
-  //   const aliceIdentityAddress = await userIdentity.getIdentity(alice.address);
-  //   const tropykusBorrowingServiceAsAlice =
-  //     tropykusBorrowingService.connect(alice);
-  //   const calculateAmountToLend =
-  //     await tropykusBorrowingServiceAsAlice.calculateRequiredCollateral(
-  //       ethers.utils.parseEther(amountToBorrow.toString()),
-  //       ethers.constants.AddressZero
-  //     );
-  //   const amountToLend = +calculateAmountToLend / 1e18;
-  //
-  //   const docBalanceBefore = await doc.balanceOf(alice.address);
-  //
-  //   const tx = await tropykusBorrowingServiceAsAlice.borrow(
-  //     ethers.utils.parseEther(amountToBorrow.toString()),
-  //     onTestnet ? docAddressTestnet : docAddress,
-  //     0, // Not in use for now
-  //     0, // Not in use for now
-  //     {
-  //       value: ethers.utils.parseEther(amountToLend.toFixed(18)),
-  //     }
-  //   );
-  //   await tx.wait();
-  //
-  //   const docBalanceAfterBorrow = await doc.balanceOf(alice.address);
-  //
-  //   const forInterest = 0.2;
-  //   // Extra balance to pay interest $0.2
-  //
-  //   await doc.transfer(
-  //     alice.address,
-  //     ethers.utils.parseEther(forInterest.toFixed(18))
-  //   );
-  //   const docBalanceAfterPlusCent = await doc.balanceOf(alice.address);
-  //
-  //   const borrowBalance = await tropykusBorrowingServiceAsAlice.getBalance(
-  //     doc.address
-  //   );
-  //
-  //   const borrowBalancePlusCent = ethers.utils.parseEther(
-  //     (+borrowBalance / 1e18 + forInterest).toFixed(18)
-  //   );
-  //   const approvedValue = borrowBalancePlusCent.lt(docBalanceAfterPlusCent)
-  //     ? borrowBalancePlusCent
-  //     : docBalanceAfterPlusCent;
-  //
-  //   const approveTx = await doc
-  //     .connect(alice)
-  //     .approve(aliceIdentityAddress, approvedValue);
-  //   await approveTx.wait();
-  //
-  //   const payTx = await tropykusBorrowingServiceAsAlice.pay(
-  //     approvedValue,
-  //     onTestnet ? docAddressTestnet : docAddress,
-  //     0
-  //   );
-  //   await payTx.wait();
-  //
-  //   const borrowBalanceAfter = await tropykusBorrowingService
-  //     .connect(alice)
-  //     .getBalance(doc.address);
-  //
-  //   const balanceTropBefore =
-  //     await tropykusBorrowingServiceAsAlice.getCollateralBalance();
-  //   expect(+balanceTropBefore / 1e18).to.equal(amountToLend);
-  //
-  //   const withdrawTx = await tropykusBorrowingServiceAsAlice.withdraw();
-  //   await withdrawTx.wait();
-  //
-  //   const balanceTropAfter =
-  //     await tropykusBorrowingServiceAsAlice.getCollateralBalance();
-  //   expect(+balanceTropAfter / 1e18).to.equal(0);
-  // });
+  it('should allow to repay DOC debt', async () => {
+    const amountToBorrow = ethers.utils.parseEther('5');
+
+    const amountToLend = await tropykusBorrowingService
+      .connect(externalWallet)
+      .calculateRequiredCollateral(
+        amountToBorrow,
+        ethers.constants.AddressZero
+      );
+
+    const docBalanceBefore = await doc.balanceOf(externalWallet.address);
+
+    const { forwardRequest, suffixData, signature } =
+      await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusBorrowingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
+
+    const tx = await tropykusBorrowingService.connect(externalWallet).borrow(
+      suffixData,
+      forwardRequest,
+      signature,
+      amountToBorrow,
+      onTestnet ? docAddressTestnet : doc.address,
+      0, // Not in use for now
+      0, // Not in use for now
+      { value: amountToLend }
+    );
+    await tx.wait();
+
+    const docBalanceAfterBorrow = await doc.balanceOf(externalWallet.address);
+
+    const expectedBalance = docBalanceBefore.add(amountToBorrow);
+
+    expect(docBalanceAfterBorrow).to.be.equal(expectedBalance);
+
+    const forInterest = ethers.utils.parseEther('0.2');
+    // Extra balance to pay interest $0.2
+    await doc.transfer(externalWallet.address, forInterest);
+    const docBalanceAfterWithInterest = await doc.balanceOf(
+      externalWallet.address
+    );
+    expect(docBalanceAfterWithInterest).to.be.equals(
+      docBalanceAfterBorrow.add(forInterest)
+    );
+
+    const borrowBalance = await tropykusBorrowingService
+      .connect(externalWallet)
+      .getBalance(doc.address);
+
+    const borrowBalancePlusCent = borrowBalance.add(forInterest);
+
+    const approvedValue = borrowBalancePlusCent.lt(docBalanceAfterWithInterest)
+      ? borrowBalancePlusCent
+      : docBalanceAfterWithInterest;
+
+    const approveTx = await doc
+      .connect(externalWallet)
+      .approve(smartWallet.address, approvedValue);
+    await approveTx.wait();
+
+    const signedMessageForPayment = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusBorrowingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
+
+    const payTx = await tropykusBorrowingService
+      .connect(externalWallet)
+      .pay(
+        signedMessageForPayment.suffixData,
+        signedMessageForPayment.forwardRequest,
+        signedMessageForPayment.signature,
+        approvedValue,
+        onTestnet ? docAddressTestnet : doc.address,
+        0
+      );
+    await payTx.wait();
+
+    const borrowBalanceAfter = await tropykusBorrowingService
+      .connect(externalWallet)
+      .getBalance(doc.address);
+    expect(+borrowBalanceAfter / 1e18).to.eq(0);
+
+    const docBalanceAfter = await doc.balanceOf(externalWallet.address);
+
+    expect(+docBalanceAfter / 1e18).to.be.closeTo(
+      +docBalanceAfterWithInterest / 1e18 - +borrowBalancePlusCent / 1e18,
+      +forInterest / 1e18
+    );
+  });
+
+  it('should allow withdraw collateral after repaying debt', async () => {
+    const amountToBorrow = ethers.utils.parseEther('5');
+
+    const amountToLend = await tropykusBorrowingService
+      .connect(externalWallet)
+      .calculateRequiredCollateral(
+        amountToBorrow,
+        ethers.constants.AddressZero
+      );
+
+    const docBalanceBefore = await doc.balanceOf(externalWallet.address);
+
+    const { forwardRequest, suffixData, signature } =
+      await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusBorrowingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
+
+    const tx = await tropykusBorrowingService.connect(externalWallet).borrow(
+      suffixData,
+      forwardRequest,
+      signature,
+      amountToBorrow,
+      onTestnet ? docAddressTestnet : doc.address,
+      0, // Not in use for now
+      0, // Not in use for now
+      { value: amountToLend }
+    );
+    await tx.wait();
+
+    const docBalanceAfterBorrow = await doc.balanceOf(externalWallet.address);
+
+    const expectedBalance = docBalanceBefore.add(amountToBorrow);
+
+    expect(docBalanceAfterBorrow).to.be.equal(expectedBalance);
+
+    const forInterest = ethers.utils.parseEther('0.2');
+    // Extra balance to pay interest $0.2
+    await doc.transfer(externalWallet.address, forInterest);
+    const docBalanceAfterWithInterest = await doc.balanceOf(
+      externalWallet.address
+    );
+    expect(docBalanceAfterWithInterest).to.be.equals(
+      docBalanceAfterBorrow.add(forInterest)
+    );
+
+    const borrowBalance = await tropykusBorrowingService
+      .connect(externalWallet)
+      .getBalance(doc.address);
+
+    const borrowBalancePlusCent = borrowBalance.add(forInterest);
+
+    const approvedValue = borrowBalancePlusCent.lt(docBalanceAfterWithInterest)
+      ? borrowBalancePlusCent
+      : docBalanceAfterWithInterest;
+
+    const approveTx = await doc
+      .connect(externalWallet)
+      .approve(smartWallet.address, approvedValue);
+    await approveTx.wait();
+
+    const signedMessageForPayment = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusBorrowingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
+
+    const payTx = await tropykusBorrowingService
+      .connect(externalWallet)
+      .pay(
+        signedMessageForPayment.suffixData,
+        signedMessageForPayment.forwardRequest,
+        signedMessageForPayment.signature,
+        approvedValue,
+        onTestnet ? docAddressTestnet : doc.address,
+        0
+      );
+    await payTx.wait();
+
+    const borrowBalanceAfter = await tropykusBorrowingService
+      .connect(externalWallet)
+      .getBalance(doc.address);
+    expect(+borrowBalanceAfter / 1e18).to.eq(0);
+
+    const docBalanceAfter = await doc.balanceOf(externalWallet.address);
+
+    expect(+docBalanceAfter / 1e18).to.be.closeTo(
+      +docBalanceAfterWithInterest / 1e18 - +borrowBalancePlusCent / 1e18,
+      +forInterest / 1e18
+    );
+
+    const balanceTropBefore = await tropykusBorrowingService
+      .connect(externalWallet)
+      .getCollateralBalance();
+    expect(balanceTropBefore).to.be.equals(amountToLend);
+
+    const signedMessageForWithdraw = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusBorrowingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
+
+    const withdrawTx = await tropykusBorrowingService
+      .connect(externalWallet)
+      .withdraw(
+        signedMessageForWithdraw.suffixData,
+        signedMessageForWithdraw.forwardRequest,
+        signedMessageForWithdraw.signature
+      );
+    await withdrawTx.wait();
+
+    const balanceTropAfter = await tropykusBorrowingService
+      .connect(externalWallet)
+      .getCollateralBalance();
+    expect(+balanceTropAfter / 1e18).to.equal(0);
+  });
 });

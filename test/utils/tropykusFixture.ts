@@ -1,20 +1,20 @@
 import { Contract } from 'ethers';
 import hre, { ethers } from 'hardhat';
-import StandardTokenJSON from './tropykusCompiledContracts/ERC20.sol/StandardToken.json';
-import MultiSigWalletJSON from './tropykusCompiledContracts/MultiSigWallet.sol/MultiSigWallet.json';
-import PriceOracleProxyJSON from './tropykusCompiledContracts/PriceOracleProxy.sol/PriceOracleProxy.json';
-import UnitrollerJSON from './tropykusCompiledContracts/Unitroller.sol/Unitroller.json';
-import ComptrollerG6JSON from './tropykusCompiledContracts/ComptrollerG6.sol/ComptrollerG6.json';
-import MockProviderMOCJSON from './tropykusCompiledContracts/mocks/MockPriceProviderMoC.sol/MockPriceProviderMoC.json';
-import PriceOracleAdapterMOCJSON from './tropykusCompiledContracts/PriceOracleAdapterMoc.sol/PriceOracleAdapterMoc.json';
-import WhitePaperInterestRateJSON from './tropykusCompiledContracts/WhitePaperInterestRateModel.sol/WhitePaperInterestRateModel.json';
-import JumpRateModelV2JSON from './tropykusCompiledContracts/JumpRateModelV2.sol/JumpRateModelV2.json';
-import HurricaneRateInterestModelJSON from './tropykusCompiledContracts/HurricaneInterestRateModel.sol/HurricaneInterestRateModel.json';
-import CErc20ImmutableJSON from './tropykusCompiledContracts/CErc20Immutable.sol/CErc20Immutable.json';
-import CRBTCJSON from './tropykusCompiledContracts/CRBTC.sol/CRBTC.json';
-import CRBTCCompanionJSON from './tropykusCompiledContracts/CRBTCCompanion.sol/CRBTCCompanion.json';
-import CRDOCJSON from './tropykusCompiledContracts/CRDOC.sol/CRDOC.json';
-import TropykusLensJSON from './tropykusCompiledContracts/Lens/TropykusLens.sol/TropykusLens.json';
+import StandardTokenJSON from './tropykusCompiledContracts/StandardToken.json';
+import MultiSigWalletJSON from './tropykusCompiledContracts/MultiSigWallet.json';
+import PriceOracleProxyJSON from './tropykusCompiledContracts/PriceOracleProxy.json';
+import UnitrollerJSON from './tropykusCompiledContracts/Unitroller.json';
+import ComptrollerG6JSON from './tropykusCompiledContracts/ComptrollerG6.json';
+import MockProviderMOCJSON from './tropykusCompiledContracts/MockPriceProviderMoC.json';
+import PriceOracleAdapterMOCJSON from './tropykusCompiledContracts/PriceOracleAdapterMoc.json';
+import WhitePaperInterestRateJSON from './tropykusCompiledContracts/WhitePaperInterestRateModel.json';
+import JumpRateModelV2JSON from './tropykusCompiledContracts/JumpRateModelV2.json';
+import HurricaneRateInterestModelJSON from './tropykusCompiledContracts/HurricaneInterestRateModel.json';
+import CErc20ImmutableJSON from './tropykusCompiledContracts/CErc20Immutable.json';
+import CRBTCJSON from './tropykusCompiledContracts/CRBTC.json';
+import CRBTCCompanionJSON from './tropykusCompiledContracts/CRBTCCompanion.json';
+import CRDOCJSON from './tropykusCompiledContracts/CRDOC.json';
+import TropykusLensJSON from './tropykusCompiledContracts/TropykusLens.json';
 
 export const tropykusFixture = async () => {
   const tropykusContracts = await deployTropykusContracts();

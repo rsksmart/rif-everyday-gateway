@@ -99,7 +99,7 @@ contract SmartWallet is IForwarder {
         address to,
         address currency
     ) external payable override returns (bool success, bytes memory ret) {
-        (sig); // This is line saves gas TODO: Research why this saves gas 🤷‍♂️
+        (sig); // This line saves gas TODO: Research why 🤷‍♂️
 
         _verifyNonce(req);
         _verifySig(suffixData, req, sig);
