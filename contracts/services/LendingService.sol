@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "contracts/services/ServiceData.sol";
 import "./Service.sol";
 import "./ILendingService.sol";
 import "../smartwallet/IForwarder.sol";

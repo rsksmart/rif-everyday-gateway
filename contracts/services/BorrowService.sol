@@ -3,8 +3,6 @@ pragma solidity ^0.8.16;
 
 import "../services/Service.sol";
 import "../services/IBorrowService.sol";
-import "contracts/services/Service.sol";
-import "contracts/services/IBorrowService.sol";
 import "../smartwallet/IForwarder.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
