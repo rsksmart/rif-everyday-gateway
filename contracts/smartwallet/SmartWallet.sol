@@ -6,11 +6,12 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
+import {Publisher} from "../common/IPublisher.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
-contract SmartWallet is IForwarder {
+contract SmartWallet is IForwarder, Publisher {
     using ECDSA for bytes32;
 
     error InvalidNonce(uint256 nonce);

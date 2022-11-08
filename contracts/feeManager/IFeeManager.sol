@@ -14,6 +14,20 @@ interface IFeeManager {
     event Withdraw(address indexed payee, uint256 indexed amount);
 
     /**
+     * @notice Emitted when `serviceProvider` service is consumed
+     * @param serviceProvider service provider address
+     * @param fee service provider debt per service consumption
+     */
+    event ServiceConsumed(address serviceProvider, uint256 fee);
+
+    /**
+     * @notice Emitted when `serviceProvider` service is consumed
+     * @param serviceProvider service provider address
+     * @param fee service provider debt payed
+     */
+    event DebtPayed(address serviceProvider, uint256 fee);
+
+    /**
      * @notice Emitted when `payee` deposits to the RIF Gateway
      * @param payer account that deposits
      * @param amount funds to be deposited
@@ -21,6 +35,8 @@ interface IFeeManager {
     event Deposit(address indexed payer, uint256 indexed amount);
 
     error InvalidAmount();
+
+    error InvalidFee();
 
     error InsufficientFunds();
 
