@@ -1,14 +1,16 @@
 import hre, { ethers } from 'hardhat';
 import {
   ACME,
-  IdentityLendingService,
   Providers,
   TropykusBorrowingService,
   UserIdentityFactory,
+  ServiceTypeManager,
 } from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
 import { PaybackOption } from 'test/constants/service';
+import { BytesLike } from 'ethers';
+import { toUtf8Bytes } from 'ethers/lib/utils';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
 const tropikusDOC = '0x59b670e9fa9d0a427751af201d676719a970857b';
 const tropykusContracts = {
@@ -34,6 +36,13 @@ async function deployIdentityFactory() {
   return identityFactory;
 }
 
+async function deployServiceTypeManager() {
+  const { contract: serviceTypeManager } =
+    await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
+  console.log('ServiceTypeManager deployed at: ', serviceTypeManager.address);
+  return serviceTypeManager;
+}
+
 async function deployBorrowingServices(identityFactory: UserIdentityFactory) {
   const { contract: tropykusBorrowingService } =
     await deployContract<TropykusBorrowingService>('TropykusBorrowingService', {
@@ -57,12 +66,6 @@ async function deployLendingServices(identityFactory: UserIdentityFactory) {
     value: ethers.utils.parseEther('0.001'),
   });
 
-  // const { contract: dummyLendingService } =
-  //   await deployContract<IdentityLendingService>('IdentityLendingService', {
-  //     acmeLending: acmeLending.address,
-  //     identityFactory: identityFactory.address,
-  //   });
-
   const { contract: tropykusLendingService } = await deployContract(
     'TropykusLendingService',
     {
@@ -75,15 +78,16 @@ async function deployLendingServices(identityFactory: UserIdentityFactory) {
 
   return {
     acmeLending,
-    // lendingService: dummyLendingService,
     tropykusLendingService,
   };
 }
 
-async function deployProvidersContract() {
+async function deployProvidersContract(serviceTypeManager: string) {
   const { contract: providersContract } = await deployContract<Providers>(
     'Providers',
-    {}
+    {
+      stm: serviceTypeManager,
+    }
   );
   console.log('Providers contract deployed at: ', providersContract.address);
   return providersContract;
@@ -91,6 +95,24 @@ async function deployProvidersContract() {
 
 async function setupLending() {
   const identityFactory = await deployIdentityFactory();
+  const serviceTypeManager = await deployServiceTypeManager();
+
+  // lending service interface id
+  // const LENDING_SERVICE_INTERFACEID = '0xce663897';
+  const LENDING_SERVICE_INTERFACEID = '0xab102a6a';
+  const tLx = await serviceTypeManager.addServiceType(
+    LENDING_SERVICE_INTERFACEID
+  );
+  tLx.wait();
+
+  // borrow serivce interface id = 0xe3864a23
+  // const BORROW_SERVICE_INTERFACEID = '0xe3864a23';
+  const BORROW_SERVICE_INTERFACEID = '0x768dc69d';
+
+  const tBx = await serviceTypeManager.addServiceType(
+    BORROW_SERVICE_INTERFACEID
+  );
+  tBx.wait();
   //deploy providers contracts
 
   // add providers
@@ -103,7 +125,9 @@ async function setupLending() {
     identityFactory
   );
 
-  const providersContract = await deployProvidersContract();
+  const providersContract = await deployProvidersContract(
+    serviceTypeManager.address
+  );
 
   console.log('tropykusLendingService', tropykusLendingService.address);
   console.log('tropykusBorrowingService', tropykusBorrowingService.address);
@@ -117,19 +141,6 @@ async function setupLending() {
     tropykusBorrowingService.address
   );
   await addTropykusBorrowingServiceTx.wait();
-
-  await providersContract.getServices();
-  const validateTropykusLendTx = await providersContract.validate(
-    true,
-    tropykusLendingService.address
-  );
-  await validateTropykusLendTx.wait();
-
-  const validateTropykusBorrowTx = await providersContract.validate(
-    true,
-    tropykusBorrowingService.address
-  );
-  await validateTropykusBorrowTx.wait();
 
   const contractsJSON = {
     acmeLending: acmeLending.address,
