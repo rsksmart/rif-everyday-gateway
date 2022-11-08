@@ -22,7 +22,7 @@ export const tropykusFixture = async () => {
   return tropykusContracts;
 };
 
-const deployTropykusContracts = async () => {
+export const deployTropykusContracts = async () => {
   const [deployer] = await ethers.getSigners();
   const parseEther = ethers.utils.parseEther;
   const config = {
