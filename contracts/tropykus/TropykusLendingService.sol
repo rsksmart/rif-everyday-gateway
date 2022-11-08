@@ -3,69 +3,100 @@ pragma solidity ^0.8.16;
 
 import "../services/LendingService.sol";
 import "../services/LendingService.sol";
-import "../userIdentity/UserIdentityFactory.sol";
-import "../userIdentity/UserIdentity.sol";
+import "../smartwallet/SmartWalletFactory.sol";
+import "../smartwallet/SmartWallet.sol";
+import "../smartwallet/IForwarder.sol";
 
 contract TropykusLendingService is LendingService {
     address private _crbtc;
-    UserIdentityFactory private _userIdentityFactory;
+    SmartWalletFactory private _smartWalletFactory;
     uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
 
-    constructor(address crbtc, UserIdentityFactory userIdentityFactory)
+    constructor(address crbtc, SmartWalletFactory smartWalletFactory)
         LendingService("Tropykus")
     {
         _crbtc = crbtc;
-        _userIdentityFactory = userIdentityFactory;
+        _smartWalletFactory = smartWalletFactory;
     }
 
-    function lend() public payable override {
+    function lend(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig
+    ) public payable override {
         if (msg.value == 0) {
             revert InvalidAmount(msg.value);
         }
 
-        UserIdentityFactory(_userIdentityFactory).createIdentity(msg.sender);
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-
-        identity.send{value: msg.value}(
-            address(_crbtc),
-            abi.encodeWithSignature("mint()")
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        emit Lend({
-            listingId: 0,
-            lender: msg.sender,
-            currency: address(0),
-            amount: msg.value
-        });
+        (bool success, bytes memory ret) = smartWallet.execute{
+            value: msg.value
+        }(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature("mint()"),
+            address(_crbtc),
+            address(0)
+        );
+
+        if (success) {
+            emit Lend({
+                listingId: 0,
+                lender: msg.sender,
+                currency: address(0),
+                amount: msg.value
+            });
+        } else {
+            revert FailedOperation(ret);
+        }
     }
 
-    function withdraw() public override {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-        bytes memory balanceData = identity.read(
+    function withdraw(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig
+    ) public payable override {
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
+
+        bytes memory balanceData = smartWallet.read(
             address(_crbtc),
-            abi.encodeWithSignature("balanceOf(address)", address(identity))
+            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
 
-        identity.retrieve(
+        (bool success, bytes memory ret) = smartWallet.execute{
+            value: msg.value
+        }(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature("redeem(uint256)", tokens),
             address(_crbtc),
-            abi.encodeWithSignature("redeem(uint256)", tokens)
+            address(0)
         );
 
-        bytes memory data = identity.read(
-            address(_crbtc),
-            abi.encodeWithSignature("exchangeRateStored()")
-        );
-        uint256 exchangeRate = abi.decode(data, (uint256));
+        if (success) {
+            bytes memory data = smartWallet.read(
+                address(_crbtc),
+                abi.encodeWithSignature("exchangeRateStored()")
+            );
+            uint256 exchangeRate = abi.decode(data, (uint256));
 
-        emit Withdraw({
-            listingId: 0,
-            withdrawer: msg.sender,
-            currency: address(0),
-            amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
-        });
+            emit Withdraw({
+                listingId: 0,
+                withdrawer: msg.sender,
+                currency: address(0),
+                amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
+            });
+        } else {
+            revert FailedOperation(ret);
+        }
     }
 
     function getBalance(address currency)
@@ -74,18 +105,19 @@ contract TropykusLendingService is LendingService {
         override(IService)
         returns (uint256)
     {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
 
-        bytes memory data = identity.read(
+        bytes memory data = smartWallet.read(
             address(_crbtc),
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(data, (uint256));
 
-        bytes memory balanceData = identity.read(
+        bytes memory balanceData = smartWallet.read(
             address(_crbtc),
-            abi.encodeWithSignature("balanceOf(address)", address(identity))
+            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;

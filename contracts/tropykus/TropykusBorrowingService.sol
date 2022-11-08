@@ -2,9 +2,11 @@
 pragma solidity ^0.8.16;
 
 import "../services/BorrowService.sol";
-import "../userIdentity/UserIdentityFactory.sol";
-import "../userIdentity/UserIdentity.sol";
+import "contracts/services/BorrowService.sol";
 import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
+import "../smartwallet/SmartWalletFactory.sol";
+import "../smartwallet/SmartWallet.sol";
+import "../smartwallet/IForwarder.sol";
 
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
@@ -20,7 +22,7 @@ contract TropykusBorrowingService is BorrowService {
     address private _oracle;
     address private _crbtc;
     address private _cdoc;
-    UserIdentityFactory private _userIdentityFactory;
+    SmartWalletFactory private _smartWalletFactory;
 
     struct TropykusContracts {
         address comptroller;
@@ -30,17 +32,20 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     constructor(
-        UserIdentityFactory userIdentityFactory,
+        SmartWalletFactory smartWalletFactory,
         TropykusContracts memory contracts
     ) BorrowService("Tropykus") {
         _comptroller = contracts.comptroller;
         _oracle = contracts.oracle;
         _crbtc = contracts.crbtc;
         _cdoc = contracts.cdoc;
-        _userIdentityFactory = userIdentityFactory;
+        _smartWalletFactory = smartWalletFactory;
     }
 
     function borrow(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
         uint256 amount,
         address currency,
         uint256 index,
@@ -49,22 +54,21 @@ contract TropykusBorrowingService is BorrowService {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-
-        if (address(identity) == address(0)) {
-            identity = UserIdentityFactory(_userIdentityFactory).createIdentity(
-                    msg.sender
-                );
-        }
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
 
         uint256 amountToLend = calculateRequiredCollateral(amount, currency);
         if (msg.value < amountToLend)
             revert InvalidCollateralAmount(msg.value, amountToLend);
 
-        identity.send{value: msg.value}(
+        smartWallet.execute{value: msg.value}(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature("mint()"),
             address(_crbtc),
-            abi.encodeWithSignature("mint()")
+            address(0)
         );
 
         address[] memory markets = new address[](2);
@@ -72,14 +76,21 @@ contract TropykusBorrowingService is BorrowService {
         markets[0] = address(_crbtc); // kRBTC
         markets[1] = address(_cdoc); // kDOC
 
-        identity.send(
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature("enterMarkets(address[])", markets),
             address(_comptroller),
-            abi.encodeWithSignature("enterMarkets(address[])", markets)
+            address(0)
         );
 
-        identity.retrieveTokens(
-            address(_cdoc),
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
             abi.encodeWithSignature("borrow(uint256)", amount),
+            address(_cdoc),
             currency
         );
 
@@ -93,24 +104,52 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     function pay(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
         uint256 amount,
         address currency,
         uint256 index
     ) public payable override {
         if (amount <= 0) revert NonZeroAmountAllowed();
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
 
-        if (address(identity) == address(0)) {
-            revert MissingIdentity(msg.sender);
-        }
-
-        identity.sendTokens(
-            address(_cdoc),
-            abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                req.from,
+                address(smartWallet),
+                amount
+            ), // max uint to repay whole debt
             currency,
-            amount,
-            _cdoc
+            address(0)
+        );
+
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature(
+                "approve(address,uint256)",
+                address(_cdoc),
+                amount
+            ), // max uint to repay whole debt
+            currency,
+            address(0)
+        );
+
+        smartWallet.execute(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
+            address(_cdoc),
+            currency
         );
 
         emit Pay({
@@ -122,22 +161,19 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     function getCollateralBalance() public view returns (uint256) {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-        // If identity is 0 then The user has n't ever interacted with the protocol
-        if (address(identity) == address(0)) {
-            return 0;
-        }
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
 
-        bytes memory data = identity.read(
+        bytes memory data = smartWallet.read(
             address(_crbtc),
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(data, (uint256));
 
-        bytes memory balanceData = identity.read(
+        bytes memory balanceData = smartWallet.read(
             address(_crbtc),
-            abi.encodeWithSignature("balanceOf(address)", address(identity))
+            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
@@ -163,36 +199,48 @@ contract TropykusBorrowingService is BorrowService {
                 _UNIT_DECIMAL_PRECISION) / (collateralFactor * rbtcPrice);
     }
 
-    function withdraw() public override {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
+    function withdraw(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig
+    ) public payable override {
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
 
-        if (address(identity) == address(0)) {
-            revert MissingIdentity(msg.sender);
-        }
-        bytes memory balanceData = identity.read(
+        bytes memory balanceData = smartWallet.read(
             address(_crbtc),
-            abi.encodeWithSignature("balanceOf(address)", address(identity))
+            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
 
-        identity.retrieve(
+        (bool success, bytes memory ret) = smartWallet.execute{
+            value: msg.value
+        }(
+            suffixData,
+            req,
+            sig,
+            abi.encodeWithSignature("redeem(uint256)", tokens),
             address(_crbtc),
-            abi.encodeWithSignature("redeem(uint256)", tokens)
+            address(0)
         );
 
-        bytes memory data = identity.read(
-            address(_crbtc),
-            abi.encodeWithSignature("exchangeRateStored()")
-        );
-        uint256 exchangeRate = abi.decode(data, (uint256));
+        if (success) {
+            bytes memory data = smartWallet.read(
+                address(_crbtc),
+                abi.encodeWithSignature("exchangeRateStored()")
+            );
+            uint256 exchangeRate = abi.decode(data, (uint256));
 
-        emit Withdraw({
-            listingId: 0,
-            withdrawer: msg.sender,
-            currency: address(0),
-            amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
-        });
+            emit Withdraw({
+                listingId: 0,
+                withdrawer: msg.sender,
+                currency: address(0),
+                amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
+            });
+        } else {
+            revert FailedOperation(ret);
+        }
     }
 
     function getBalance(address currency)
@@ -201,17 +249,15 @@ contract TropykusBorrowingService is BorrowService {
         override(IService)
         returns (uint256)
     {
-        UserIdentity identity = UserIdentityFactory(_userIdentityFactory)
-            .getIdentity(msg.sender);
-        if (address(identity) == address(0)) {
-            return 0;
-        }
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
 
-        bytes memory data = identity.read(
+        bytes memory data = smartWallet.read(
             address(_cdoc),
             abi.encodeWithSignature(
                 "borrowBalanceStored(address)",
-                address(identity)
+                address(smartWallet)
             )
         );
 

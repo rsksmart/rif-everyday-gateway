@@ -25,6 +25,9 @@ export default <HardhatUserConfig>{
       },
     ],
   },
+  mocha: {
+    timeout: 5000000000000000,
+  },
   networks: {
     regtest: {
       url: 'http://localhost:4444',
@@ -32,12 +35,17 @@ export default <HardhatUserConfig>{
     ganache: {
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
+      accounts: {
+        mnemonic:
+          'region camera keep actual absorb drive elegant chronic silver forget mammal enhance',
+      },
     },
     // testnet: {
     //   url: 'https://public-node.testnet.rsk.co',
     //   accounts: {
     //     mnemonic: process.env.HDWALLET_MNEMONIC,
     //   },
+    //   chainId: 31,
     // },
   },
   typechain: {
