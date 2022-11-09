@@ -34,7 +34,8 @@ contract TropykusBorrowingService is BorrowService {
     constructor(
         SmartWalletFactory smartWalletFactory,
         TropykusContracts memory contracts
-    ) BorrowService("Tropykus") {
+    ) BorrowService("") {
+        serviceProviderName = "Tropykus";
         _comptroller = contracts.comptroller;
         _oracle = contracts.oracle;
         _crbtc = contracts.crbtc;

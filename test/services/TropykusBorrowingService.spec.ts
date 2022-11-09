@@ -91,6 +91,17 @@ describe('Tropykus Borrowing Service', () => {
     await tropykusBorrowingService.deployed();
   });
 
+  it('should retrieve service name', async () => {
+    const borrowingService = await ethers.getContractAt(
+      'BorrowService',
+      tropykusBorrowingService.address,
+      owner
+    );
+
+    const name = await borrowingService.serviceProviderName();
+    expect(name).equals('Tropykus');
+  });
+
   it('should allow to borrow DOC after lending RBTC on tropykus', async () => {
     const amountToBorrow = 2;
 

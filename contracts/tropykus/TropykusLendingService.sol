@@ -2,7 +2,6 @@
 pragma solidity ^0.8.16;
 
 import "../services/LendingService.sol";
-import "../services/LendingService.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
@@ -13,8 +12,9 @@ contract TropykusLendingService is LendingService {
     uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
 
     constructor(address crbtc, SmartWalletFactory smartWalletFactory)
-        LendingService("Tropykus")
+        LendingService("")
     {
+        serviceProviderName = "Tropykus";
         _crbtc = crbtc;
         _smartWalletFactory = smartWalletFactory;
     }

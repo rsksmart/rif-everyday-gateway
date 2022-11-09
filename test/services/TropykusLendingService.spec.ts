@@ -74,6 +74,17 @@ describe('Tropykus Lending Service', () => {
     // console.log('tropykusLendingService', tropykusLendingService.address);
   });
 
+  it('should retrieve service name', async () => {
+    const lendingService = await ethers.getContractAt(
+      'LendingService',
+      tropykusLendingService.address,
+      owner
+    );
+
+    const name = await lendingService.serviceProviderName();
+    expect(name).equals('Tropykus');
+  });
+
   it('should allow to lend RBTC on tropykus', async () => {
     const { forwardRequest, suffixData, signature } =
       await signTransactionForExecutor(
