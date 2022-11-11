@@ -12,9 +12,8 @@ contract TropykusLendingService is LendingService {
     uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
 
     constructor(address crbtc, SmartWalletFactory smartWalletFactory)
-        LendingService("")
+        LendingService("Tropykus")
     {
-        serviceProviderName = "Tropykus";
         _crbtc = crbtc;
         _smartWalletFactory = smartWalletFactory;
     }
@@ -102,7 +101,7 @@ contract TropykusLendingService is LendingService {
     function getBalance(address currency)
         public
         view
-        override(IService)
+        override
         returns (uint256)
     {
         SmartWallet smartWallet = SmartWallet(

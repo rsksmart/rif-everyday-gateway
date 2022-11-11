@@ -6,9 +6,9 @@ import "../services/IBorrowService.sol";
 import "../smartwallet/IForwarder.sol";
 
 abstract contract BorrowService is Service, IBorrowService {
-    constructor(string memory serviceProviderName) {
+    constructor(string memory providerName) {
         serviceType = type(IBorrowService).interfaceId; //borrowing/loan
-        serviceProviderName = serviceProviderName;
+        serviceProviderName = providerName;
     }
 
     function borrow(
