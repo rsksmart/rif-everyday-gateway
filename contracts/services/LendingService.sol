@@ -6,9 +6,9 @@ import "./ILendingService.sol";
 import "../smartwallet/IForwarder.sol";
 
 abstract contract LendingService is Service, ILendingService {
-    constructor(string memory serviceProviderName) {
+    constructor(string memory providerName) {
         serviceType = type(ILendingService).interfaceId; //lending/savings
-        serviceProviderName = serviceProviderName;
+        serviceProviderName = providerName;
     }
 
     function lend(

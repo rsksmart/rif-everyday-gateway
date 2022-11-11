@@ -6,14 +6,7 @@ import {
   externalSmartwalletFixture,
   smartwalletFactoryFixture,
 } from './fixtures';
-import {
-  computeSalt,
-  encoder,
-  getLocalEip712Signature,
-  getSuffixData,
-  HARDHAT_CHAIN_ID,
-  signTransactionForExecutor,
-} from './utils';
+import { computeSalt, encoder, signTransactionForExecutor } from './utils';
 import { ethers } from 'hardhat';
 import { Wallet } from 'ethers';
 
@@ -59,19 +52,13 @@ describe('RIF Gateway SmartWallet', () => {
   });
 
   describe('Message signing and nonce verification', () => {
-    let smartWallet: SmartWallet;
+    let smartWallet: SmartWallet | undefined;
     let privateKey: string;
     let externalWallet: Wallet | SignerWithAddress;
 
     beforeEach(async () => {
       ({ smartWallet, privateKey, externalWallet } = await loadFixture(
-        externalSmartwalletFixture.bind(
-          null,
-          smartWalletFactory,
-          signers,
-          false,
-          ['']
-        )
+        externalSmartwalletFixture.bind(null, smartWalletFactory, signers, true)
       ));
     });
 
@@ -85,7 +72,7 @@ describe('RIF Gateway SmartWallet', () => {
         );
 
       await expect(
-        smartWallet.verify(suffixData, forwardRequest, signature),
+        smartWallet!.verify(suffixData, forwardRequest, signature),
         'Verification failed'
       ).not.to.be.rejected;
     });
@@ -100,7 +87,7 @@ describe('RIF Gateway SmartWallet', () => {
         );
 
       await expect(
-        smartWallet.verify(suffixData, forwardRequest, signature),
+        smartWallet!.verify(suffixData, forwardRequest, signature),
         'Executor verification failed'
       ).to.be.rejected;
     });
@@ -117,7 +104,7 @@ describe('RIF Gateway SmartWallet', () => {
         );
 
       await expect(
-        smartWallet.execute(
+        smartWallet!.execute(
           suffixData,
           forwardRequest,
           signature,
@@ -142,7 +129,7 @@ describe('RIF Gateway SmartWallet', () => {
         );
 
       await expect(
-        smartWallet.execute(
+        smartWallet!.execute(
           suffixData,
           forwardRequest,
           signature,
@@ -156,7 +143,7 @@ describe('RIF Gateway SmartWallet', () => {
       ).not.to.be.rejected;
 
       await expect(
-        smartWallet.execute(
+        smartWallet!.execute(
           suffixData,
           forwardRequest,
           signature,

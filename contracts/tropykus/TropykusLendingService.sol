@@ -2,7 +2,6 @@
 pragma solidity ^0.8.16;
 
 import "../services/LendingService.sol";
-import "../services/LendingService.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
@@ -28,8 +27,8 @@ contract TropykusLendingService is LendingService {
             revert InvalidAmount(msg.value);
         }
 
-        SmartWallet smartWallet = SmartWallet(
-            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
+            msg.sender
         );
 
         (bool success, bytes memory ret) = smartWallet.execute{
@@ -102,7 +101,7 @@ contract TropykusLendingService is LendingService {
     function getBalance(address currency)
         public
         view
-        override(IService)
+        override
         returns (uint256)
     {
         SmartWallet smartWallet = SmartWallet(
