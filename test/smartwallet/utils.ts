@@ -153,9 +153,7 @@ export const signTransactionForExecutor = async (
         smartWalletAddress
       );
       onChainNonce = (await smartWallet.nonce()).toNumber();
-    } catch (e) {
-      console.log('Smart wallet does not exist');
-    }
+    } catch (e) {}
     nonce = onChainNonce.toString();
   }
 
