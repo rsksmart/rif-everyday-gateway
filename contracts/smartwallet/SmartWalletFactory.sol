@@ -66,4 +66,17 @@ contract SmartWalletFactory is ISmartWalletFactory {
         //No info is returned, an event is emitted to inform the new deployment
         emit Deployed(addr, uint256(salt));
     }
+
+    function getUsersSmartWallet(address owner) public returns (SmartWallet) {
+        address smartWalletAddress = this.getSmartWalletAddress(owner);
+        uint32 size;
+        assembly {
+            size := extcodesize(smartWalletAddress)
+        }
+
+        if (size == 0) {
+            this.createUserSmartWallet(owner);
+        }
+        return SmartWallet(payable(smartWalletAddress));
+    }
 }

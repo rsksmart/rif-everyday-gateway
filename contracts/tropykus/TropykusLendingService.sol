@@ -28,7 +28,9 @@ contract TropykusLendingService is LendingService {
             revert InvalidAmount(msg.value);
         }
 
-        SmartWallet smartWallet = _createSmartWallet();
+        SmartWallet smartWallet = _smartWalletFactory.getUsersSmartWallet(
+            msg.sender
+        );
 
         (bool success, bytes memory ret) = smartWallet.execute{
             value: msg.value
@@ -119,20 +121,5 @@ contract TropykusLendingService is LendingService {
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
-    }
-
-    function _createSmartWallet() internal returns (SmartWallet) {
-        address smartWalletAddress = _smartWalletFactory.getSmartWalletAddress(
-            msg.sender
-        );
-        uint32 size;
-        assembly {
-            size := extcodesize(smartWalletAddress)
-        }
-
-        if (size == 0) {
-            _smartWalletFactory.createUserSmartWallet(msg.sender);
-        }
-        return SmartWallet(payable(smartWalletAddress));
     }
 }
