@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
-import { ACME, ACME__factory, ERC677, ERC677__factory } from 'typechain-types';
+import { ACME, ACME__factory, ERC677 } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployContract } from 'utils/deployment.utils';
 
@@ -54,9 +54,9 @@ describe('Service Provider Lending Contract', () => {
     it('should fail if amount sent is 0', async () => {
       const ZERO_RBTC = ethers.constants.Zero;
 
-      await expect(
-        acmeContract['deposit()']({ value: ZERO_RBTC })
-      ).to.revertedWith('InvalidAmount(0)');
+      await expect(acmeContract['deposit()']({ value: ZERO_RBTC }))
+        .to.revertedWith('InvalidAmount')
+        .withArgs(0);
     });
 
     it('should return balance 1000 blocks after deposit', async () => {
@@ -168,19 +168,19 @@ describe('Service Provider Lending Contract', () => {
       expect(+balance / 1e18).to.eq(docPoolBalance);
     });
 
-    it('should fail when setting a collateral factor to zero', () => {
-      expect(
-        acmeContract.updateCollateralFactor(doc.address, 0)
-      ).to.revertedWith('InvalidAmount(0)');
+    it('should fail when setting a collateral factor to zero', async () => {
+      await expect(acmeContract.updateCollateralFactor(doc.address, 0))
+        .to.be.revertedWith('InvalidAmount')
+        .withArgs(0);
     });
 
     it('should not loan DOC if provider does not have enough ERC20 balance', async () => {
       const tx = await acmeContract['deposit()']({ value: RBTC_SENT });
       await tx.wait();
 
-      expect(
-        acmeContract['loan(address,uint256)'](doc.address, '1')
-      ).to.revertedWith('NotEnoughDocBalance(0)');
+      expect(acmeContract['loan(address,uint256)'](doc.address, '1'))
+        .to.revertedWith('NotEnoughDocBalance')
+        .withArgs(0);
     });
 
     describe('DOC pool', () => {
@@ -192,9 +192,9 @@ describe('Service Provider Lending Contract', () => {
       });
 
       it('should not loan DOC if user does not have collateral deposited', async () => {
-        expect(
-          acmeContract['loan(address,uint256)'](doc.address, '1')
-        ).to.revertedWith('NotEnoughCollateral(0)');
+        expect(acmeContract['loan(address,uint256)'](doc.address, '1'))
+          .to.revertedWith('NotEnoughCollateral')
+          .withArgs(0);
       });
 
       it('should be able to loan DOC', async () => {
@@ -242,9 +242,9 @@ describe('Service Provider Lending Contract', () => {
             ethers.utils.parseEther('101'),
             owner.address
           )
-        ).to.revertedWith(
-          `PaymentBiggerThanDebt(${ethers.utils.parseEther('100')})`
-        );
+        )
+          .to.revertedWith(`PaymentBiggerThanDebt`)
+          .withArgs(100000000000000000000);
       });
 
       it('should be able to repay doc debt', async () => {

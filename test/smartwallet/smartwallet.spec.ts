@@ -116,7 +116,9 @@ describe('RIF Gateway SmartWallet', () => {
           }
         ),
         'Nonce verification failed'
-      ).to.revertedWith('InvalidNonce(5)');
+      )
+        .to.revertedWith('InvalidNonce')
+        .withArgs(5);
     });
 
     it('should revert if nonce used twice', async () => {
@@ -155,7 +157,9 @@ describe('RIF Gateway SmartWallet', () => {
           }
         ),
         'Executor verification failed'
-      ).to.revertedWith('InvalidBlockForNonce(0)');
+      )
+        .to.revertedWith('InvalidBlockForNonce')
+        .withArgs(0);
     });
   });
 });
