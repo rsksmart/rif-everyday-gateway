@@ -14,5 +14,5 @@ interface ISmartWalletFactory {
         view
         returns (address);
 
-    function getUsersSmartWallet(address owner) external returns (SmartWallet);
+    function getSmartWallet(address owner) external returns (SmartWallet);
 }

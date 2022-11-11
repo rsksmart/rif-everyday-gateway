@@ -27,7 +27,7 @@ contract TropykusLendingService is LendingService {
             revert InvalidAmount(msg.value);
         }
 
-        SmartWallet smartWallet = _smartWalletFactory.getUsersSmartWallet(
+        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
 

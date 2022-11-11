@@ -54,7 +54,7 @@ contract TropykusBorrowingService is BorrowService {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
-        SmartWallet smartWallet = _smartWalletFactory.getUsersSmartWallet(
+        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
 
