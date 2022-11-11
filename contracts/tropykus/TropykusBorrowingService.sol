@@ -55,9 +55,7 @@ contract TropykusBorrowingService is BorrowService {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
-        SmartWallet smartWallet = SmartWallet(
-            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
-        );
+        SmartWallet smartWallet = _createSmartWallet();
 
         uint256 amountToLend = calculateRequiredCollateral(amount, currency);
         if (msg.value < amountToLend)
@@ -265,5 +263,20 @@ contract TropykusBorrowingService is BorrowService {
         uint256 borrowBalance = abi.decode(data, (uint256));
 
         return borrowBalance;
+    }
+
+    function _createSmartWallet() internal returns (SmartWallet) {
+        address smartWalletAddress = _smartWalletFactory.getSmartWalletAddress(
+            msg.sender
+        );
+        uint32 size;
+        assembly {
+            size := extcodesize(smartWalletAddress)
+        }
+
+        if (size == 0) {
+            _smartWalletFactory.createUserSmartWallet(msg.sender);
+        }
+        return SmartWallet(payable(smartWalletAddress));
     }
 }

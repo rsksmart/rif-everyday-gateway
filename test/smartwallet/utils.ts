@@ -146,9 +146,16 @@ export const signTransactionForExecutor = async (
   );
 
   if (!nonce) {
-    const onChainNonce = await (
-      await ethers.getContractAt('SmartWallet', smartWalletAddress)
-    ).nonce();
+    let onChainNonce = 0;
+    try {
+      const smartWallet = await ethers.getContractAt(
+        'SmartWallet',
+        smartWalletAddress
+      );
+      onChainNonce = (await smartWallet.nonce()).toNumber();
+    } catch (e) {
+      console.log('Smart wallet does not exist');
+    }
     nonce = onChainNonce.toString();
   }
 
