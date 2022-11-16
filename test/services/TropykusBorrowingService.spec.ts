@@ -15,6 +15,7 @@ import {
 import { signTransactionForExecutor } from '../smartwallet/utils';
 import { BigNumber, Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
+import { PaybackOption } from '../constants/service';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
@@ -27,6 +28,7 @@ describe('Tropykus Borrowing Service', () => {
   let externalWallet: Wallet | SignerWithAddress;
   let doc: ERC20;
   let gasPrice: BigNumber;
+  let tropykusContractsDeployed: any;
 
   before(async () => {
     ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
@@ -36,7 +38,7 @@ describe('Tropykus Borrowing Service', () => {
   beforeEach(async () => {
     [owner] = await ethers.getSigners();
 
-    const tropykusContractsDeployed = await tropykusFixture();
+    tropykusContractsDeployed = await tropykusFixture();
 
     doc = (await ethers.getContractAt(
       'ERC20',
@@ -76,8 +78,36 @@ describe('Tropykus Borrowing Service', () => {
     expect(name).equals('Tropykus');
   });
 
-  it('should allow to borrow DOC after lending RBTC on tropykus', async () => {
+  it('should retrieve tropykus market address given a currency', async () => {
+    const rbtcMarket = await tropykusBorrowingService.getMarketForCurrency(
+      ethers.constants.AddressZero
+    );
+    expect(rbtcMarket).equals(tropykusContractsDeployed.crbtc);
+  });
+
+  it.only('should allow to borrow DOC after lending RBTC on tropykus', async () => {
+    await (
+      await tropykusBorrowingService.addListing({
+        id: 0,
+        minAmount: ethers.utils.parseEther('1'),
+        maxAmount: ethers.utils.parseEther('100'),
+        minDuration: 0,
+        maxDuration: 1000,
+        interestRate: ethers.utils.parseEther('0.01'), // 1%
+        loanToValue: ethers.utils.parseEther('10000'),
+        loanToValueTokenAddr: ethers.constants.AddressZero,
+        currency: ethers.constants.AddressZero,
+        payBackOption: PaybackOption.Day,
+        enabled: true,
+        name: 'Tropykus Borrow Service',
+      })
+    ).wait();
+
     const amountToBorrow = 2;
+
+    const beforeLiquidity = await tropykusBorrowingService
+      .connect(externalWallet)
+      .currentLiquidity(0);
 
     const calculateAmountToLend = await tropykusBorrowingService
       .connect(externalWallet)
@@ -115,6 +145,14 @@ describe('Tropykus Borrowing Service', () => {
       }
     );
     await tx.wait();
+
+    const afterLiquidity = await tropykusBorrowingService
+      .connect(externalWallet)
+      .currentLiquidity(0);
+
+    expect(amountToBorrow).equals(
+      +beforeLiquidity / 1e18 - +afterLiquidity / 1e18
+    );
 
     smartWallet = (await ethers.getContractAt(
       'SmartWallet',

@@ -37,7 +37,7 @@ abstract contract Service is Ownable, IService {
     function getListing(uint256 listingId)
         public
         view
-        override
+        virtual
         returns (ServiceListing memory)
     {
         return listings[listingId];

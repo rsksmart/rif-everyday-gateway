@@ -3,16 +3,18 @@ pragma solidity ^0.8.16;
 
 import "../services/BorrowService.sol";
 import "contracts/services/BorrowService.sol";
-import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
+import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITropykus.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
+import "./ITropykus.sol";
 
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
     error NonZeroAmountAllowed();
     error NonZeroCollateralAllowed();
+    error LiquidityExceeded();
 
     uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
     // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
@@ -23,6 +25,7 @@ contract TropykusBorrowingService is BorrowService {
     address private _crbtc;
     address private _cdoc;
     SmartWalletFactory private _smartWalletFactory;
+    uint256 constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
 
     struct TropykusContracts {
         address comptroller;
@@ -53,6 +56,10 @@ contract TropykusBorrowingService is BorrowService {
     ) public payable override {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
+
+        ServiceListing memory listing = listings[index];
+
+        if (listing.maxAmount < amount) revert LiquidityExceeded();
 
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
@@ -93,6 +100,8 @@ contract TropykusBorrowingService is BorrowService {
             address(_cdoc),
             currency
         );
+
+        _removeLiquidityInternal(amount, index);
 
         emit Borrow({
             listingId: index,
@@ -264,5 +273,53 @@ contract TropykusBorrowingService is BorrowService {
         uint256 borrowBalance = abi.decode(data, (uint256));
 
         return borrowBalance;
+    }
+
+    function getListing(uint256 listingId)
+        public
+        view
+        override(Service, IService)
+        returns (ServiceListing memory)
+    {
+        ServiceListing memory listing = listings[listingId];
+        listing.interestRate =
+            IcErc20(getMarketForCurrency(listing.currency))
+                .borrowRatePerBlock() *
+            _BLOCKS_PER_YEAR;
+        listing.loanToValue = calculateRequiredCollateral(
+            listing.maxAmount,
+            listing.currency
+        );
+        return listing;
+    }
+
+    function getMarketForCurrency(address currency)
+        public
+        view
+        returns (address)
+    {
+        IcErc20[] memory markets = IComptrollerG6(_comptroller).getAllMarkets();
+        for (uint256 i = 0; i < markets.length; i++) {
+            if (
+                currency == address(0) &&
+                _compareStrings(IcErc20(markets[i]).symbol(), "kRBTC")
+            ) {
+                return address(markets[i]);
+            } else {
+                if (currency == IcErc20(address(markets[i])).underlying()) {
+                    return address(markets[i]);
+                }
+            }
+        }
+        return address(0);
+    }
+
+    function _compareStrings(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
+        return (keccak256(abi.encodePacked((a))) ==
+            keccak256(abi.encodePacked((b))));
     }
 }
