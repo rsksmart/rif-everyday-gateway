@@ -14,6 +14,7 @@ contract Providers is Ownable {
     address[] private _providers;
     uint256 private _totalServices;
     ServiceTypeManager private _serviceTypeManager;
+    Service[] private _allServices;
 
     bytes4 private constant _InterfaceId_ERC165 = 0x01ffc9a7;
 
@@ -38,23 +39,14 @@ contract Providers is Ownable {
         // Proceeds to add the provider and service
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
-        _providers.push(provider);
+        if (_servicesByProvider[provider].length == 0)
+            _providers.push(provider);
         _servicesByProvider[provider].push(service);
+        _allServices.push(service);
         _totalServices++;
     }
 
     function getServices() external view returns (Service[] memory) {
-        Service[] memory allServices = new Service[](_totalServices);
-        uint256 counter = 0;
-        for (uint256 i = 0; i < _providers.length; i++) {
-            Service[] memory servicesByProvider = _servicesByProvider[
-                _providers[i]
-            ];
-            for (uint256 j = 0; j < servicesByProvider.length; j++) {
-                allServices[counter] = servicesByProvider[j];
-                counter++;
-            }
-        }
-        return allServices;
+        return _allServices;
     }
 }
