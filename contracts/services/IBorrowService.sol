@@ -24,7 +24,6 @@ interface IBorrowService is IService {
         IForwarder.ForwardRequest memory req,
         bytes calldata sig,
         uint256 amount,
-        address currency,
         uint256 duration,
         uint256 listingId
     ) external payable;
@@ -34,8 +33,7 @@ interface IBorrowService is IService {
         IForwarder.ForwardRequest memory req,
         bytes calldata sig,
         uint256 amount,
-        address currency,
-        uint256 index
+        uint256 listingId
     ) external payable;
 
     function calculateRequiredCollateral(uint256 amount, address currency)

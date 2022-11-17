@@ -16,7 +16,6 @@ abstract contract BorrowService is Service, IBorrowService {
         IForwarder.ForwardRequest memory req,
         bytes calldata sig,
         uint256 amount,
-        address currency,
         uint256 duration,
         uint256 listingId
     ) public payable virtual;
@@ -26,8 +25,7 @@ abstract contract BorrowService is Service, IBorrowService {
         IForwarder.ForwardRequest memory req,
         bytes calldata sig,
         uint256 amount,
-        address currency,
-        uint256 index
+        uint256 listingId
     ) public payable virtual;
 
     function withdraw(
@@ -41,35 +39,6 @@ abstract contract BorrowService is Service, IBorrowService {
         view
         virtual
         returns (uint256);
-
-    function currentLiquidity(uint256 index)
-        public
-        view
-        virtual
-        returns (uint256 liquidity)
-    {
-        return listings[index].maxAmount;
-    }
-
-    function addLiquidity(uint256 amount, uint256 index)
-        public
-        virtual
-        onlyOwner
-    {
-        listings[index].maxAmount += amount;
-    }
-
-    function removeLiquidity(uint256 amount, uint256 index)
-        public
-        virtual
-        onlyOwner
-    {
-        _removeLiquidityInternal(amount, index);
-    }
-
-    function _removeLiquidityInternal(uint256 amount, uint256 index) internal {
-        listings[index].maxAmount -= amount;
-    }
 
     function supportsInterface(bytes4 interfaceId) public view returns (bool) {
         return

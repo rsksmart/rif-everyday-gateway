@@ -71,4 +71,33 @@ abstract contract Service is Ownable, IService {
     function getThisAddress() public view returns (address) {
         return address(this);
     }
+
+    function currentLiquidity(uint256 index)
+        public
+        view
+        virtual
+        returns (uint256 liquidity)
+    {
+        return listings[index].maxAmount;
+    }
+
+    function addLiquidity(uint256 amount, uint256 index)
+        public
+        virtual
+        onlyOwner
+    {
+        listings[index].maxAmount += amount;
+    }
+
+    function removeLiquidity(uint256 amount, uint256 index)
+        public
+        virtual
+        onlyOwner
+    {
+        _removeLiquidityInternal(amount, index);
+    }
+
+    function _removeLiquidityInternal(uint256 amount, uint256 index) internal {
+        listings[index].maxAmount -= amount;
+    }
 }

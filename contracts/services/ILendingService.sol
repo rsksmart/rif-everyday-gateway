@@ -15,7 +15,9 @@ interface ILendingService is IService {
     function lend(
         bytes32 suffixData,
         IForwarder.ForwardRequest memory req,
-        bytes calldata sig
+        bytes calldata sig,
+        uint256 amount,
+        uint256 listingId
     ) external payable;
 
     function withdraw(
