@@ -14,6 +14,7 @@ abstract contract Service is Ownable, IService {
 
     error InvalidAmount(uint256 amount);
     error FailedOperation(bytes data);
+    error ListingDisabled(uint256 listingId);
 
     function addListing(ServiceListing memory listing)
         public

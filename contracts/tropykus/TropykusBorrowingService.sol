@@ -56,6 +56,9 @@ contract TropykusBorrowingService is BorrowService {
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
         ServiceListing memory listing = listings[listingId];
+        if (!listing.enabled) {
+            revert ListingDisabled(listingId);
+        }
 
         if (listing.maxAmount < amount || listing.minAmount > amount)
             revert InvalidAmount(amount);
@@ -289,10 +292,6 @@ contract TropykusBorrowingService is BorrowService {
             IcErc20(getMarketForCurrency(listing.currency))
                 .borrowRatePerBlock() *
             _BLOCKS_PER_YEAR;
-        listing.loanToValue = calculateRequiredCollateral(
-            listing.maxAmount,
-            listing.currency
-        );
         return listing;
     }
 
