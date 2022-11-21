@@ -4,21 +4,25 @@ pragma experimental ABIEncoderV2;
 
 import "./ISmartWalletFactory.sol";
 import "./SmartWallet.sol";
+import {ISubscriber, SubscriptionEvent} from "../common/IPublisher.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
 contract SmartWalletFactory is ISmartWalletFactory {
+    address private _feeManager;
+
+    constructor(address feeManager) {
+        _feeManager = feeManager;
+    }
+
     /**
      * Calculates the Smart Wallet address for an owner EOA
      * @param owner - EOA of the owner of the smart wallet
      */
-    function getSmartWalletAddress(address owner)
-        external
-        view
-        override
-        returns (address)
-    {
+    function getSmartWalletAddress(
+        address owner
+    ) external view override returns (address) {
         return
             address(
                 uint160(
@@ -48,22 +52,26 @@ contract SmartWalletFactory is ISmartWalletFactory {
         _deploy(
             owner,
             keccak256(
-                abi.encodePacked(
-                    owner,
-                    address(this),
-                    "0" /* INDEX */
-                ) // salt
+                abi.encodePacked(owner, address(this), "0" /* INDEX */) // salt
             )
         );
     }
 
-    function _deploy(address owner, bytes32 salt)
-        internal
-        returns (address addr)
-    {
+    function _deploy(
+        address owner,
+        bytes32 salt
+    ) internal returns (address addr) {
         //Deployment of the Smart Wallet
-        addr = address(new SmartWallet{salt: salt}(owner));
+        SmartWallet sm = new SmartWallet{salt: salt}(owner);
+
+        // Initial subscription
+        sm.subscribe(
+            ISubscriber(_feeManager),
+            SubscriptionEvent.SERVICE_CONSUMPTION
+        );
+
         //No info is returned, an event is emitted to inform the new deployment
+        addr = address(sm);
         emit Deployed(addr, uint256(salt));
     }
 

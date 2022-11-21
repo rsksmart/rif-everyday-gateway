@@ -9,6 +9,8 @@ import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
 import "./ITropykus.sol";
 
+import "hardhat/console.sol";
+
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
@@ -180,27 +182,24 @@ contract TropykusBorrowingService is BorrowService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory data = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory exchangeRatedata) = address(_crbtc).staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
-        uint256 exchangeRate = abi.decode(data, (uint256));
+        uint256 exchangeRate = abi.decode(exchangeRatedata, (uint256));
 
-        bytes memory balanceData = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory balanceData) = address(_crbtc).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
+
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
     // Only using RBTC as collateral after will be defining by the listing loanToValueTokenAddr
-    function calculateRequiredCollateral(uint256 amount, address currency)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function calculateRequiredCollateral(
+        uint256 amount,
+        address currency
+    ) public view override returns (uint256) {
         uint256 rbtcPrice = IPriceOracleProxy(_oracle).getUnderlyingPrice(
             _crbtc
         );
@@ -223,11 +222,13 @@ contract TropykusBorrowingService is BorrowService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory balanceData = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory balanceData) = address(_crbtc).call(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
+
+        console.log("1-");
+        console.log(tokens);
 
         (bool success, bytes memory ret) = smartWallet.execute{
             value: msg.value
@@ -240,9 +241,18 @@ contract TropykusBorrowingService is BorrowService {
             address(0)
         );
 
+        (, bytes memory balanceData2) = address(_crbtc).call(
+            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
+        );
+        uint256 tokens2 = abi.decode(balanceData, (uint256));
+
+        console.log("2-");
+        console.log(tokens2);
+
+        console.log(success);
+
         if (success) {
-            bytes memory data = smartWallet.read(
-                address(_crbtc),
+            (, bytes memory data) = address(_crbtc).call(
                 abi.encodeWithSignature("exchangeRateStored()")
             );
             uint256 exchangeRate = abi.decode(data, (uint256));
@@ -258,18 +268,14 @@ contract TropykusBorrowingService is BorrowService {
         }
     }
 
-    function getBalance(address currency)
-        public
-        view
-        override(IService)
-        returns (uint256)
-    {
+    function getBalance(
+        address currency
+    ) public view override(IService) returns (uint256) {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory data = smartWallet.read(
-            address(_cdoc),
+        (, bytes memory data) = address(_crbtc).staticcall(
             abi.encodeWithSignature(
                 "borrowBalanceStored(address)",
                 address(smartWallet)

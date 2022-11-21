@@ -11,9 +11,10 @@ contract TropykusLendingService is LendingService {
     SmartWalletFactory private _smartWalletFactory;
     uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
 
-    constructor(address crbtc, SmartWalletFactory smartWalletFactory)
-        LendingService("Tropykus")
-    {
+    constructor(
+        address crbtc,
+        SmartWalletFactory smartWalletFactory
+    ) LendingService("Tropykus") {
         _crbtc = crbtc;
         _smartWalletFactory = smartWalletFactory;
     }
@@ -79,8 +80,7 @@ contract TropykusLendingService is LendingService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory balanceData = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory balanceData) = address(_crbtc).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
@@ -97,11 +97,10 @@ contract TropykusLendingService is LendingService {
         );
 
         if (success) {
-            bytes memory data = smartWallet.read(
-                address(_crbtc),
+            (, bytes memory exchangeRateData) = address(_crbtc).staticcall(
                 abi.encodeWithSignature("exchangeRateStored()")
             );
-            uint256 exchangeRate = abi.decode(data, (uint256));
+            uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
 
             emit Withdraw({
                 listingId: 0,
@@ -114,27 +113,23 @@ contract TropykusLendingService is LendingService {
         }
     }
 
-    function getBalance(address currency)
-        public
-        view
-        override
-        returns (uint256)
-    {
+    function getBalance(
+        address currency
+    ) public view override returns (uint256) {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory data = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory exchangeRateData) = address(_crbtc).staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
-        uint256 exchangeRate = abi.decode(data, (uint256));
+        uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
 
-        bytes memory balanceData = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory balanceData) = address(_crbtc).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
+
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 }

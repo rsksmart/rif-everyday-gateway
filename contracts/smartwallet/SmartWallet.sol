@@ -6,17 +6,19 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
+import {Publisher, SubscriptionEvent} from "../common/IPublisher.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
-contract SmartWallet is IForwarder {
+contract SmartWallet is Publisher, IForwarder {
     using ECDSA for bytes32;
 
     error InvalidNonce(uint256 nonce);
     error InvalidBlockForNonce(uint256 nonce);
     error InvalidExecutor(address executor);
     error UnexpectedError(bytes data);
+    error ReadNoLongerValid();
 
     uint256 public override nonce;
     bytes32 public constant DATA_VERSION_HASH = keccak256("1");
@@ -125,23 +127,27 @@ contract SmartWallet is IForwarder {
     }
 
     function read(
-        //        bytes32 suffixData,
-        //        ForwardRequest memory req,
-        //        bytes calldata sig,
+        bytes32 suffixData,
+        ForwardRequest memory req,
+        bytes calldata sig,
         address targetContract,
-        bytes calldata functionToCall
+        bytes calldata data
     ) external view returns (bytes memory) {
-        //        _verifyNonce(req);
-        //        _verifySig(suffixData, req, sig);
-        (bool success, bytes memory data) = targetContract.staticcall(
-            functionToCall
-        );
+        _verifySig(suffixData, req, sig);
+
+        if (
+            keccak256(abi.encodePacked(msg.sender)) != _getOwner() &&
+            nonce > req.nonce &&
+            _currentBlockForNonce != block.number
+        ) revert ReadNoLongerValid();
+
+        (bool success, bytes memory ret) = targetContract.staticcall(data);
 
         if (!success) {
-            revert UnexpectedError(data);
+            revert UnexpectedError(ret);
         }
 
-        return data;
+        return ret;
     }
 
     function _getChainID() private view returns (uint256 id) {
@@ -156,6 +162,8 @@ contract SmartWallet is IForwarder {
             // example: current nonce = 4 and req.nonce = 4
             nonce++;
             _currentBlockForNonce = block.number;
+
+            _notify(req.executor, SubscriptionEvent.SERVICE_CONSUMPTION);
         } else if (nonce > req.nonce && _currentBlockForNonce != block.number) {
             // example: current nonce = 5 and req.nonce = 4
             // and we are not in the same transaction
@@ -199,11 +207,10 @@ contract SmartWallet is IForwarder {
         );
     }
 
-    function _getEncoded(bytes32 suffixData, ForwardRequest memory req)
-        private
-        pure
-        returns (bytes memory)
-    {
+    function _getEncoded(
+        bytes32 suffixData,
+        ForwardRequest memory req
+    ) private pure returns (bytes memory) {
         return
             abi.encodePacked(
                 keccak256(
