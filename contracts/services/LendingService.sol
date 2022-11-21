@@ -14,7 +14,9 @@ abstract contract LendingService is Service, ILendingService {
     function lend(
         bytes32 suffixData,
         IForwarder.ForwardRequest memory req,
-        bytes calldata sig
+        bytes calldata sig,
+        uint256 amount,
+        uint256 listingId
     ) public payable virtual;
 
     function supportsInterface(bytes4 interfaceId) public view returns (bool) {

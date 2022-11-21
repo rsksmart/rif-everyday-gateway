@@ -3,10 +3,11 @@ pragma solidity ^0.8.16;
 
 import "../services/BorrowService.sol";
 import "contracts/services/BorrowService.sol";
-import {IPriceOracleProxy, IComptrollerG6} from "contracts/tropykus/ITropykus.sol";
+import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITropykus.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
+import "./ITropykus.sol";
 
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
@@ -23,6 +24,7 @@ contract TropykusBorrowingService is BorrowService {
     address private _crbtc;
     address private _cdoc;
     SmartWalletFactory private _smartWalletFactory;
+    uint256 constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
 
     struct TropykusContracts {
         address comptroller;
@@ -47,18 +49,28 @@ contract TropykusBorrowingService is BorrowService {
         IForwarder.ForwardRequest memory req,
         bytes calldata sig,
         uint256 amount,
-        address currency,
-        uint256 index,
+        uint256 listingId,
         uint256 duration
     ) public payable override {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
+        ServiceListing memory listing = listings[listingId];
+        if (!listing.enabled) {
+            revert ListingDisabled(listingId);
+        }
+
+        if (listing.maxAmount < amount || listing.minAmount > amount)
+            revert InvalidAmount(amount);
+
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
 
-        uint256 amountToLend = calculateRequiredCollateral(amount, currency);
+        uint256 amountToLend = calculateRequiredCollateral(
+            amount,
+            listing.currency
+        );
         if (msg.value < amountToLend)
             revert InvalidCollateralAmount(msg.value, amountToLend);
 
@@ -91,13 +103,15 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("borrow(uint256)", amount),
             address(_cdoc),
-            currency
+            listing.currency
         );
 
+        _removeLiquidityInternal(amount, listingId);
+
         emit Borrow({
-            listingId: index,
+            listingId: listingId,
             borrower: msg.sender,
-            currency: currency,
+            currency: listing.currency,
             amount: amount,
             duration: duration
         });
@@ -108,13 +122,14 @@ contract TropykusBorrowingService is BorrowService {
         IForwarder.ForwardRequest memory req,
         bytes calldata sig,
         uint256 amount,
-        address currency,
-        uint256 index
+        uint256 listingId
     ) public payable override {
         if (amount <= 0) revert NonZeroAmountAllowed();
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
+
+        ServiceListing memory listing = listings[listingId];
 
         smartWallet.execute(
             suffixData,
@@ -126,7 +141,7 @@ contract TropykusBorrowingService is BorrowService {
                 address(smartWallet),
                 amount
             ), // max uint to repay whole debt
-            currency,
+            listing.currency,
             address(0)
         );
 
@@ -139,7 +154,7 @@ contract TropykusBorrowingService is BorrowService {
                 address(_cdoc),
                 amount
             ), // max uint to repay whole debt
-            currency,
+            listing.currency,
             address(0)
         );
 
@@ -149,13 +164,13 @@ contract TropykusBorrowingService is BorrowService {
             sig,
             abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
             address(_cdoc),
-            currency
+            listing.currency
         );
 
         emit Pay({
-            listingId: index,
+            listingId: listingId,
             borrower: msg.sender,
-            currency: currency,
+            currency: listing.currency,
             amount: amount
         });
     }
@@ -264,5 +279,49 @@ contract TropykusBorrowingService is BorrowService {
         uint256 borrowBalance = abi.decode(data, (uint256));
 
         return borrowBalance;
+    }
+
+    function getListing(uint256 listingId)
+        public
+        view
+        override(Service, IService)
+        returns (ServiceListing memory)
+    {
+        ServiceListing memory listing = listings[listingId];
+        listing.interestRate =
+            IcErc20(getMarketForCurrency(listing.currency))
+                .borrowRatePerBlock() *
+            _BLOCKS_PER_YEAR;
+        return listing;
+    }
+
+    function getMarketForCurrency(address currency)
+        public
+        view
+        returns (address)
+    {
+        IcErc20[] memory markets = IComptrollerG6(_comptroller).getAllMarkets();
+        for (uint256 i = 0; i < markets.length; i++) {
+            if (
+                currency == address(0) &&
+                _compareStrings(IcErc20(markets[i]).symbol(), "kRBTC")
+            ) {
+                return address(markets[i]);
+            } else {
+                if (currency == IcErc20(address(markets[i])).underlying()) {
+                    return address(markets[i]);
+                }
+            }
+        }
+        return address(0);
+    }
+
+    function _compareStrings(string memory a, string memory b)
+        internal
+        pure
+        returns (bool)
+    {
+        return (keccak256(abi.encodePacked((a))) ==
+            keccak256(abi.encodePacked((b))));
     }
 }

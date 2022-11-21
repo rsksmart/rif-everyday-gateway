@@ -21,10 +21,25 @@ contract TropykusLendingService is LendingService {
     function lend(
         bytes32 suffixData,
         IForwarder.ForwardRequest memory req,
-        bytes calldata sig
+        bytes calldata sig,
+        uint256 amount,
+        uint256 listingId
     ) public payable override {
-        if (msg.value == 0) {
-            revert InvalidAmount(msg.value);
+        ServiceListing memory listing = listings[listingId];
+        if (!listing.enabled) {
+            revert ListingDisabled(listingId);
+        }
+
+        uint256 amountToLend = amount;
+        if (listing.currency == address(0)) amountToLend = msg.value;
+        if (amountToLend == 0) {
+            revert InvalidAmount(amountToLend);
+        }
+
+        if (
+            listing.maxAmount < amountToLend || listing.minAmount > amountToLend
+        ) {
+            revert InvalidAmount(amountToLend);
         }
 
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
@@ -32,7 +47,7 @@ contract TropykusLendingService is LendingService {
         );
 
         (bool success, bytes memory ret) = smartWallet.execute{
-            value: msg.value
+            value: amountToLend
         }(
             suffixData,
             req,
@@ -43,6 +58,7 @@ contract TropykusLendingService is LendingService {
         );
 
         if (success) {
+            _removeLiquidityInternal(amountToLend, listingId);
             emit Lend({
                 listingId: 0,
                 lender: msg.sender,
