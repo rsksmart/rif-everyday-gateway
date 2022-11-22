@@ -21,17 +21,17 @@ interface ISubscriber {
 abstract contract Publisher {
     Subscription[] internal _subscribers;
 
-    function subscribe(
-        ISubscriber subscriber,
-        SubscriptionEvent _event
-    ) external virtual {
+    function subscribe(ISubscriber subscriber, SubscriptionEvent _event)
+        external
+        virtual
+    {
         _subscribers.push(Subscription(subscriber, _event, ""));
     }
 
-    function unsubscribe(
-        ISubscriber subscriber,
-        SubscriptionEvent _event
-    ) external virtual {
+    function unsubscribe(ISubscriber subscriber, SubscriptionEvent _event)
+        external
+        virtual
+    {
         for (uint256 i = 0; i < _subscribers.length; i++) {
             if (
                 _subscribers[i].subscriber == subscriber &&

@@ -9,9 +9,10 @@ interface ISmartWalletFactory {
 
     function createUserSmartWallet(address owner) external;
 
-    function getSmartWalletAddress(
-        address owner
-    ) external view returns (address);
+    function getSmartWalletAddress(address owner)
+        external
+        view
+        returns (address);
 
     function getSmartWallet(address owner) external returns (SmartWallet);
 }
