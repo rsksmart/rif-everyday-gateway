@@ -207,10 +207,11 @@ contract SmartWallet is Publisher, IForwarder {
         );
     }
 
-    function _getEncoded(
-        bytes32 suffixData,
-        ForwardRequest memory req
-    ) private pure returns (bytes memory) {
+    function _getEncoded(bytes32 suffixData, ForwardRequest memory req)
+        private
+        pure
+        returns (bytes memory)
+    {
         return
             abi.encodePacked(
                 keccak256(

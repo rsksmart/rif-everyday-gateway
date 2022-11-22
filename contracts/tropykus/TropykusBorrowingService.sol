@@ -9,7 +9,7 @@ import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
 import "./ITropykus.sol";
 
-import "hardhat/console.sol";
+/* solhint-disable avoid-low-level-calls */
 
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
@@ -17,16 +17,16 @@ contract TropykusBorrowingService is BorrowService {
     error NonZeroAmountAllowed();
     error NonZeroCollateralAllowed();
 
-    uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
+    uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
     // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
-    uint256 constant _DELTA_COLLATERAL_WITH_PRECISION = 5e18;
+    uint256 private constant _DELTA_COLLATERAL_WITH_PRECISION = 5e18;
 
     address private _comptroller;
     address private _oracle;
     address private _crbtc;
     address private _cdoc;
     SmartWalletFactory private _smartWalletFactory;
-    uint256 constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
+    uint256 private constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
 
     struct TropykusContracts {
         address comptroller;
@@ -81,8 +81,8 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("mint()"),
-            address(_crbtc),
-            address(0)
+            getMarketForCurrency(listing.loanToValueCurrency),
+            listing.loanToValueCurrency
         );
 
         address[] memory markets = new address[](2);
@@ -104,7 +104,7 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("borrow(uint256)", amount),
-            address(_cdoc),
+            getMarketForCurrency(listing.currency),
             listing.currency
         );
 
@@ -133,6 +133,8 @@ contract TropykusBorrowingService is BorrowService {
 
         ServiceListing memory listing = listings[listingId];
 
+        address market = getMarketForCurrency(listing.currency);
+
         smartWallet.execute(
             suffixData,
             req,
@@ -151,11 +153,7 @@ contract TropykusBorrowingService is BorrowService {
             suffixData,
             req,
             sig,
-            abi.encodeWithSignature(
-                "approve(address,uint256)",
-                address(_cdoc),
-                amount
-            ), // max uint to repay whole debt
+            abi.encodeWithSignature("approve(address,uint256)", market, amount), // max uint to repay whole debt
             listing.currency,
             address(0)
         );
@@ -165,7 +163,7 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
-            address(_cdoc),
+            market,
             listing.currency
         );
 
@@ -195,11 +193,13 @@ contract TropykusBorrowingService is BorrowService {
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
-    // Only using RBTC as collateral after will be defining by the listing loanToValueTokenAddr
-    function calculateRequiredCollateral(
-        uint256 amount,
-        address currency
-    ) public view override returns (uint256) {
+    // Only using RBTC as collateral after will be defining by the listing loanToValueCurrency
+    function calculateRequiredCollateral(uint256 amount, address currency)
+        public
+        view
+        override
+        returns (uint256)
+    {
         uint256 rbtcPrice = IPriceOracleProxy(_oracle).getUnderlyingPrice(
             _crbtc
         );
@@ -216,19 +216,19 @@ contract TropykusBorrowingService is BorrowService {
     function withdraw(
         bytes32 suffixData,
         IForwarder.ForwardRequest memory req,
-        bytes calldata sig
+        bytes calldata sig,
+        address currency
     ) public payable override {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        (, bytes memory balanceData) = address(_crbtc).call(
+        address market = getMarketForCurrency(currency);
+
+        (, bytes memory balanceData) = market.call(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
-
-        console.log("1-");
-        console.log(tokens);
 
         (bool success, bytes memory ret) = smartWallet.execute{
             value: msg.value
@@ -237,19 +237,9 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
-            address(_crbtc),
-            address(0)
+            market,
+            currency
         );
-
-        (, bytes memory balanceData2) = address(_crbtc).call(
-            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
-        );
-        uint256 tokens2 = abi.decode(balanceData, (uint256));
-
-        console.log("2-");
-        console.log(tokens2);
-
-        console.log(success);
 
         if (success) {
             (, bytes memory data) = address(_crbtc).call(
@@ -268,14 +258,17 @@ contract TropykusBorrowingService is BorrowService {
         }
     }
 
-    function getBalance(
-        address currency
-    ) public view override(IService) returns (uint256) {
+    function getBalance(address currency)
+        public
+        view
+        override(IService)
+        returns (uint256)
+    {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        (, bytes memory data) = address(_crbtc).staticcall(
+        (, bytes memory data) = getMarketForCurrency(currency).staticcall(
             abi.encodeWithSignature(
                 "borrowBalanceStored(address)",
                 address(smartWallet)

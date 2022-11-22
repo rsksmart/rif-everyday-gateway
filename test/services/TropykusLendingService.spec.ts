@@ -1,6 +1,7 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
+  IFeeManager,
   SmartWalletFactory,
   TropykusLendingService,
   TropykusLendingService__factory,
@@ -25,9 +26,11 @@ describe('Tropykus Lending Service', () => {
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let crbtc: string;
+  let feeManager: IFeeManager;
 
   before(async () => {
-    ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
+    ({ smartWalletFactory, signers, feeManager } =
+      await smartwalletFactoryFixture());
     // console.log('smartWalletFactory', smartWalletFactory.address);
   });
 
@@ -76,7 +79,7 @@ describe('Tropykus Lending Service', () => {
           minDuration: 0,
           maxDuration: 0,
           interestRate: ethers.utils.parseEther('0.05'), // 5%
-          loanToValueTokenAddr: ethers.constants.AddressZero,
+          loanToValueCurrency: ethers.constants.AddressZero,
           currency: ethers.constants.AddressZero,
           payBackOption: PaybackOption.Day,
           enabled: true,
@@ -177,6 +180,10 @@ describe('Tropykus Lending Service', () => {
         .getBalance(ethers.constants.AddressZero);
 
       expect(+balanceTropAfter / 1e18).to.be.equals(0);
+
+      expect(
+        await feeManager.getDebtBalance(tropykusLendingService.address)
+      ).to.be.gt(0);
     });
   });
 });

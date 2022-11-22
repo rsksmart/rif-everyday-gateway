@@ -36,6 +36,13 @@ interface IBorrowService is IService {
         uint256 listingId
     ) external payable;
 
+    function withdraw(
+        bytes32 suffixData,
+        IForwarder.ForwardRequest memory req,
+        bytes calldata sig,
+        address currency
+    ) external payable;
+
     function calculateRequiredCollateral(uint256 amount, address currency)
         external
         view

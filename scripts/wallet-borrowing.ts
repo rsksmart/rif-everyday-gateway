@@ -73,7 +73,7 @@ const executeBorrowing = async () => {
     currency: docContract.address,
     interestRate: 5,
     loanToValue: ethers.utils.parseEther(collateralFactor.toString()),
-    loanToValueTokenAddr: NATIVE_CURRENCY,
+    loanToValueCurrency: NATIVE_CURRENCY,
     maxAmount: ethers.utils.parseEther('10000'),
     minAmount: ethers.utils.parseEther('1'),
     maxDuration: 1000,

@@ -4,6 +4,8 @@ pragma solidity ^0.8.16;
 import {IFeeManager} from "./IFeeManager.sol";
 import {ISubscriber} from "../common/IPublisher.sol";
 
+import "hardhat/console.sol";
+
 contract FeeManager is IFeeManager, ISubscriber {
     // TODO: should fee be something that can be changed/dynamic?
     // if so, this can be placed somewhere where the Defi Gateway
@@ -53,10 +55,22 @@ contract FeeManager is IFeeManager, ISubscriber {
         emit Deposit(beneficiary, msg.value);
     }
 
-    function getBalance(
-        address beneficiary
-    ) external view override returns (uint256) {
+    function getBalance(address beneficiary)
+        external
+        view
+        override
+        returns (uint256)
+    {
         return _beneficiares[beneficiary];
+    }
+
+    function getDebtBalance(address debtor)
+        external
+        view
+        override
+        returns (uint256)
+    {
+        return _debtors[debtor];
     }
 
     function withdraw(uint256 amount) external override {

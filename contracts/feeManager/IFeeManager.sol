@@ -59,6 +59,14 @@ interface IFeeManager {
     function getBalance(address beneficiary) external view returns (uint256);
 
     /**
+     * @notice Returns the debt amount
+     *
+     * @param debtor the address of debtor
+     * @return fees
+     */
+    function getDebtBalance(address debtor) external view returns (uint256);
+
+    /**
      * @notice Allow benificiaries to withdraw their funds
      *
      * @param amount fees to be withdrawn
