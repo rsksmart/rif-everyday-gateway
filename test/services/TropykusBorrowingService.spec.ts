@@ -145,7 +145,7 @@ describe('Tropykus Borrowing Service', () => {
         0, // Not in use for now
         {
           value: ethers.utils.parseEther(amountToLend.toString()),
-          gasLimit: 3000000,
+          gasLimit: 5000000,
         }
       );
       await tx.wait();
@@ -209,7 +209,7 @@ describe('Tropykus Borrowing Service', () => {
         amountToBorrow,
         0, // Not in use for now
         0, // Not in use for now
-        { value: amountToLend, gasLimit: 3000000 }
+        { value: amountToLend, gasLimit: 5000000 }
       );
       await tx.wait();
 
@@ -269,7 +269,7 @@ describe('Tropykus Borrowing Service', () => {
           approvedValue,
           0,
           {
-            gasLimit: 3000000,
+            gasLimit: 5000000,
           }
         );
       await payTx.wait();
@@ -315,7 +315,7 @@ describe('Tropykus Borrowing Service', () => {
         amountToBorrow,
         0, // Not in use for now
         0, // Not in use for now
-        { value: amountToLend, gasLimit: 3000000 }
+        { value: amountToLend, gasLimit: 5000000 }
       );
       await tx.wait();
 

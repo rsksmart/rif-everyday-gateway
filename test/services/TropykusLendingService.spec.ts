@@ -107,7 +107,7 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .lend(suffixData, forwardRequest, signature, 0, 0, {
           value: ethers.utils.parseEther(amountToLend.toString()),
-          gasLimit: 3000000,
+          gasLimit: 5000000,
         });
       await tx1.wait();
 
@@ -144,7 +144,7 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .lend(suffixData1, forwardRequest1, signature1, 0, 0, {
           value: ethers.utils.parseEther('0.0001'),
-          gasLimit: 3000000,
+          gasLimit: 5000000,
         });
 
       await lendTx.wait();
