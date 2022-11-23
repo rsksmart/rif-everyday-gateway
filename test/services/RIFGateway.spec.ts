@@ -1,7 +1,7 @@
 import { expect } from '../../chairc';
 import { ethers } from 'hardhat';
 import { deployContract } from '../../utils/deployment.utils';
-import { $Providers } from '../../typechain-types/contracts-exposed/services/Providers.sol/$Providers';
+import { $RIFGateway } from '../../typechain-types/contracts-exposed/services/RIFGateway.sol/$RIFGateway';
 import { deployMockContract } from '../utils/mock.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import ServiceTypeManagerJson from '../../artifacts/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager.json';
@@ -23,15 +23,15 @@ describe('Providers', () => {
       LendingServiceJson.abi
     );
 
-    const { contract: Providers } = await deployContract<$Providers>(
-      '$Providers',
+    const { contract: RIFGateway } = await deployContract<$RIFGateway>(
+      '$RIFGateway',
       {
         ServiceTypeManager: ServiceTypeManager.address,
       }
     );
 
     return {
-      Providers,
+      RIFGateway,
       ServiceTypeManager,
       LendingService,
       signer,
@@ -39,7 +39,7 @@ describe('Providers', () => {
   };
 
   it('Should add a new service', async () => {
-    const { Providers, ServiceTypeManager, LendingService, signer } =
+    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
       await loadFixture(initialFixture);
 
     await ServiceTypeManager.mock.supportsInterface.returns(true);
@@ -47,34 +47,34 @@ describe('Providers', () => {
     await LendingService.mock.supportsInterface.returns(true);
     await LendingService.mock.getServiceType.returns(0x01ffc9a7);
 
-    await expect(Providers.addService(LendingService.address)).to.not.be
+    await expect(RIFGateway.addService(LendingService.address)).to.not.be
       .reverted;
   });
 
   it('Should not add a new service if the service type is not supported', async () => {
-    const { Providers, ServiceTypeManager, LendingService, signer } =
+    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
       await loadFixture(initialFixture);
 
     await ServiceTypeManager.mock.supportsInterface.returns(false);
     await LendingService.mock.owner.returns(signer.address);
     await LendingService.mock.supportsInterface.returns(true);
 
-    await expect(Providers.addService(LendingService.address)).to.be.reverted;
+    await expect(RIFGateway.addService(LendingService.address)).to.be.reverted;
   });
 
   it('Should not add a new service if the service owner is address zero', async () => {
-    const { Providers, ServiceTypeManager, LendingService, signer } =
+    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
       await loadFixture(initialFixture);
 
     await ServiceTypeManager.mock.supportsInterface.returns(true);
     await LendingService.mock.owner.returns(ethers.constants.AddressZero);
     await LendingService.mock.supportsInterface.returns(true);
 
-    await expect(Providers.addService(LendingService.address)).to.be.reverted;
+    await expect(RIFGateway.addService(LendingService.address)).to.be.reverted;
   });
 
   it('Should add multiple services for the same provider', async () => {
-    const { Providers, ServiceTypeManager, LendingService, signer } =
+    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
       await loadFixture(initialFixture);
 
     await ServiceTypeManager.mock.supportsInterface.returns(true);
@@ -82,11 +82,11 @@ describe('Providers', () => {
     await LendingService.mock.supportsInterface.returns(true);
     await LendingService.mock.getServiceType.returns(0x01ffc9a7);
 
-    const tx = await Providers.addService(LendingService.address);
+    const tx = await RIFGateway.addService(LendingService.address);
 
     await tx.wait();
 
-    await expect(Providers.addService(LendingService.address)).to.not.be
+    await expect(RIFGateway.addService(LendingService.address)).to.not.be
       .reverted;
   });
 });
