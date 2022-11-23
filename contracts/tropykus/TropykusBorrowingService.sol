@@ -242,7 +242,7 @@ contract TropykusBorrowingService is BorrowService {
         );
 
         if (success) {
-            (, bytes memory data) = address(_crbtc).call(
+            (, bytes memory data) = market.call(
                 abi.encodeWithSignature("exchangeRateStored()")
             );
             uint256 exchangeRate = abi.decode(data, (uint256));
