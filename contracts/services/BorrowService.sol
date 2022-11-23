@@ -31,7 +31,8 @@ abstract contract BorrowService is Service, IBorrowService {
     function withdraw(
         bytes32 suffixData,
         IForwarder.ForwardRequest memory req,
-        bytes calldata sig
+        bytes calldata sig,
+        address currency
     ) public payable virtual;
 
     function calculateRequiredCollateral(uint256 amount, address currency)

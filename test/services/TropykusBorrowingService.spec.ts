@@ -2,6 +2,7 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   ERC20,
+  IFeeManager,
   SmartWallet,
   SmartWalletFactory,
   TropykusBorrowingService,
@@ -29,9 +30,11 @@ describe('Tropykus Borrowing Service', () => {
   let doc: ERC20;
   let gasPrice: BigNumber;
   let tropykusContractsDeployed: any;
+  let feeManager: IFeeManager;
 
   before(async () => {
-    ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
+    ({ smartWalletFactory, signers, feeManager } =
+      await smartwalletFactoryFixture());
     gasPrice = await ethers.provider.getGasPrice();
   });
 
@@ -95,7 +98,7 @@ describe('Tropykus Borrowing Service', () => {
           minDuration: 0,
           maxDuration: 1000,
           interestRate: ethers.utils.parseEther('0.01'), // 1%
-          loanToValueTokenAddr: ethers.constants.AddressZero,
+          loanToValueCurrency: ethers.constants.AddressZero,
           currency: doc.address,
           payBackOption: PaybackOption.Day,
           enabled: true,
@@ -142,7 +145,7 @@ describe('Tropykus Borrowing Service', () => {
         0, // Not in use for now
         {
           value: ethers.utils.parseEther(amountToLend.toString()),
-          gasLimit: 3000000,
+          gasLimit: 5000000,
         }
       );
       await tx.wait();
@@ -206,7 +209,7 @@ describe('Tropykus Borrowing Service', () => {
         amountToBorrow,
         0, // Not in use for now
         0, // Not in use for now
-        { value: amountToLend, gasLimit: 3000000 }
+        { value: amountToLend, gasLimit: 5000000 }
       );
       await tx.wait();
 
@@ -266,7 +269,7 @@ describe('Tropykus Borrowing Service', () => {
           approvedValue,
           0,
           {
-            gasLimit: 3000000,
+            gasLimit: 5000000,
           }
         );
       await payTx.wait();
@@ -312,7 +315,7 @@ describe('Tropykus Borrowing Service', () => {
         amountToBorrow,
         0, // Not in use for now
         0, // Not in use for now
-        { value: amountToLend, gasLimit: 3000000 }
+        { value: amountToLend, gasLimit: 5000000 }
       );
       await tx.wait();
 
@@ -380,6 +383,7 @@ describe('Tropykus Borrowing Service', () => {
       const borrowBalanceAfter = await tropykusBorrowingService
         .connect(externalWallet)
         .getBalance(doc.address);
+
       expect(+borrowBalanceAfter / 1e18).to.eq(0);
 
       const docBalanceAfter = await doc.balanceOf(externalWallet.address);
@@ -408,6 +412,7 @@ describe('Tropykus Borrowing Service', () => {
           signedMessageForWithdraw.suffixData,
           signedMessageForWithdraw.forwardRequest,
           signedMessageForWithdraw.signature,
+          ethers.constants.AddressZero,
           { gasLimit: 3000000 }
         );
       await withdrawTx.wait();
@@ -416,6 +421,10 @@ describe('Tropykus Borrowing Service', () => {
         .connect(externalWallet)
         .getCollateralBalance();
       expect(+balanceTropAfter / 1e18).to.equal(0);
+
+      expect(
+        await feeManager.getDebtBalance(tropykusBorrowingService.address)
+      ).to.be.gt(0);
     });
   });
 });

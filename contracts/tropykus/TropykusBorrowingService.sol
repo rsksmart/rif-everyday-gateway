@@ -9,22 +9,24 @@ import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
 import "./ITropykus.sol";
 
+/* solhint-disable avoid-low-level-calls */
+
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
     error NonZeroAmountAllowed();
     error NonZeroCollateralAllowed();
 
-    uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
+    uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
     // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
-    uint256 constant _DELTA_COLLATERAL_WITH_PRECISION = 5e18;
+    uint256 private constant _DELTA_COLLATERAL_WITH_PRECISION = 5e18;
 
     address private _comptroller;
     address private _oracle;
     address private _crbtc;
     address private _cdoc;
     SmartWalletFactory private _smartWalletFactory;
-    uint256 constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
+    uint256 private constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
 
     struct TropykusContracts {
         address comptroller;
@@ -79,8 +81,8 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("mint()"),
-            address(_crbtc),
-            address(0)
+            getMarketForCurrency(listing.loanToValueCurrency),
+            listing.loanToValueCurrency
         );
 
         address[] memory markets = new address[](2);
@@ -102,7 +104,7 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("borrow(uint256)", amount),
-            address(_cdoc),
+            getMarketForCurrency(listing.currency),
             listing.currency
         );
 
@@ -131,6 +133,8 @@ contract TropykusBorrowingService is BorrowService {
 
         ServiceListing memory listing = listings[listingId];
 
+        address market = getMarketForCurrency(listing.currency);
+
         smartWallet.execute(
             suffixData,
             req,
@@ -149,11 +153,7 @@ contract TropykusBorrowingService is BorrowService {
             suffixData,
             req,
             sig,
-            abi.encodeWithSignature(
-                "approve(address,uint256)",
-                address(_cdoc),
-                amount
-            ), // max uint to repay whole debt
+            abi.encodeWithSignature("approve(address,uint256)", market, amount), // max uint to repay whole debt
             listing.currency,
             address(0)
         );
@@ -163,7 +163,7 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
-            address(_cdoc),
+            market,
             listing.currency
         );
 
@@ -180,21 +180,20 @@ contract TropykusBorrowingService is BorrowService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory data = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory exchangeRatedata) = address(_crbtc).staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
-        uint256 exchangeRate = abi.decode(data, (uint256));
+        uint256 exchangeRate = abi.decode(exchangeRatedata, (uint256));
 
-        bytes memory balanceData = smartWallet.read(
-            address(_crbtc),
+        (, bytes memory balanceData) = address(_crbtc).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
+
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
-    // Only using RBTC as collateral after will be defining by the listing loanToValueTokenAddr
+    // Only using RBTC as collateral after will be defining by the listing loanToValueCurrency
     function calculateRequiredCollateral(uint256 amount, address currency)
         public
         view
@@ -217,14 +216,16 @@ contract TropykusBorrowingService is BorrowService {
     function withdraw(
         bytes32 suffixData,
         IForwarder.ForwardRequest memory req,
-        bytes calldata sig
+        bytes calldata sig,
+        address currency
     ) public payable override {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory balanceData = smartWallet.read(
-            address(_crbtc),
+        address market = getMarketForCurrency(currency);
+
+        (, bytes memory balanceData) = market.call(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
@@ -236,13 +237,12 @@ contract TropykusBorrowingService is BorrowService {
             req,
             sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
-            address(_crbtc),
-            address(0)
+            market,
+            currency
         );
 
         if (success) {
-            bytes memory data = smartWallet.read(
-                address(_crbtc),
+            (, bytes memory data) = market.call(
                 abi.encodeWithSignature("exchangeRateStored()")
             );
             uint256 exchangeRate = abi.decode(data, (uint256));
@@ -268,8 +268,7 @@ contract TropykusBorrowingService is BorrowService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        bytes memory data = smartWallet.read(
-            address(_cdoc),
+        (, bytes memory data) = getMarketForCurrency(currency).staticcall(
             abi.encodeWithSignature(
                 "borrowBalanceStored(address)",
                 address(smartWallet)

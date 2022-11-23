@@ -4,11 +4,18 @@ pragma experimental ABIEncoderV2;
 
 import "./ISmartWalletFactory.sol";
 import "./SmartWallet.sol";
+import {ISubscriber, SubscriptionEvent} from "../common/IPublisher.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
 contract SmartWalletFactory is ISmartWalletFactory {
+    address private _feeManager;
+
+    constructor(address feeManager) {
+        _feeManager = feeManager;
+    }
+
     /**
      * Calculates the Smart Wallet address for an owner EOA
      * @param owner - EOA of the owner of the smart wallet
@@ -62,8 +69,16 @@ contract SmartWalletFactory is ISmartWalletFactory {
         returns (address addr)
     {
         //Deployment of the Smart Wallet
-        addr = address(new SmartWallet{salt: salt}(owner));
+        SmartWallet sm = new SmartWallet{salt: salt}(owner);
+
+        // Initial subscription
+        sm.subscribe(
+            ISubscriber(_feeManager),
+            SubscriptionEvent.SERVICE_CONSUMPTION
+        );
+
         //No info is returned, an event is emitted to inform the new deployment
+        addr = address(sm);
         emit Deployed(addr, uint256(salt));
     }
 

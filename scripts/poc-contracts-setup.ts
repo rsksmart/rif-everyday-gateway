@@ -158,7 +158,7 @@ async function setupServices() {
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.01'), // 1%
       loanToValue: ethers.utils.parseEther('10000'),
-      loanToValueTokenAddr: NATIVE_CURRENCY,
+      loanToValueCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -174,7 +174,7 @@ async function setupServices() {
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.02'), // 2%
       loanToValue: ethers.utils.parseEther('10000'),
-      loanToValueTokenAddr: NATIVE_CURRENCY,
+      loanToValueCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -190,7 +190,7 @@ async function setupServices() {
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.03'), // 3%
       loanToValue: ethers.utils.parseEther('10000'),
-      loanToValueTokenAddr: NATIVE_CURRENCY,
+      loanToValueCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -206,7 +206,7 @@ async function setupServices() {
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.05'), // 5%
       loanToValue: ethers.utils.parseEther('10000'),
-      loanToValueTokenAddr: NATIVE_CURRENCY,
+      loanToValueCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -222,7 +222,7 @@ async function setupServices() {
       maxDuration: 0,
       interestRate: ethers.utils.parseEther('0.05'), // 5%
       loanToValue: 0,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
+      loanToValueCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -239,7 +239,7 @@ async function setupServices() {
       maxDuration: 0,
       interestRate: ethers.utils.parseEther('0.1'), // 10%
       loanToValue: 0,
-      loanToValueTokenAddr: NATIVE_CURRENCY,
+      loanToValueCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,

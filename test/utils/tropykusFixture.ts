@@ -582,6 +582,13 @@ export const deployTropykusContracts = async () => {
     )
   ).wait();
 
+  // Supply rBTC to the cRBTC contract
+  await (
+    await cRBTC.functions['mint()']({
+      value: ethers.utils.parseEther('1'),
+    })
+  ).wait();
+
   return {
     comptroller: comptrollerDeployed.address,
     oracle: priceOracleProxyDeploy.address,
