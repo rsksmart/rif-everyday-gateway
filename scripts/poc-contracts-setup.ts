@@ -1,10 +1,12 @@
 import { ethers } from 'hardhat';
 import {
   ISmartWalletFactory,
-  Providers,
+  RIFGateway,
   TropykusBorrowingService,
   ServiceTypeManager,
   TropykusLendingService,
+  IRIFGateway,
+  IFeeManager,
 } from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
@@ -19,9 +21,11 @@ async function deployServiceTypeManager() {
   return serviceTypeManager;
 }
 
-async function deploySmartWalletFactory() {
+async function deploySmartWalletFactory(feeManagerAddr: string) {
   const { contract: smartWalletFactory } =
-    await deployContract<ISmartWalletFactory>('SmartWalletFactory', {});
+    await deployContract<ISmartWalletFactory>('SmartWalletFactory', {
+      feeManager: feeManagerAddr,
+    });
   console.log('SmartWalletFactory deployed at: ', smartWalletFactory.address);
   return smartWalletFactory;
 }
@@ -42,17 +46,6 @@ async function deployProviders(
     doc: string;
   }
 ) {
-  // const {
-  //   contract: acmeLending,
-  //   signers: [owner],
-  // } = await deployContract<ACME>('ACME', {});
-
-  // Add initial liquidity of 0.001 RBTC
-  // await owner.sendTransaction({
-  //   to: acmeLending.address,
-  //   value: ethers.utils.parseEther('0.001'),
-  // });
-
   const { contract: tropykusLendingService } =
     await deployContract<TropykusLendingService>('TropykusLendingService', {
       crbtc: contracts.crbtc,
@@ -66,37 +59,48 @@ async function deployProviders(
     });
 
   return {
-    // acmeLending,
     tropykusLendingService,
     tropykusBorrowingService,
   };
 }
 
-async function deployProvidersContract(serviceTypeManagerAddr: string) {
-  const { contract: providersContract } = await deployContract<Providers>(
-    'Providers',
+async function deployRIFGatewayContract(serviceTypeManagerAddr: string) {
+  const { contract: RIFGateway } = await deployContract<IRIFGateway>(
+    'RIFGateway',
     {
       stm: serviceTypeManagerAddr,
     }
   );
-  console.log('Providers contract deployed at: ', providersContract.address);
-  return providersContract;
+  console.log('RIFGateway contract deployed at: ', RIFGateway.address);
+  return RIFGateway;
+}
+
+async function deployFeeManager() {
+  const { contract: FeeManager } = await deployContract<IFeeManager>(
+    'FeeManager',
+    {}
+  );
+  console.log('FeeManager contract deployed at: ', FeeManager.address);
+  return FeeManager;
 }
 
 async function setupServices() {
-  const smartWalletFactory = await deploySmartWalletFactory();
+  const feeManagerContract = await deployFeeManager();
+  const smartWalletFactory = await deploySmartWalletFactory(
+    feeManagerContract.address
+  );
   const tropykusContracts = await deployAndSetupTropykusContracts();
   const serviceTypeManager = await deployServiceTypeManager();
 
   // allow lending service interface id
-  const LENDING_SERVICE_INTERFACEID = '0x5f5a2f99';
+  const LENDING_SERVICE_INTERFACEID = '0xd9eedeca';
   const tLx = await serviceTypeManager.addServiceType(
     LENDING_SERVICE_INTERFACEID
   );
   tLx.wait();
 
   // allow borrowing service interface id
-  const BORROW_SERVICE_INTERFACEID = '0x710b6510';
+  const BORROW_SERVICE_INTERFACEID = '0x7337eabd';
   const tBx = await serviceTypeManager.addServiceType(
     BORROW_SERVICE_INTERFACEID
   );
@@ -109,7 +113,7 @@ async function setupServices() {
   const { tropykusLendingService, tropykusBorrowingService } =
     await deployProviders(smartWalletFactory, tropykusContracts);
 
-  const providersContract = await deployProvidersContract(
+  const RIFGatewayContract = await deployRIFGatewayContract(
     serviceTypeManager.address
   );
 
@@ -118,18 +122,18 @@ async function setupServices() {
     tropykusLendingService.address
   );
   console.log(
-    'tropykusLendingService deployed at: ',
+    'tropykusBorrowingService deployed at: ',
     tropykusBorrowingService.address
   );
 
-  const addTropykusServiceTx = await providersContract.addService(
+  const addTropykusServiceTx = await RIFGatewayContract.addService(
     tropykusLendingService.address
   );
   await addTropykusServiceTx.wait();
 
   console.log('TropykusLendingService was added successfuly');
 
-  const addTropykusBorrowingServiceTx = await providersContract.addService(
+  const addTropykusBorrowingServiceTx = await RIFGatewayContract.addService(
     tropykusBorrowingService.address
   );
   await addTropykusBorrowingServiceTx.wait();
@@ -137,7 +141,7 @@ async function setupServices() {
   console.log('TropykusBorrowingService was added successfuly');
 
   const contractsJSON = {
-    providersContract: providersContract.address,
+    RIFGatewayContract: RIFGatewayContract.address,
     smartWalletFactory: smartWalletFactory.address,
     tropykusLendingService: tropykusLendingService.address,
     tropykusBorrowingService: tropykusBorrowingService.address,
@@ -157,9 +161,8 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.01'), // 1%
-      loanToValue: ethers.utils.parseEther('10000'),
       loanToValueCurrency: NATIVE_CURRENCY,
-      currency: NATIVE_CURRENCY,
+      currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
@@ -168,14 +171,13 @@ async function setupServices() {
   await (
     await tropykusBorrowingService.addListing({
       id: 1,
-      minAmount: ethers.utils.parseEther('1'),
-      maxAmount: ethers.utils.parseEther('100'),
+      minAmount: ethers.utils.parseEther('0.0001'),
+      maxAmount: ethers.utils.parseEther('1'),
       minDuration: 0,
       maxDuration: 1000,
-      interestRate: ethers.utils.parseEther('0.02'), // 2%
-      loanToValue: ethers.utils.parseEther('10000'),
-      loanToValueCurrency: NATIVE_CURRENCY,
-      currency: tropykusContracts.doc,
+      interestRate: ethers.utils.parseEther('0.00002'), // ~ 0.0002%
+      loanToValueCurrency: tropykusContracts.doc,
+      currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
@@ -189,7 +191,6 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.03'), // 3%
-      loanToValue: ethers.utils.parseEther('10000'),
       loanToValueCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
@@ -205,7 +206,6 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.05'), // 5%
-      loanToValue: ethers.utils.parseEther('10000'),
       loanToValueCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
@@ -216,12 +216,11 @@ async function setupServices() {
   await (
     await tropykusLendingService.addListing({
       id: 0,
-      minAmount: 0,
-      maxAmount: 0,
+      minAmount: ethers.utils.parseEther('0.001'),
+      maxAmount: ethers.utils.parseEther('1'),
       minDuration: 0,
       maxDuration: 0,
       interestRate: ethers.utils.parseEther('0.05'), // 5%
-      loanToValue: 0,
       loanToValueCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
@@ -233,12 +232,11 @@ async function setupServices() {
   await (
     await tropykusBorrowingService.addListing({
       id: 4,
-      minAmount: 0,
-      maxAmount: 0,
+      minAmount: ethers.utils.parseEther('0.001'),
+      maxAmount: ethers.utils.parseEther('2'),
       minDuration: 0,
       maxDuration: 0,
-      interestRate: ethers.utils.parseEther('0.1'), // 10%
-      loanToValue: 0,
+      interestRate: ethers.utils.parseEther('0.4'), // 4%
       loanToValueCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
