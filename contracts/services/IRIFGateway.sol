@@ -7,7 +7,7 @@ interface IRIFGateway {
     error InvalidProviderAddress(address provider);
     error InvalidServiceImplementation(Service service, bytes4 serviceType);
     error NonConformity(string nonConformityErrMsg);
-    // TODO: check for duplicated _servicesByProvider 
+    // TODO: check for duplicated _servicesByProvider
     // error DuplicatedService(address service);
 
     event ServiceAdded(address provider, address service);
