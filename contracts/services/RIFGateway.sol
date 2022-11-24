@@ -35,7 +35,10 @@ contract RIFGateway is IRIFGateway, Ownable {
         // Proceeds to add the provider and service
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
-        _providers.push(provider);
+        if (_servicesByProvider[provider].length == 0)
+            _providers.push(provider);
+        // TODO: check for duplicated _servicesByProvider
+        // revert DuplicatedService(service);
         _servicesByProvider[provider].push(service);
         _totalServices++;
     }
