@@ -84,6 +84,7 @@ describe('Tropykus Lending Service', () => {
           payBackOption: PaybackOption.Day,
           enabled: true,
           name: 'Tropykus Lending Service',
+          owner: owner.address,
         })
       ).wait();
     });

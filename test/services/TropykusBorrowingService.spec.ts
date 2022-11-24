@@ -103,6 +103,7 @@ describe('Tropykus Borrowing Service', () => {
           payBackOption: PaybackOption.Day,
           enabled: true,
           name: 'Tropykus Borrow Service',
+          owner: owner.address,
         })
       ).wait();
     });

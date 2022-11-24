@@ -85,7 +85,9 @@ describe('RIF Gateway', () => {
     // await expect(rifGateway.addService(tropykusLendingService.address)).to.be
     //   .reverted;
 
-    const services = await rifGateway.getServices();
+    const [services, providers] = await rifGateway.getServicesAndProviders();
     expect(services[0]).equals(tropykusLendingService.address);
+    expect(providers[0].provider).equals(await tropykusLendingService.owner());
+    expect(providers[0].validated).equals(false);
   });
 });

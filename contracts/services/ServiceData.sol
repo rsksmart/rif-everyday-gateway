@@ -20,4 +20,10 @@ struct ServiceListing {
     PayBackOption payBackOption;
     bool enabled;
     string name;
+    address owner;
+}
+
+struct Provider {
+    address provider;
+    bool validated;
 }
