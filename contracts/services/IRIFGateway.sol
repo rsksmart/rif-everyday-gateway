@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "./Service.sol";
-import { Provider } from "./ServiceData.sol";
+import {Provider} from "./ServiceData.sol";
 
 interface IRIFGateway {
     error InvalidProviderAddress(address provider);
@@ -17,7 +17,10 @@ interface IRIFGateway {
 
     function addService(Service service) external;
 
-    function getServicesAndProviders() external view returns (Service[] memory, Provider[] memory);
+    function getServicesAndProviders()
+        external
+        view
+        returns (Service[] memory, Provider[] memory);
 
     function requestValidation(address provider) external;
 }

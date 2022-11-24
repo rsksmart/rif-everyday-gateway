@@ -5,11 +5,11 @@ import "./Service.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ServiceTypeManager.sol";
 import "./IRIFGateway.sol";
-import { Provider } from "./ServiceData.sol";
+import {Provider} from "./ServiceData.sol";
 
 contract RIFGateway is IRIFGateway, Ownable {
     Provider[] private _providers;
-    mapping(address => uint) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
+    mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     uint256 private _totalServices;
     ServiceTypeManager private _serviceTypeManager;
     Service[] _allServices;
@@ -37,7 +37,7 @@ contract RIFGateway is IRIFGateway, Ownable {
         // Proceeds to add the provider and service
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
-        uint index = _providerIndexes[provider];
+        uint256 index = _providerIndexes[provider];
         if (_providerIndexes[provider] == 0) {
             _providers.push(Provider({provider: provider, validated: false}));
             _providerIndexes[provider] = _providers.length;
@@ -48,7 +48,11 @@ contract RIFGateway is IRIFGateway, Ownable {
         _allServices.push(service);
     }
 
-    function getServicesAndProviders() external view returns (Service[] memory, Provider[] memory) {
+    function getServicesAndProviders()
+        external
+        view
+        returns (Service[] memory, Provider[] memory)
+    {
         return (_allServices, _providers);
     }
 
@@ -63,9 +67,9 @@ contract RIFGateway is IRIFGateway, Ownable {
 
     function removeService(Service service) external {
         // TODO: msg.sender must be service owner
-        for(uint i = 0; i < _allServices.length; i++) {
-            if(_allServices[i] == service) {
-                _allServices[i] = _allServices[_allServices.length -1];
+        for (uint256 i = 0; i < _allServices.length; i++) {
+            if (_allServices[i] == service) {
+                _allServices[i] = _allServices[_allServices.length - 1];
                 _allServices.pop();
                 break;
             }
