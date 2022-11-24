@@ -1,92 +1,91 @@
 import { expect } from '../../chairc';
 import { ethers } from 'hardhat';
 import { deployContract } from '../../utils/deployment.utils';
-import { $RIFGateway } from '../../typechain-types/contracts-exposed/services/RIFGateway.sol/$RIFGateway';
-import { deployMockContract } from '../utils/mock.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import ServiceTypeManagerJson from '../../artifacts/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager.json';
-import LendingServiceJson from '../../artifacts/contracts-exposed/services/LendingService.sol/$LendingService.json';
-import { $ServiceTypeManager } from '../../typechain-types/contracts-exposed/services/ServiceTypeManager.sol/$ServiceTypeManager';
-import { $LendingService } from '../../typechain-types/contracts-exposed/services/LendingService.sol/$LendingService';
-describe('Providers', () => {
+import {
+  ServiceTypeManager,
+  RIFGateway,
+  TropykusLendingService__factory,
+  TropykusLendingService,
+} from '../../typechain-types';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+
+describe('RIF Gateway', () => {
+  let rifGateway: RIFGateway;
+  let serviceTypeManager: ServiceTypeManager;
+  let signer: SignerWithAddress;
+  let tropykusLendingService: TropykusLendingService;
+
   const initialFixture = async () => {
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
-    const ServiceTypeManager = await deployMockContract<$ServiceTypeManager>(
-      signer,
-      ServiceTypeManagerJson.abi
-    );
+    const { contract: serviceTypeManager } =
+      await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
 
-    const LendingService = await deployMockContract<$LendingService>(
-      signer,
-      LendingServiceJson.abi
-    );
+    const tropykusLendingServiceFactory = (await ethers.getContractFactory(
+      'TropykusLendingService'
+    )) as TropykusLendingService__factory;
 
-    const { contract: RIFGateway } = await deployContract<$RIFGateway>(
-      '$RIFGateway',
+    tropykusLendingService = (await tropykusLendingServiceFactory.deploy(
+      ethers.constants.AddressZero,
+      ethers.constants.AddressZero
+    )) as TropykusLendingService;
+
+    await tropykusLendingService.deployed();
+
+    const { contract: rifGateway } = await deployContract<RIFGateway>(
+      'RIFGateway',
       {
-        ServiceTypeManager: ServiceTypeManager.address,
+        ServiceTypeManager: serviceTypeManager.address,
       }
     );
 
     return {
-      RIFGateway,
-      ServiceTypeManager,
-      LendingService,
+      rifGateway,
+      serviceTypeManager,
+      tropykusLendingService,
       signer,
     };
   };
 
+  beforeEach(async () => {
+    ({ rifGateway, serviceTypeManager, tropykusLendingService, signer } =
+      await loadFixture(initialFixture));
+  });
+
   it('Should add a new service', async () => {
-    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
-      await loadFixture(initialFixture);
+    // allow lending service interface id
+    const LENDING_SERVICE_INTERFACEID = '0xd9eedeca';
+    const tLx = await serviceTypeManager.addServiceType(
+      LENDING_SERVICE_INTERFACEID
+    );
+    tLx.wait();
 
-    await ServiceTypeManager.mock.supportsInterface.returns(true);
-    await LendingService.mock.owner.returns(signer.address);
-    await LendingService.mock.supportsInterface.returns(true);
-    await LendingService.mock.getServiceType.returns(0x01ffc9a7);
-
-    await expect(RIFGateway.addService(LendingService.address)).to.not.be
-      .reverted;
+    await expect(rifGateway.addService(tropykusLendingService.address)).to.not
+      .be.reverted;
   });
 
   it('Should not add a new service if the service type is not supported', async () => {
-    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
-      await loadFixture(initialFixture);
-
-    await ServiceTypeManager.mock.supportsInterface.returns(false);
-    await LendingService.mock.owner.returns(signer.address);
-    await LendingService.mock.supportsInterface.returns(true);
-
-    await expect(RIFGateway.addService(LendingService.address)).to.be.reverted;
-  });
-
-  it('Should not add a new service if the service owner is address zero', async () => {
-    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
-      await loadFixture(initialFixture);
-
-    await ServiceTypeManager.mock.supportsInterface.returns(true);
-    await LendingService.mock.owner.returns(ethers.constants.AddressZero);
-    await LendingService.mock.supportsInterface.returns(true);
-
-    await expect(RIFGateway.addService(LendingService.address)).to.be.reverted;
+    await expect(rifGateway.addService(tropykusLendingService.address)).to.be
+      .reverted;
   });
 
   it('Should add multiple services for the same provider', async () => {
-    const { RIFGateway, ServiceTypeManager, LendingService, signer } =
-      await loadFixture(initialFixture);
+    // allow lending service interface id
+    const LENDING_SERVICE_INTERFACEID = '0xd9eedeca';
+    const tLx = await serviceTypeManager.addServiceType(
+      LENDING_SERVICE_INTERFACEID
+    );
+    tLx.wait();
 
-    await ServiceTypeManager.mock.supportsInterface.returns(true);
-    await LendingService.mock.owner.returns(signer.address);
-    await LendingService.mock.supportsInterface.returns(true);
-    await LendingService.mock.getServiceType.returns(0x01ffc9a7);
-
-    const tx = await RIFGateway.addService(LendingService.address);
-
+    const tx = await rifGateway.addService(tropykusLendingService.address);
     await tx.wait();
 
-    await expect(RIFGateway.addService(LendingService.address)).to.not.be
-      .reverted;
+    // await expect(rifGateway.addService(tropykusLendingService.address)).to.be
+    //   .reverted;
+
+    const services = await rifGateway.getServices();
+    expect(services[0]).equals(tropykusLendingService.address);
   });
 });

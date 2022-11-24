@@ -1,4 +1,4 @@
-import { ethers } from 'hardhat';
+import hre, { ethers } from 'hardhat';
 import {
   ISmartWalletFactory,
   RIFGateway,
@@ -31,9 +31,19 @@ async function deploySmartWalletFactory(feeManagerAddr: string) {
 }
 
 async function deployAndSetupTropykusContracts() {
-  const contracts = await deployTropykusContracts();
-  console.log('TropykusContracts delpoyed');
-  return contracts;
+  if (hre.network.config.chainId === 31) {
+    return {
+      comptroller: '0xb1bec5376929b4e0235f1353819dba92c4b0c6bb',
+      oracle: '0x9fbB872D3B45f95b4E3126BC767553D3Fa1e31C0',
+      crbtc: '0x5b35072cd6110606c8421e013304110fa04a32a3',
+      cdoc: '0x71e6b108d823c2786f8ef63a3e0589576b4f3914',
+      doc: '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0',
+    };
+  } else {
+    const contracts = await deployTropykusContracts();
+    console.log('TropykusContracts delpoyed');
+    return contracts;
+  }
 }
 
 async function deployProviders(
@@ -142,7 +152,9 @@ async function setupServices() {
 
   const contractsJSON = {
     RIFGatewayContract: RIFGatewayContract.address,
+    FeeManager: feeManagerContract.address,
     smartWalletFactory: smartWalletFactory.address,
+    ServiceTypeManager: serviceTypeManager.address,
     tropykusLendingService: tropykusLendingService.address,
     tropykusBorrowingService: tropykusBorrowingService.address,
     tropykusDOC: tropykusContracts.doc,
