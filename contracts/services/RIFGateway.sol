@@ -58,7 +58,7 @@ contract RIFGateway is IRIFGateway, Ownable {
 
     function requestValidation(address provider) external {
         // TODO: Check if the service is already on the RIFGateway
-        emit ValidationRequested(provider);
+        if (!_providers[_providerIndexes[provider]].validated) emit ValidationRequested(provider);
     }
 
     function validateProvider(address provider) external onlyOwner {
