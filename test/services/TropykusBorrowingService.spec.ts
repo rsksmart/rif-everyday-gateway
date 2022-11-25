@@ -18,7 +18,7 @@ import { BigNumber, Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
 
-describe('Tropykus Borrowing Service', () => {
+describe('Tropykus Borrowing Service', async () => {
   let owner: SignerWithAddress;
   let tropykusBorrowingService: TropykusBorrowingService;
   let smartWalletFactory: SmartWalletFactory;

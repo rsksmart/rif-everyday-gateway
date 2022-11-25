@@ -20,7 +20,7 @@ enum FeeManagerEvents {
   Withdraw = 'Withdraw',
 }
 
-describe('FeeManager', () => {
+describe('FeeManager', async () => {
   let feeManager: IFeeManager;
   let signers: SignerWithAddress[];
   let beneficiary: SignerWithAddress;
@@ -32,7 +32,7 @@ describe('FeeManager', () => {
     beneficiaryAddr = beneficiary.address;
   });
 
-  describe('getBeneficiaryFunds', () => {
+  describe('getBeneficiaryFunds', async () => {
     it('it should get return the fees for the given beneficiary', async () => {
       const expectedFee = 0;
       await expect(feeManager.getBalance(beneficiaryAddr)).to.eventually.equal(
@@ -41,7 +41,7 @@ describe('FeeManager', () => {
     });
   });
 
-  describe('fundBeneficiary', () => {
+  describe('fundBeneficiary', async () => {
     it('it should add the given fees to the given beneficiary', async () => {
       const expectedFee = 100;
 
@@ -71,7 +71,7 @@ describe('FeeManager', () => {
     });
   });
 
-  describe('withdraw', () => {
+  describe('withdraw', async () => {
     let feeManagerAsBeneficiary: IFeeManager;
 
     beforeEach(() => {

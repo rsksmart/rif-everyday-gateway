@@ -16,7 +16,7 @@ import { Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
 
-describe('Tropykus Lending Service', () => {
+describe('Tropykus Lending Service', async () => {
   let owner: SignerWithAddress;
   let alice: SignerWithAddress;
   let bob: SignerWithAddress;
@@ -69,7 +69,7 @@ describe('Tropykus Lending Service', () => {
     expect(name).equals('Tropykus');
   });
 
-  describe('Lend/Withdraw', () => {
+  describe('Lend/Withdraw', async () => {
     beforeEach(async () => {
       await (
         await tropykusLendingService.addListing({

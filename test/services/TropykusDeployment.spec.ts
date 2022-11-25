@@ -3,7 +3,7 @@ import { expect } from 'chairc';
 import { ethers } from 'hardhat';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 
-describe('Test tropykus deployment', () => {
+describe('Test tropykus deployment', async () => {
   it('should deploy tropykus contracts', async () => {
     const contracts = await loadFixture(tropykusFixture);
 

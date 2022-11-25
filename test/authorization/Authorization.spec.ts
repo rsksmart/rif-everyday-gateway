@@ -20,7 +20,7 @@ async function authorizationSetUp() {
   return { authorization, signers };
 }
 
-describe('Authorization', () => {
+describe('Authorization', async () => {
   let authorization: IAuthorization;
   let signers: SignerWithAddress[];
 
@@ -28,7 +28,7 @@ describe('Authorization', () => {
     ({ authorization, signers } = await loadFixture(authorizationSetUp));
   });
 
-  describe('addOwner', () => {
+  describe('addOwner', async () => {
     it('should add a new owner', async () => {
       const [, newOwner] = signers;
       const newOwnerAddr = newOwner.address;
@@ -49,7 +49,7 @@ describe('Authorization', () => {
     });
   });
 
-  describe('addServiceProvider', () => {
+  describe('addServiceProvider', async () => {
     it('should add a new service provider', async () => {
       const [, newServiceProvider] = signers;
       const newServiceProvideAddr = newServiceProvider.address;
@@ -73,7 +73,7 @@ describe('Authorization', () => {
     });
   });
 
-  describe('addWalletProvider', () => {
+  describe('addWalletProvider', async () => {
     it('should add a new wallet provider', async () => {
       const [, newWalletProvider] = signers;
       const newWalletProvideAddr = newWalletProvider.address;

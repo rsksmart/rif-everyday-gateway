@@ -83,7 +83,7 @@ contract RIFGateway is IRIFGateway, Ownable {
                 _allServices.pop();
                 break;
             }
-            if(lowerIndex == upperIndex) break;
+            if (lowerIndex == upperIndex) break;
             if (_allServices[upperIndex] == service) {
                 _allServices[upperIndex] = _allServices[
                     _allServices.length - 1
