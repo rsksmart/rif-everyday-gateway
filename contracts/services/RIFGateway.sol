@@ -70,12 +70,27 @@ contract RIFGateway is IRIFGateway, Ownable {
     function removeService(Service service) external override {
         if (msg.sender != service.owner())
             revert InvalidProviderAddress(msg.sender);
-        for (uint256 i = 0; i < _allServices.length; i++) {
-            if (_allServices[i] == service) {
-                _allServices[i] = _allServices[_allServices.length - 1];
+        uint256 upperIndex = _allServices.length - 1;
+        for (
+            uint256 lowerIndex = 0;
+            lowerIndex <= _allServices.length / 2;
+            lowerIndex++
+        ) {
+            if (_allServices[lowerIndex] == service) {
+                _allServices[lowerIndex] = _allServices[
+                    _allServices.length - 1
+                ];
                 _allServices.pop();
                 break;
             }
+            if (_allServices[upperIndex] == service) {
+                _allServices[upperIndex] = _allServices[
+                    _allServices.length - 1
+                ];
+                _allServices.pop();
+                break;
+            }
+            upperIndex--;
         }
     }
 }
