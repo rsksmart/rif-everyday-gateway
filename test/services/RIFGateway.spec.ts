@@ -134,8 +134,9 @@ describe('RIF Gateway', () => {
         await rifGateway.addService(tropykusLendingService.address)
       ).wait();
 
-      await expect(rifGateway.addService(tropykusLendingService.address)).to.be
-        .reverted;
+      await expect(rifGateway.addService(tropykusLendingService.address))
+        .to.revertedWith('DuplicatedService')
+        .withArgs(tropykusLendingService.address);
     });
 
     it('should emit an event to request providers validation', async () => {

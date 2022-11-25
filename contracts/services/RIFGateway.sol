@@ -60,7 +60,6 @@ contract RIFGateway is IRIFGateway, Ownable {
         if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
         if (!_providers[_providerIndexes[provider] - 1].validated)
             emit ValidationRequested(provider);
-        emit ValidationRequested(provider);
     }
 
     function validateProvider(address provider) external override onlyOwner {
