@@ -11,7 +11,7 @@ import {Publisher, SubscriptionEvent} from "../common/IPublisher.sol";
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
-contract SmartWallet is Publisher, IForwarder {
+contract SmartWallet is IForwarder {
     using ECDSA for bytes32;
 
     error InvalidNonce(uint256 nonce);
@@ -162,8 +162,6 @@ contract SmartWallet is Publisher, IForwarder {
             // example: current nonce = 4 and req.nonce = 4
             nonce++;
             _currentBlockForNonce = block.number;
-
-            _notify(req.executor, SubscriptionEvent.SERVICE_CONSUMPTION);
         } else if (nonce > req.nonce && _currentBlockForNonce != block.number) {
             // example: current nonce = 5 and req.nonce = 4
             // and we are not in the same transaction

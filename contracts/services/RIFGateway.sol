@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: MI T
 pragma solidity ^0.8.4;
 
-import "./Service.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Service.sol";
 import "./ServiceTypeManager.sol";
 import "./IRIFGateway.sol";
+import "./SubscriptionManager.sol";
 import {Provider} from "./ServiceData.sol";
 
-contract RIFGateway is IRIFGateway, Ownable {
+contract RIFGateway is Ownable, SubscriptionManager, IRIFGateway {
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager private _serviceTypeManager;
     Service[] private _allServices;
-    mapping(address => bool) _uniqueServices;
+    mapping(address => bool) private _uniqueServices;
 
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
-    constructor(ServiceTypeManager stm) {
+    constructor(ServiceTypeManager stm, IFeeManager feeManager)
+        SubscriptionManager(feeManager)
+    {
         _serviceTypeManager = stm;
     }
 
@@ -94,5 +97,15 @@ contract RIFGateway is IRIFGateway, Ownable {
             }
             upperIndex--;
         }
+    }
+
+    function subscribe(
+        address subscriber,
+        address service,
+        uint256 listingId
+    ) external override {
+        if (_uniqueServices[address(service)]) revert ServiceNotFound(service);
+
+        _subscribeInternal(subscriber, service, listingId);
     }
 }

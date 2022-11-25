@@ -6,7 +6,7 @@ import {ISubscriber} from "../common/IPublisher.sol";
 
 import "hardhat/console.sol";
 
-contract FeeManager is IFeeManager, ISubscriber {
+contract FeeManager is IFeeManager {
     // TODO: should fee be something that can be changed/dynamic?
     // if so, this can be placed somewhere where the Defi Gateway
     // changes service consumption fees depending on other factors
@@ -16,18 +16,10 @@ contract FeeManager is IFeeManager, ISubscriber {
     // this mapping only applies to service providers
     mapping(address => uint256) internal _debtors;
 
-    function update(address debtor) external {
-        chargeFee(debtor, _FIXED_SERVICE_CONSUMPTION_FEE);
-    }
+    function chargeFee(address debtor) public override {
+        _debtors[debtor] += _FIXED_SERVICE_CONSUMPTION_FEE;
 
-    function chargeFee(address debtor, uint256 fee) public {
-        if (fee == 0) {
-            revert InvalidFee();
-        }
-
-        _debtors[debtor] += fee;
-
-        emit ServiceConsumed(debtor, fee);
+        emit ServiceConsumed(debtor, _FIXED_SERVICE_CONSUMPTION_FEE);
     }
 
     function payDebt() public payable {

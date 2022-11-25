@@ -72,4 +72,9 @@ interface IFeeManager {
      * @param amount fees to be withdrawn
      */
     function withdraw(uint256 amount) external;
+
+    /**
+     * @notice Charges a fixed amount to a debtor
+     */
+    function chargeFee(address debtor) external;
 }

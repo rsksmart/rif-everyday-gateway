@@ -40,13 +40,14 @@ export default <HardhatUserConfig>{
           'region camera keep actual absorb drive elegant chronic silver forget mammal enhance',
       },
     },
-    // testnet: {
-    //   url: 'https://public-node.testnet.rsk.co',
-    //   accounts: {
-    //     mnemonic: process.env.HDWALLET_MNEMONIC,
-    //   },
-    //   chainId: 31,
-    // },
+    testnet: {
+      url: 'https://public-node.testnet.rsk.co',
+      accounts: {
+        mnemonic:
+          'maximum curtain toward fox digital hair put warrior obey travel friend insect',
+      },
+      chainId: 31,
+    },
   },
   typechain: {
     target: 'ethers-v5',

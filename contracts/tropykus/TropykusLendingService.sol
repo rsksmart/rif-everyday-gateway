@@ -24,7 +24,7 @@ contract TropykusLendingService is LendingService {
         bytes calldata sig,
         uint256 amount,
         uint256 listingId
-    ) public payable override {
+    ) public payable override withSubscription(req.from, listingId) {
         ServiceListing memory listing = listings[listingId];
         if (!listing.enabled) {
             revert ListingDisabled(listingId);

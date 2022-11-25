@@ -53,7 +53,7 @@ contract TropykusBorrowingService is BorrowService {
         uint256 amount,
         uint256 listingId,
         uint256 duration
-    ) public payable override {
+    ) public payable override withSubscription(req.from, listingId) {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
