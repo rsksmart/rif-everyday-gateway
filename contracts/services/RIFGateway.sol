@@ -42,7 +42,8 @@ contract RIFGateway is IRIFGateway, Ownable {
             _providers.push(Provider({provider: provider, validated: false}));
             _providerIndexes[provider] = _providers.length;
         }
-        if(_uniqueServices[address(service)]) revert DuplicatedService(service);
+        if (_uniqueServices[address(service)])
+            revert DuplicatedService(service);
         _allServices.push(service);
         _uniqueServices[address(service)] = true;
     }
@@ -56,18 +57,20 @@ contract RIFGateway is IRIFGateway, Ownable {
     }
 
     function requestValidation(address provider) external override {
-        if(_providerIndexes[provider] == 0) revert InvalidProvider(provider);
-        if (!_providers[_providerIndexes[provider] - 1].validated) emit ValidationRequested(provider);
+        if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+        if (!_providers[_providerIndexes[provider] - 1].validated)
+            emit ValidationRequested(provider);
         emit ValidationRequested(provider);
     }
 
-    function validateProvider(address provider) external onlyOwner override {
-        if(_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+    function validateProvider(address provider) external override onlyOwner {
+        if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
         _providers[_providerIndexes[provider] - 1].validated = true;
     }
 
     function removeService(Service service) external override {
-        if (msg.sender != service.owner()) revert InvalidProviderAddress(msg.sender);
+        if (msg.sender != service.owner())
+            revert InvalidProviderAddress(msg.sender);
         for (uint256 i = 0; i < _allServices.length; i++) {
             if (_allServices[i] == service) {
                 _allServices[i] = _allServices[_allServices.length - 1];
