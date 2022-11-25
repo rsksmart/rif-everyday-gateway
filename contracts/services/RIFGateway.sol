@@ -12,7 +12,7 @@ contract RIFGateway is IRIFGateway, Ownable {
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     uint256 private _totalServices;
     ServiceTypeManager private _serviceTypeManager;
-    Service[] _allServices;
+    Service[] private _allServices;
 
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
