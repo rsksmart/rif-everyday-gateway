@@ -8,8 +8,8 @@ interface IRIFGateway {
     error InvalidProviderAddress(address provider);
     error InvalidServiceImplementation(Service service, bytes4 serviceType);
     error NonConformity(string nonConformityErrMsg);
-    // TODO: check for duplicated _servicesByProvider
-    // error DuplicatedService(address service);
+    error DuplicatedService(Service service);
+    error InvalidProvider(address provider);
 
     event ServiceAdded(address provider, address service);
     event ValidationRequested(address provider);
@@ -23,4 +23,8 @@ interface IRIFGateway {
         returns (Service[] memory, Provider[] memory);
 
     function requestValidation(address provider) external;
+
+    function validateProvider(address provider) external;
+
+    function removeService(Service service) external;
 }

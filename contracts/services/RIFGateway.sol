@@ -10,9 +10,9 @@ import {Provider} from "./ServiceData.sol";
 contract RIFGateway is IRIFGateway, Ownable {
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
-    uint256 private _totalServices;
     ServiceTypeManager private _serviceTypeManager;
     Service[] private _allServices;
+    mapping(address => bool) _uniqueServices;
 
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
@@ -42,10 +42,9 @@ contract RIFGateway is IRIFGateway, Ownable {
             _providers.push(Provider({provider: provider, validated: false}));
             _providerIndexes[provider] = _providers.length;
         }
-        // TODO: check for duplicated _servicesByProvider
-        // revert DuplicatedService(service);
-        _totalServices++;
+        if(_uniqueServices[address(service)]) revert DuplicatedService(service);
         _allServices.push(service);
+        _uniqueServices[address(service)] = true;
     }
 
     function getServicesAndProviders()
@@ -56,16 +55,18 @@ contract RIFGateway is IRIFGateway, Ownable {
         return (_allServices, _providers);
     }
 
-    function requestValidation(address provider) external {
-        // TODO: Check if the service is already on the RIFGateway
-        if (!_providers[_providerIndexes[provider]].validated) emit ValidationRequested(provider);
+    function requestValidation(address provider) external override {
+        if(_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+        if (!_providers[_providerIndexes[provider] - 1].validated) emit ValidationRequested(provider);
+        emit ValidationRequested(provider);
     }
 
-    function validateProvider(address provider) external onlyOwner {
-        _providers[_providerIndexes[provider]].validated = true;
+    function validateProvider(address provider) external onlyOwner override {
+        if(_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+        _providers[_providerIndexes[provider] - 1].validated = true;
     }
 
-    function removeService(Service service) external {
+    function removeService(Service service) external override {
         if (msg.sender != service.owner()) revert InvalidProviderAddress(msg.sender);
         for (uint256 i = 0; i < _allServices.length; i++) {
             if (_allServices[i] == service) {
