@@ -12,7 +12,7 @@ import {
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
-describe('RIF Gateway', () => {
+describe('RIF Gateway', async () => {
   let rifGateway: RIFGateway;
   let serviceTypeManager: ServiceTypeManager;
   let signer: SignerWithAddress;
@@ -87,7 +87,7 @@ describe('RIF Gateway', () => {
       .reverted;
   });
 
-  describe('Gateway actions', () => {
+  describe('Gateway actions', async () => {
     beforeEach(async () => {
       // allow lending service interface id
       const LENDING_SERVICE_INTERFACEID = '0xd9eedeca';
@@ -211,32 +211,6 @@ describe('RIF Gateway', () => {
       expect(afterProviders.length).equals(1);
       expect(afterProviders[0].provider).equals(signer.address);
       expect(afterProviders[0].validated).equals(false);
-    });
-
-    it.skip('should remove a service and provider if ther are no more services from the provider', async () => {
-      await (
-        await rifGateway.addService(tropykusLendingService.address)
-      ).wait();
-
-      const [services, providers] = await rifGateway.getServicesAndProviders();
-      expect(services[0]).equals(tropykusLendingService.address);
-      expect(services.length).equals(1);
-
-      expect(providers.length).equals(1);
-      expect(providers[0].provider).equals(signer.address);
-      expect(providers[0].validated).equals(false);
-
-      await (
-        await rifGateway.removeService(tropykusLendingService.address)
-      ).wait();
-
-      const [afterServices, afterProviders] =
-        await rifGateway.getServicesAndProviders();
-      console.log(afterServices);
-      console.log(afterProviders);
-
-      expect(afterServices.length).equals(0);
-      expect(afterProviders.length).equals(0);
     });
 
     it('should revert on remove a service if caller is not service owner', async () => {

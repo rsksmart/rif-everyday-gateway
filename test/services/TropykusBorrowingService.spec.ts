@@ -88,7 +88,7 @@ describe('Tropykus Borrowing Service', () => {
     expect(rbtcMarket).equals(tropykusContractsDeployed.crbtc);
   });
 
-  describe('Borrow/Repay', () => {
+  describe('Borrow/Repay', async () => {
     beforeEach(async () => {
       await (
         await tropykusBorrowingService.addListing({

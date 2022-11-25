@@ -11,7 +11,7 @@ import { ILendingService } from '../../typechain-types/contracts/services/ILendi
 const SERVICE_TYPE_INTERFACE_ID = '0x01ffc9a7';
 const UNIMPLEMENTED_SERVICE_TYPE_INTERFACE_ID = '0x01ffc6f2';
 
-describe('Service Type Manager', () => {
+describe('Service Type Manager', async () => {
   const initialFixture = async () => {
     const signers = await ethers.getSigners();
     const gatewayOwner = signers[0];
