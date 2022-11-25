@@ -66,7 +66,7 @@ contract RIFGateway is IRIFGateway, Ownable {
     }
 
     function removeService(Service service) external {
-        // TODO: msg.sender must be service owner
+        if (msg.sender != service.owner()) revert InvalidProviderAddress(msg.sender);
         for (uint256 i = 0; i < _allServices.length; i++) {
             if (_allServices[i] == service) {
                 _allServices[i] = _allServices[_allServices.length - 1];
