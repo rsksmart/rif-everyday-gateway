@@ -5,12 +5,14 @@ import "./Service.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ServiceTypeManager.sol";
 import "./IRIFGateway.sol";
+import {Provider} from "./ServiceData.sol";
 
 contract RIFGateway is IRIFGateway, Ownable {
-    mapping(address => Service[]) private _servicesByProvider;
-    address[] private _providers;
-    uint256 private _totalServices;
+    Provider[] private _providers;
+    mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager private _serviceTypeManager;
+    Service[] private _allServices;
+    mapping(address => bool) _uniqueServices;
 
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
@@ -19,6 +21,8 @@ contract RIFGateway is IRIFGateway, Ownable {
     }
 
     function addService(Service service) external {
+        if (_uniqueServices[address(service)])
+            revert DuplicatedService(service);
         // Checks that the service provider implements ERC165
         if (!service.supportsInterface(_INTERFACE_ID_ERC165)) {
             revert NonConformity("Service does not implement ERC165");
@@ -35,31 +39,60 @@ contract RIFGateway is IRIFGateway, Ownable {
         // Proceeds to add the provider and service
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
-        if (_servicesByProvider[provider].length == 0)
-            _providers.push(provider);
-        // TODO: check for duplicated _servicesByProvider
-        // revert DuplicatedService(service);
-        _servicesByProvider[provider].push(service);
-        _totalServices++;
-    }
-
-    function getServices() external view returns (Service[] memory) {
-        Service[] memory allServices = new Service[](_totalServices);
-        uint256 counter = 0;
-        for (uint256 i = 0; i < _providers.length; i++) {
-            Service[] memory servicesByProvider = _servicesByProvider[
-                _providers[i]
-            ];
-            for (uint256 j = 0; j < servicesByProvider.length; j++) {
-                allServices[counter] = servicesByProvider[j];
-                counter++;
-            }
+        if (_providerIndexes[provider] == 0) {
+            _providers.push(Provider({provider: provider, validated: false}));
+            _providerIndexes[provider] = _providers.length;
         }
-        return allServices;
+        _allServices.push(service);
+        _uniqueServices[address(service)] = true;
     }
 
-    function requestValidation(address provider, address service) external {
-        // TODO: Check if the service is already on the RIFGateway
-        emit ValidationRequested(provider, service);
+    function getServicesAndProviders()
+        external
+        view
+        returns (Service[] memory, Provider[] memory)
+    {
+        return (_allServices, _providers);
+    }
+
+    function requestValidation(address provider) external override {
+        if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+        if (!_providers[_providerIndexes[provider] - 1].validated)
+            emit ValidationRequested(provider);
+    }
+
+    function validateProvider(address provider) external override onlyOwner {
+        if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+        _providers[_providerIndexes[provider] - 1].validated = true;
+    }
+
+    function removeService(Service service) external override {
+        if (msg.sender != service.owner())
+            revert InvalidProviderAddress(msg.sender);
+        if (!_uniqueServices[address(service)]) revert InvalidService(service);
+        uint256 upperIndex = _allServices.length - 1;
+        for (
+            uint256 lowerIndex = 0;
+            lowerIndex <= _allServices.length / 2;
+            lowerIndex++
+        ) {
+            if (_allServices[lowerIndex] == service) {
+                _allServices[lowerIndex] = _allServices[
+                    _allServices.length - 1
+                ];
+                _allServices.pop();
+                _uniqueServices[address(service)] = false;
+                break;
+            }
+            if (_allServices[upperIndex] == service) {
+                _allServices[upperIndex] = _allServices[
+                    _allServices.length - 1
+                ];
+                _allServices.pop();
+                _uniqueServices[address(service)] = false;
+                break;
+            }
+            upperIndex--;
+        }
     }
 }

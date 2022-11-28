@@ -10,7 +10,7 @@ import { computeSalt, encoder, signTransactionForExecutor } from './utils';
 import { ethers } from 'hardhat';
 import { Wallet } from 'ethers';
 
-describe('RIF Gateway SmartWallet', () => {
+describe('RIF Gateway SmartWallet', async () => {
   let smartWalletFactory: SmartWalletFactory;
   let signers: SignerWithAddress[];
   let smartwalletOwner: SignerWithAddress;
@@ -23,7 +23,7 @@ describe('RIF Gateway SmartWallet', () => {
     smartwalletOwner = signers[1];
   });
 
-  describe('Smart wallet creation', () => {
+  describe('Smart wallet creation', async () => {
     it('should generate smart wallet address without deployment', async () => {
       const salt = computeSalt(smartwalletOwner, smartWalletFactory.address);
       const deployedWallet = await (

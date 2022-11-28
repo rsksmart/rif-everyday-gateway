@@ -18,7 +18,7 @@ import { BigNumber, Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
 
-describe('Tropykus Borrowing Service', () => {
+describe('Tropykus Borrowing Service', async () => {
   let owner: SignerWithAddress;
   let tropykusBorrowingService: TropykusBorrowingService;
   let smartWalletFactory: SmartWalletFactory;
@@ -71,13 +71,7 @@ describe('Tropykus Borrowing Service', () => {
   });
 
   it('should retrieve service name', async () => {
-    const borrowingService = await ethers.getContractAt(
-      'BorrowService',
-      tropykusBorrowingService.address,
-      owner
-    );
-
-    const name = await borrowingService.serviceProviderName();
+    const name = await tropykusBorrowingService.serviceProviderName();
     expect(name).equals('Tropykus');
   });
 
@@ -88,7 +82,7 @@ describe('Tropykus Borrowing Service', () => {
     expect(rbtcMarket).equals(tropykusContractsDeployed.crbtc);
   });
 
-  describe('Borrow/Repay', () => {
+  describe('Borrow/Repay', async () => {
     beforeEach(async () => {
       await (
         await tropykusBorrowingService.addListing({
@@ -103,6 +97,7 @@ describe('Tropykus Borrowing Service', () => {
           payBackOption: PaybackOption.Day,
           enabled: true,
           name: 'Tropykus Borrow Service',
+          owner: owner.address,
         })
       ).wait();
     });
