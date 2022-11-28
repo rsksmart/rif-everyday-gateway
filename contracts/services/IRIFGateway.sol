@@ -9,6 +9,7 @@ interface IRIFGateway {
     error InvalidServiceImplementation(Service service, bytes4 serviceType);
     error NonConformity(string nonConformityErrMsg);
     error DuplicatedService(Service service);
+    error InvalidService(Service service);
     error InvalidProvider(address provider);
 
     event ServiceAdded(address provider, address service);

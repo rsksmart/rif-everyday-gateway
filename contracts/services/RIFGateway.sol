@@ -21,6 +21,8 @@ contract RIFGateway is IRIFGateway, Ownable {
     }
 
     function addService(Service service) external {
+        if (_uniqueServices[address(service)])
+            revert DuplicatedService(service);
         // Checks that the service provider implements ERC165
         if (!service.supportsInterface(_INTERFACE_ID_ERC165)) {
             revert NonConformity("Service does not implement ERC165");
@@ -42,8 +44,6 @@ contract RIFGateway is IRIFGateway, Ownable {
             _providers.push(Provider({provider: provider, validated: false}));
             _providerIndexes[provider] = _providers.length;
         }
-        if (_uniqueServices[address(service)])
-            revert DuplicatedService(service);
         _allServices.push(service);
         _uniqueServices[address(service)] = true;
     }
@@ -70,6 +70,7 @@ contract RIFGateway is IRIFGateway, Ownable {
     function removeService(Service service) external override {
         if (msg.sender != service.owner())
             revert InvalidProviderAddress(msg.sender);
+        if (!_uniqueServices[address(service)]) revert InvalidService(service);
         uint256 upperIndex = _allServices.length - 1;
         for (
             uint256 lowerIndex = 0;
@@ -83,7 +84,6 @@ contract RIFGateway is IRIFGateway, Ownable {
                 _allServices.pop();
                 break;
             }
-            if (lowerIndex == upperIndex) break;
             if (_allServices[upperIndex] == service) {
                 _allServices[upperIndex] = _allServices[
                     _allServices.length - 1

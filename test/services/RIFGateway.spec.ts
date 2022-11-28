@@ -226,5 +226,13 @@ describe('RIF Gateway', async () => {
         .to.revertedWith('InvalidProviderAddress')
         .withArgs(otherSigner.address);
     });
+
+    it('should revert if trying to delete a service that does not exist', async () => {
+      await expect(
+        rifGateway.connect(signer).removeService(tropykusLendingService.address)
+      )
+        .to.revertedWith('InvalidService')
+        .withArgs(tropykusLendingService.address);
+    });
   });
 });
