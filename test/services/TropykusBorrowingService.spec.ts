@@ -71,13 +71,7 @@ describe('Tropykus Borrowing Service', async () => {
   });
 
   it('should retrieve service name', async () => {
-    const borrowingService = await ethers.getContractAt(
-      'BorrowService',
-      tropykusBorrowingService.address,
-      owner
-    );
-
-    const name = await borrowingService.serviceProviderName();
+    const name = await tropykusBorrowingService.serviceProviderName();
     expect(name).equals('Tropykus');
   });
 

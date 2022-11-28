@@ -1,4 +1,3 @@
-import { Contract } from 'ethers';
 import hre, { ethers } from 'hardhat';
 import StandardTokenJSON from './tropykusCompiledContracts/StandardToken.json';
 import MultiSigWalletJSON from './tropykusCompiledContracts/MultiSigWallet.json';
@@ -90,7 +89,7 @@ export const deployTropykusContracts = async () => {
     deployer
   );
   const multiSig = await multiSigWalletContract.deploy([deployer.address], 1);
-  await multiSig.deployTransaction.wait();
+  await multiSig.deployed();
 
   const priceOracleProxyContract = new ethers.ContractFactory(
     PriceOracleProxyJSON.abi,
@@ -100,7 +99,7 @@ export const deployTropykusContracts = async () => {
   const priceOracleProxyDeploy = await priceOracleProxyContract.deploy(
     deployer.address
   );
-  await priceOracleProxyDeploy.deployTransaction.wait();
+  await priceOracleProxyDeploy.deployed();
 
   const unitrollerContract = new ethers.ContractFactory(
     UnitrollerJSON.abi,
@@ -109,7 +108,7 @@ export const deployTropykusContracts = async () => {
   );
 
   const unitrollerDeployed = await unitrollerContract.deploy();
-  await unitrollerDeployed.deployTransaction.wait();
+  await unitrollerDeployed.deployed();
   const comptrollerContract = new ethers.ContractFactory(
     ComptrollerG6JSON.abi,
     ComptrollerG6JSON.bytecode,
@@ -119,7 +118,7 @@ export const deployTropykusContracts = async () => {
   const comptrollerDeployed = await comptrollerContract.deploy();
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
 
-  await comptrollerDeployed.deployTransaction.wait();
+  await comptrollerDeployed.deployed();
 
   const standardTokenContract = new ethers.ContractFactory(
     StandardTokenJSON.abi,
@@ -133,7 +132,7 @@ export const deployTropykusContracts = async () => {
     18,
     'tRIF'
   );
-  await rifToken.deployTransaction.wait();
+  await rifToken.deployed();
 
   const docToken = await standardTokenContract.deploy(
     parseEther('2000000'),
@@ -141,7 +140,7 @@ export const deployTropykusContracts = async () => {
     18,
     'tDOC'
   );
-  await docToken.deployTransaction.wait();
+  await docToken.deployed();
 
   const rdocToken = await standardTokenContract.deploy(
     parseEther('2000000'),
@@ -149,7 +148,7 @@ export const deployTropykusContracts = async () => {
     18,
     'tRDOC'
   );
-  await rdocToken.deployTransaction.wait();
+  await rdocToken.deployed();
 
   const usdtToken = await standardTokenContract.deploy(
     parseEther('2000000'),
@@ -157,7 +156,7 @@ export const deployTropykusContracts = async () => {
     18,
     'trUSDT'
   );
-  await usdtToken.deployTransaction.wait();
+  await usdtToken.deployed();
 
   const mockPriceProviderMoC = new ethers.ContractFactory(
     MockProviderMOCJSON.abi,
@@ -169,31 +168,31 @@ export const deployTropykusContracts = async () => {
     deployer.address,
     parseEther('0.252')
   );
-  await rifOracle.deployTransaction.wait();
+  await rifOracle.deployed();
 
   const rbtcOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('54556.9')
   );
-  await rbtcOracle.deployTransaction.wait();
+  await rbtcOracle.deployed();
 
   const docOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
-  await docOracle.deployTransaction.wait();
+  await docOracle.deployed();
 
   const rdocOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
-  await rdocOracle.deployTransaction.wait();
+  await rdocOracle.deployed();
 
   const usdtOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
-  await usdtOracle.deployTransaction.wait();
+  await usdtOracle.deployed();
 
   const priceOracleAdapterMoc = new ethers.ContractFactory(
     PriceOracleAdapterMOCJSON.abi,
@@ -204,38 +203,38 @@ export const deployTropykusContracts = async () => {
     deployer.address,
     rbtcOracle.address
   );
-  await rbtcPriceOracleAdapterMoC.deployTransaction.wait();
+  await rbtcPriceOracleAdapterMoC.deployed();
 
   const satPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rbtcOracle.address
   );
-  await satPriceOracleAdapterMoC.deployTransaction.wait();
+  await satPriceOracleAdapterMoC.deployed();
 
   const rifPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rifOracle.address
   );
-  await rifPriceOracleAdapterMoC.deployTransaction.wait();
+  await rifPriceOracleAdapterMoC.deployed();
 
   const docPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     docOracle.address
   );
-  await docPriceOracleAdapterMoC.deployTransaction.wait();
+  await docPriceOracleAdapterMoC.deployed();
 
   const rdocPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rdocOracle.address
   );
-  await rdocPriceOracleAdapterMoC.deployTransaction.wait();
+  await rdocPriceOracleAdapterMoC.deployed();
 
   const usdtPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     usdtOracle.address
   );
 
-  await usdtPriceOracleAdapterMoC.deployTransaction.wait();
+  await usdtPriceOracleAdapterMoC.deployed();
 
   const whitePaperInterestRateModel = new ethers.ContractFactory(
     WhitePaperInterestRateJSON.abi,
@@ -258,7 +257,7 @@ export const deployTropykusContracts = async () => {
     rif.baseBorrowRate,
     rif.multiplier
   );
-  await rifInterestRateModel.deployTransaction.wait();
+  await rifInterestRateModel.deployed();
 
   const docInterestRateModel = await jumpInterestRateModelV2.deploy(
     doc.baseBorrowRate,
@@ -267,7 +266,7 @@ export const deployTropykusContracts = async () => {
     doc.kink,
     deployer.address
   );
-  await docInterestRateModel.deployTransaction.wait();
+  await docInterestRateModel.deployed();
 
   const rdocInterestRateModel = await jumpInterestRateModelV2.deploy(
     rdoc.baseBorrowRate,
@@ -276,7 +275,7 @@ export const deployTropykusContracts = async () => {
     rdoc.kink,
     deployer.address
   );
-  await rdocInterestRateModel.deployTransaction.wait();
+  await rdocInterestRateModel.deployed();
 
   const usdtInterestRateModel = await jumpInterestRateModelV2.deploy(
     usdt.baseBorrowRate,
@@ -285,13 +284,13 @@ export const deployTropykusContracts = async () => {
     usdt.kink,
     deployer.address
   );
-  await usdtInterestRateModel.deployTransaction.wait();
+  await usdtInterestRateModel.deployed();
 
   const rbtcInterestRateModel = await whitePaperInterestRateModel.deploy(
     rbtc.baseBorrowRate,
     rbtc.multiplier
   );
-  await rbtcInterestRateModel.deployTransaction.wait();
+  await rbtcInterestRateModel.deployed();
 
   const satInterestRateModel = await hurricaneInterestRateModel.deploy(
     sat.baseBorrowRate,
@@ -300,7 +299,7 @@ export const deployTropykusContracts = async () => {
     sat.borrowRateSlope,
     sat.supplyRateSlope
   );
-  await satInterestRateModel.deployTransaction.wait();
+  await satInterestRateModel.deployed();
 
   const cErc20Immutable = new ethers.ContractFactory(
     CErc20ImmutableJSON.abi,
@@ -333,7 +332,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  await cRIFdeployed.deployTransaction.wait();
+  await cRIFdeployed.deployed();
 
   const cDOCdeployed = await cErc20Immutable.deploy(
     docToken.address,
@@ -345,7 +344,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  await cDOCdeployed.deployTransaction.wait();
+  await cDOCdeployed.deployed();
 
   const cRDOCdeployed = await cRDOCContract.deploy(
     rdocToken.address,
@@ -357,7 +356,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  await cRDOCdeployed.deployTransaction.wait();
+  await cRDOCdeployed.deployed();
 
   const cUSDTdeployed = await cErc20Immutable.deploy(
     usdtToken.address,
@@ -369,7 +368,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  await cUSDTdeployed.deployTransaction.wait();
+  await cUSDTdeployed.deployed();
 
   const cRBTCdeployed = await cRBTCContract.deploy(
     comptrollerDeployed.address,
@@ -380,7 +379,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  await cRBTCdeployed.deployTransaction.wait();
+  await cRBTCdeployed.deployed();
 
   const cSATdeployed = await cRBTCContract.deploy(
     comptrollerDeployed.address,
@@ -391,14 +390,14 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  await cSATdeployed.deployTransaction.wait();
+  await cSATdeployed.deployed();
 
   const cRBTCCompanionDeployed = await cRBTCCompanionContract.deploy(
     comptrollerDeployed.address,
     cSATdeployed.address,
     priceOracleProxyDeploy.address
   );
-  await cRBTCCompanionDeployed.deployTransaction.wait();
+  await cRBTCCompanionDeployed.deployed();
 
   const tropykusLensContract = new ethers.ContractFactory(
     TropykusLensJSON.abi,
@@ -406,7 +405,7 @@ export const deployTropykusContracts = async () => {
     deployer
   );
   const tropykusLens = await tropykusLensContract.deploy();
-  await tropykusLens.deployTransaction.wait();
+  await tropykusLens.deployed();
 
   const unitroller = new ethers.Contract(
     unitrollerDeployed.address,
