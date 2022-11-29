@@ -5,10 +5,7 @@ import {
   IBorrowService,
   IFeeManager,
   IRIFGateway,
-  SmartWallet,
   SmartWalletFactory,
-  TropykusBorrowingService,
-  TropykusBorrowingService__factory,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
@@ -24,7 +21,7 @@ import { deployContract } from 'utils/deployment.utils';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
-  let tropykusBorrowingService: TropykusBorrowingService;
+  let tropykusBorrowingService: IBorrowService;
   let smartWalletFactory: SmartWalletFactory;
   let smartWalletAddress: string;
   let privateKey: string;
@@ -59,14 +56,11 @@ describe('Tropykus Borrowing Service', () => {
       await deployRIFGateway());
 
     ({ contract: tropykusBorrowingService } =
-      await deployContract<TropykusBorrowingService>(
-        'TropykusBorrowingService',
-        {
-          gateway: RIFGateway.address,
-          smartWalletFactory: smartWalletFactory.address,
-          contracts: tropykusContractsDeployed,
-        }
-      ));
+      await deployContract<IBorrowService>('TropykusBorrowingService', {
+        gateway: RIFGateway.address,
+        smartWalletFactory: smartWalletFactory.address,
+        contracts: tropykusContractsDeployed,
+      }));
 
     await (
       await RIFGateway.addService(tropykusBorrowingService.address)
@@ -76,13 +70,6 @@ describe('Tropykus Borrowing Service', () => {
   it('should retrieve service name', async () => {
     const name = await tropykusBorrowingService.serviceProviderName();
     expect(name).equals('Tropykus');
-  });
-
-  it('should retrieve tropykus market address given a currency', async () => {
-    const rbtcMarket = await tropykusBorrowingService.getMarketForCurrency(
-      ethers.constants.AddressZero
-    );
-    expect(rbtcMarket).equals(tropykusContractsDeployed.crbtc);
   });
 
   it('should revert while trying to consume a service that is not added in the gateway', async () => {
