@@ -8,7 +8,7 @@ import { deployContract } from 'utils/deployment.utils';
 const RBTC_SENT = ethers.utils.parseEther('10');
 const INTEREST_PER_100_BLOCKS = 10;
 
-describe('Service Provider Lending Contract', async () => {
+describe('Service Provider Lending Contract', () => {
   const initialFixture = async () => {
     const [owner, ...accounts] = await ethers.getSigners();
     const ACMEFactory = (await ethers.getContractFactory(
@@ -32,7 +32,7 @@ describe('Service Provider Lending Contract', async () => {
     };
   };
 
-  describe('Deposits', async () => {
+  describe('Deposits', () => {
     let owner: SignerWithAddress;
     let acmeContract: ACME;
 
@@ -130,7 +130,7 @@ describe('Service Provider Lending Contract', async () => {
     });
   });
 
-  describe('Loans', async () => {
+  describe('Loans', () => {
     let acmeContract: ACME;
     let doc: ERC677;
     let owner: SignerWithAddress;
@@ -183,7 +183,7 @@ describe('Service Provider Lending Contract', async () => {
         .withArgs(0);
     });
 
-    describe('DOC pool', async () => {
+    describe('DOC pool', () => {
       beforeEach(async () => {
         await doc.transfer(
           acmeContract.address,

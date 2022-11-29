@@ -58,7 +58,12 @@ describe('RIF Gateway SmartWallet', async () => {
 
     beforeEach(async () => {
       ({ smartWallet, privateKey, externalWallet } = await loadFixture(
-        externalSmartwalletFixture.bind(null, smartWalletFactory, signers, true)
+        externalSmartwalletFixture.bind(
+          null,
+          smartWalletFactory,
+          signers[0],
+          true
+        )
       ));
     });
 

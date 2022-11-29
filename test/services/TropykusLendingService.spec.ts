@@ -3,7 +3,6 @@ import { expect } from 'chairc';
 import {
   IFeeManager,
   IRIFGateway,
-  ServiceTypeManager,
   SmartWalletFactory,
   TropykusLendingService,
   TropykusLendingService__factory,
@@ -17,16 +16,13 @@ import { signTransactionForExecutor } from '../smartwallet/utils';
 import { Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
-import { deployContract } from 'utils/deployment.utils';
 import { deployRIFGateway } from './utils';
 
-describe('Tropykus Lending Service', async () => {
+describe('Tropykus Lending Service', () => {
   let owner: SignerWithAddress;
-  let alice: SignerWithAddress;
-  let bob: SignerWithAddress;
   let tropykusLendingService: TropykusLendingService;
+  let tropykusLendingServiceAsExternal: TropykusLendingService;
   let smartWalletFactory: SmartWalletFactory;
-  let signers: SignerWithAddress[];
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let crbtc: string;
@@ -34,19 +30,17 @@ describe('Tropykus Lending Service', async () => {
   let RIFGateway: IRIFGateway;
 
   before(async () => {
-    ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
+    ({ smartWalletFactory } = await smartwalletFactoryFixture());
+    ({ crbtc: crbtc } = await tropykusFixture());
   });
 
   beforeEach(async () => {
-    [owner, alice, bob] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
 
     ({ privateKey, externalWallet } = await externalSmartwalletFixture(
       smartWalletFactory,
-      signers
+      owner
     ));
-    // console.log('externalWallet', externalWallet.address);
-
-    ({ crbtc: crbtc } = await tropykusFixture());
 
     ({ RIFGateway: RIFGateway, feeManager: feeManager } =
       await deployRIFGateway());
@@ -63,7 +57,7 @@ describe('Tropykus Lending Service', async () => {
 
     await tropykusLendingService.deployed();
 
-    RIFGateway.addService(tropykusLendingService.address);
+    await (await RIFGateway.addService(tropykusLendingService.address)).wait();
   });
 
   it('should retrieve service name', async () => {
@@ -77,7 +71,7 @@ describe('Tropykus Lending Service', async () => {
     expect(name).equals('Tropykus');
   });
 
-  describe('Lend/Withdraw', async () => {
+  describe('Lend/Withdraw', () => {
     beforeEach(async () => {
       await (
         await tropykusLendingService.addListing({

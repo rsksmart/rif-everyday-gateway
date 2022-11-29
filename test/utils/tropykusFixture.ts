@@ -421,21 +421,19 @@ export const deployTropykusContracts = async () => {
   );
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
 
-  await unitroller
-    ._setPendingImplementation(comptroller.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._become(unitroller.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setPriceOracle(priceOracleProxyDeploy.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setCloseFactor(config.closeFactorMantissa)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setLiquidationIncentive(config.liquidationIncentiveMantissa)
-    .then((tx: { wait: () => any }) => tx.wait());
+  await (
+    await unitroller._setPendingImplementation(comptroller.address)
+  ).wait();
+  await (await comptroller._become(unitroller.address)).wait();
+  await (
+    await comptroller._setPriceOracle(priceOracleProxyDeploy.address)
+  ).wait();
+  await (await comptroller._setCloseFactor(config.closeFactorMantissa)).wait();
+  await (
+    await comptroller._setLiquidationIncentive(
+      config.liquidationIncentiveMantissa
+    )
+  ).wait();
 
   const priceOracleProxy = new ethers.Contract(
     priceOracleProxyDeploy.address,
@@ -443,64 +441,87 @@ export const deployTropykusContracts = async () => {
     deployer
   );
 
-  await priceOracleProxy
-    .setAdapterToToken(cRIFdeployed.address, rifPriceOracleAdapterMoC.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await priceOracleProxy
-    .setAdapterToToken(cDOCdeployed.address, docPriceOracleAdapterMoC.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await priceOracleProxy
-    .setAdapterToToken(cRDOCdeployed.address, rdocPriceOracleAdapterMoC.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await priceOracleProxy
-    .setAdapterToToken(cUSDTdeployed.address, usdtPriceOracleAdapterMoC.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await priceOracleProxy
-    .setAdapterToToken(cRBTCdeployed.address, rbtcPriceOracleAdapterMoC.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await priceOracleProxy
-    .setAdapterToToken(cSATdeployed.address, satPriceOracleAdapterMoC.address)
-    .then((tx: { wait: () => any }) => tx.wait());
+  await (
+    await priceOracleProxy.setAdapterToToken(
+      cRIFdeployed.address,
+      rifPriceOracleAdapterMoC.address
+    )
+  ).wait();
+  await (
+    await priceOracleProxy.setAdapterToToken(
+      cDOCdeployed.address,
+      docPriceOracleAdapterMoC.address
+    )
+  ).wait();
+  await (
+    await priceOracleProxy.setAdapterToToken(
+      cRDOCdeployed.address,
+      rdocPriceOracleAdapterMoC.address
+    )
+  ).wait();
+  await (
+    await priceOracleProxy.setAdapterToToken(
+      cUSDTdeployed.address,
+      usdtPriceOracleAdapterMoC.address
+    )
+  ).wait();
+  await (
+    await priceOracleProxy.setAdapterToToken(
+      cRBTCdeployed.address,
+      rbtcPriceOracleAdapterMoC.address
+    )
+  ).wait();
+  await (
+    await priceOracleProxy.setAdapterToToken(
+      cSATdeployed.address,
+      satPriceOracleAdapterMoC.address
+    )
+  ).wait();
 
-  await comptroller
-    ._supportMarket(cRIFdeployed.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._supportMarket(cDOCdeployed.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._supportMarket(cRDOCdeployed.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._supportMarket(cUSDTdeployed.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._supportMarket(cRBTCdeployed.address)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._supportMarket(cSATdeployed.address)
-    .then((tx: { wait: () => any }) => tx.wait());
+  await (await comptroller._supportMarket(cRIFdeployed.address)).wait();
+  await (await comptroller._supportMarket(cDOCdeployed.address)).wait();
+  await (await comptroller._supportMarket(cRDOCdeployed.address)).wait();
+  await (await comptroller._supportMarket(cUSDTdeployed.address)).wait();
+  await (await comptroller._supportMarket(cRBTCdeployed.address)).wait();
+  await (await comptroller._supportMarket(cSATdeployed.address)).wait();
+  await (
+    await comptroller._setCollateralFactor(
+      cRIFdeployed.address,
+      rif.collateralFactor
+    )
+  ).wait();
+  await (
+    await comptroller._setCollateralFactor(
+      cDOCdeployed.address,
+      doc.collateralFactor
+    )
+  ).wait();
+  await (
+    await comptroller._setCollateralFactor(
+      cRDOCdeployed.address,
+      rdoc.collateralFactor
+    )
+  ).wait();
+  await (
+    await comptroller._setCollateralFactor(
+      cUSDTdeployed.address,
+      usdt.collateralFactor
+    )
+  ).wait();
+  await (
+    await comptroller._setCollateralFactor(
+      cRBTCdeployed.address,
+      rbtc.collateralFactor
+    )
+  ).wait();
+  await (
+    await comptroller._setCollateralFactor(
+      cSATdeployed.address,
+      sat.collateralFactor
+    )
+  ).wait();
 
-  await comptroller
-    ._setCollateralFactor(cRIFdeployed.address, rif.collateralFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setCollateralFactor(cDOCdeployed.address, doc.collateralFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setCollateralFactor(cRDOCdeployed.address, rdoc.collateralFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setCollateralFactor(cUSDTdeployed.address, usdt.collateralFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setCollateralFactor(cRBTCdeployed.address, rbtc.collateralFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await comptroller
-    ._setCollateralFactor(cSATdeployed.address, sat.collateralFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-
-  await comptroller._setCompRate(config.compSpeed);
+  await (await comptroller._setCompRate(config.compSpeed)).wait();
 
   const cRIF = new ethers.Contract(
     cRIFdeployed.address,
@@ -538,27 +559,13 @@ export const deployTropykusContracts = async () => {
     deployer
   );
 
-  await cRIF
-    ._setReserveFactor(rif.reserveFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cDOC
-    ._setReserveFactor(doc.reserveFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cRDOC
-    ._setReserveFactor(rdoc.reserveFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cUSDT
-    ._setReserveFactor(usdt.reserveFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cRBTC
-    ._setReserveFactor(rbtc.reserveFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cSAT
-    ._setReserveFactor(sat.reserveFactor)
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cSAT
-    .addSubsidy({ value: sat.initialSubsidy })
-    .then((tx: { wait: () => any }) => tx.wait());
+  await (await cRIF._setReserveFactor(rif.reserveFactor)).wait();
+  await (await cDOC._setReserveFactor(doc.reserveFactor)).wait();
+  await (await cRDOC._setReserveFactor(rdoc.reserveFactor)).wait();
+  await (await cUSDT._setReserveFactor(usdt.reserveFactor)).wait();
+  await (await cRBTC._setReserveFactor(rbtc.reserveFactor)).wait();
+  await (await cSAT._setReserveFactor(sat.reserveFactor)).wait();
+  await (await cSAT.addSubsidy({ value: sat.initialSubsidy })).wait();
 
   const crbtcCompanion = new ethers.Contract(
     cRBTCCompanionDeployed.address,
@@ -566,12 +573,8 @@ export const deployTropykusContracts = async () => {
     deployer
   );
 
-  await crbtcCompanion
-    .setMarketCapThreshold(parseEther('0.8'))
-    .then((tx: { wait: () => any }) => tx.wait());
-  await cSAT
-    .setCompanion(crbtcCompanion.address)
-    .then((tx: { wait: () => any }) => tx.wait());
+  await (await crbtcCompanion.setMarketCapThreshold(parseEther('0.8'))).wait();
+  await (await cSAT.setCompanion(crbtcCompanion.address)).wait();
 
   // Supply DOC to the cDOC contract
   await (

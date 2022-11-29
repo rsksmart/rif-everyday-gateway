@@ -11,14 +11,14 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
     const tLx = await serviceTypeManager.addServiceType(
       LENDING_SERVICE_INTERFACEID
     );
-    tLx.wait();
+    await tLx.wait();
 
     // allow borrowing service interface id
     const BORROW_SERVICE_INTERFACEID = '0x7337eabd';
     const tBx = await serviceTypeManager.addServiceType(
       BORROW_SERVICE_INTERFACEID
     );
-    tBx.wait();
+    await tBx.wait();
   }
 
   const { contract: feeManager } = await deployContract<IFeeManager>(

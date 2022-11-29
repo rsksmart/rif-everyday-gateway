@@ -24,14 +24,14 @@ export const smartwalletFactoryFixture = async () => {
 
 export const externalSmartwalletFixture = async (
   smartWalletFactory: ISmartWalletFactory,
-  signers: SignerWithAddress[],
+  signer: SignerWithAddress,
   deploySmartWallet: boolean = false
 ) => {
   const externalWallet = ethers.Wallet.createRandom().connect(ethers.provider);
   const privateKey = externalWallet.privateKey;
   let smartWallet;
 
-  await signers[0].sendTransaction({
+  await signer.sendTransaction({
     to: externalWallet.address,
     value: ethers.utils.parseEther('1'),
   });
