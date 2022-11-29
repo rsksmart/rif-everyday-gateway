@@ -5,7 +5,6 @@ import {
   IRIFGateway,
   SmartWalletFactory,
   TropykusLendingService,
-  TropykusLendingService__factory,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
@@ -17,11 +16,11 @@ import { Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
 import { deployRIFGateway } from './utils';
+import { deployContract } from '../../utils/deployment.utils';
 
 describe('Tropykus Lending Service', () => {
   let owner: SignerWithAddress;
   let tropykusLendingService: TropykusLendingService;
-  let tropykusLendingServiceAsExternal: TropykusLendingService;
   let smartWalletFactory: SmartWalletFactory;
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
@@ -30,32 +29,27 @@ describe('Tropykus Lending Service', () => {
   let RIFGateway: IRIFGateway;
 
   before(async () => {
+    [owner] = await ethers.getSigners();
+
     ({ smartWalletFactory } = await smartwalletFactoryFixture());
     ({ crbtc: crbtc } = await tropykusFixture());
-  });
-
-  beforeEach(async () => {
-    [owner] = await ethers.getSigners();
 
     ({ privateKey, externalWallet } = await externalSmartwalletFixture(
       smartWalletFactory,
       owner
     ));
+  });
 
+  beforeEach(async () => {
     ({ RIFGateway: RIFGateway, feeManager: feeManager } =
       await deployRIFGateway());
 
-    const tropykusLendingServiceFactory = (await ethers.getContractFactory(
-      'TropykusLendingService'
-    )) as TropykusLendingService__factory;
-
-    tropykusLendingService = (await tropykusLendingServiceFactory.deploy(
-      RIFGateway.address,
-      crbtc,
-      smartWalletFactory.address
-    )) as TropykusLendingService;
-
-    await tropykusLendingService.deployed();
+    ({ contract: tropykusLendingService } =
+      await deployContract<TropykusLendingService>('TropykusLendingService', {
+        gateway: RIFGateway.address,
+        crbtc,
+        smartWalletFactory: smartWalletFactory.address,
+      }));
 
     await (await RIFGateway.addService(tropykusLendingService.address)).wait();
   });
