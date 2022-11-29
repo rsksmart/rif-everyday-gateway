@@ -2,6 +2,8 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   IFeeManager,
+  IRIFGateway,
+  ServiceTypeManager,
   SmartWalletFactory,
   TropykusLendingService,
   TropykusLendingService__factory,
@@ -15,6 +17,8 @@ import { signTransactionForExecutor } from '../smartwallet/utils';
 import { Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
+import { deployContract } from 'utils/deployment.utils';
+import { deployRIFGateway } from './utils';
 
 describe('Tropykus Lending Service', async () => {
   let owner: SignerWithAddress;
@@ -27,11 +31,10 @@ describe('Tropykus Lending Service', async () => {
   let externalWallet: Wallet | SignerWithAddress;
   let crbtc: string;
   let feeManager: IFeeManager;
+  let RIFGateway: IRIFGateway;
 
   before(async () => {
-    ({ smartWalletFactory, signers, feeManager } =
-      await smartwalletFactoryFixture());
-    // console.log('smartWalletFactory', smartWalletFactory.address);
+    ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
   });
 
   beforeEach(async () => {
@@ -45,17 +48,22 @@ describe('Tropykus Lending Service', async () => {
 
     ({ crbtc: crbtc } = await tropykusFixture());
 
+    ({ RIFGateway: RIFGateway, feeManager: feeManager } =
+      await deployRIFGateway());
+
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
     )) as TropykusLendingService__factory;
 
     tropykusLendingService = (await tropykusLendingServiceFactory.deploy(
+      RIFGateway.address,
       crbtc,
       smartWalletFactory.address
     )) as TropykusLendingService;
 
     await tropykusLendingService.deployed();
-    // console.log('tropykusLendingService', tropykusLendingService.address);
+
+    RIFGateway.addService(tropykusLendingService.address);
   });
 
   it('should retrieve service name', async () => {

@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "./ISubscriptionManager.sol";
+import "./ISubscriptionReporter.sol";
 import "../feeManager/IFeeManager.sol";
 
-abstract contract SubscriptionManager is ISubscriptionManager {
+abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) private _subscriptions;
     IFeeManager private _feeManager;
 
@@ -19,5 +19,7 @@ abstract contract SubscriptionManager is ISubscriptionManager {
     ) internal {
         _subscriptions[subscriber].push(Subscription(service, listingId));
         _feeManager.chargeFee(service);
+
+        emit NewSubscribtion(subscriber, service);
     }
 }

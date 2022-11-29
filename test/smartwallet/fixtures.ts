@@ -9,25 +9,17 @@ import {
 import { deployContract, Factory } from 'utils/deployment.utils';
 
 export const smartwalletFactoryFixture = async () => {
-  const { contract: feeManager } = await deployContract<IFeeManager>(
-    'FeeManager',
-    {},
-    (await ethers.getContractFactory('FeeManager', {})) as Factory<IFeeManager>
-  );
-
   const { contract: smartWalletFactory, signers } =
     await deployContract<ISmartWalletFactory>(
       'SmartWalletFactory',
-      {
-        feeManager: feeManager.address,
-      },
+      {},
       (await ethers.getContractFactory(
         'SmartWalletFactory',
         {}
       )) as Factory<ISmartWalletFactory>
     );
 
-  return { smartWalletFactory, signers, feeManager };
+  return { smartWalletFactory, signers };
 };
 
 export const externalSmartwalletFixture = async (

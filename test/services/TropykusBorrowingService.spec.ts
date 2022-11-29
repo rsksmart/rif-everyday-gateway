@@ -3,6 +3,7 @@ import { expect } from 'chairc';
 import {
   ERC20,
   IFeeManager,
+  IRIFGateway,
   SmartWallet,
   SmartWalletFactory,
   TropykusBorrowingService,
@@ -17,6 +18,8 @@ import { signTransactionForExecutor } from '../smartwallet/utils';
 import { BigNumber, Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
+import { deployContract } from 'utils/deployment.utils';
+import { deployRIFGateway } from './utils';
 
 describe('Tropykus Borrowing Service', async () => {
   let owner: SignerWithAddress;
@@ -28,14 +31,12 @@ describe('Tropykus Borrowing Service', async () => {
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let doc: ERC20;
-  let gasPrice: BigNumber;
   let tropykusContractsDeployed: any;
   let feeManager: IFeeManager;
+  let RIFGateway: IRIFGateway;
 
   before(async () => {
-    ({ smartWalletFactory, signers, feeManager } =
-      await smartwalletFactoryFixture());
-    gasPrice = await ethers.provider.getGasPrice();
+    ({ smartWalletFactory, signers } = await smartwalletFactoryFixture());
   });
 
   beforeEach(async () => {
@@ -54,11 +55,15 @@ describe('Tropykus Borrowing Service', async () => {
       signers
     ));
 
+    ({ RIFGateway: RIFGateway, feeManager: feeManager } =
+      await deployRIFGateway());
+
     const tropykusBorrowingServiceFactory = (await ethers.getContractFactory(
       'TropykusBorrowingService'
     )) as TropykusBorrowingService__factory;
 
     tropykusBorrowingService = (await tropykusBorrowingServiceFactory.deploy(
+      RIFGateway.address,
       smartWalletFactory.address,
       tropykusContractsDeployed
     )) as TropykusBorrowingService;
@@ -68,6 +73,10 @@ describe('Tropykus Borrowing Service', async () => {
     smartWalletAddress = await smartWalletFactory.getSmartWalletAddress(
       externalWallet.address
     );
+
+    RIFGateway.addService(tropykusBorrowingService.address);
+
+    tropykusBorrowingService = tropykusBorrowingService.connect(externalWallet);
   });
 
   it('should retrieve service name', async () => {
@@ -80,6 +89,43 @@ describe('Tropykus Borrowing Service', async () => {
       ethers.constants.AddressZero
     );
     expect(rbtcMarket).equals(tropykusContractsDeployed.crbtc);
+  });
+
+  it('should revert while trying to consume a service that is not added in the gateway', async () => {
+    const amountToBorrow = 2;
+
+    const calculateAmountToLend = await tropykusBorrowingService
+      .connect(externalWallet)
+      .calculateRequiredCollateral(
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        ethers.constants.AddressZero
+      );
+
+    const amountToLend = +calculateAmountToLend / 1e18;
+
+    const { forwardRequest, suffixData, signature } =
+      await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusBorrowingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
+
+    await expect(
+      tropykusBorrowingService.connect(externalWallet).borrow(
+        suffixData,
+        forwardRequest,
+        signature,
+        ethers.utils.parseEther(amountToBorrow.toString()),
+        0, // Not in use for now
+        0, // Not in use for now
+        {
+          value: ethers.utils.parseEther(amountToLend.toString()),
+          gasLimit: 5000000,
+        }
+      )
+    ).to.be.rejected;
   });
 
   describe('Borrow/Repay', async () => {

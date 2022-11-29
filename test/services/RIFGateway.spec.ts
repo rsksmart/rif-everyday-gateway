@@ -4,16 +4,18 @@ import { deployContract } from '../../utils/deployment.utils';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import {
   ServiceTypeManager,
-  RIFGateway,
   TropykusLendingService__factory,
   TropykusLendingService,
   TropykusBorrowingService__factory,
   TropykusBorrowingService,
+  IFeeManager,
+  IRIFGateway,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
+import { deployRIFGateway } from './utils';
 
 describe('RIF Gateway', async () => {
-  let rifGateway: RIFGateway;
+  let rifGateway: IRIFGateway;
   let serviceTypeManager: ServiceTypeManager;
   let signer: SignerWithAddress;
   let otherSigner: SignerWithAddress;
@@ -25,8 +27,8 @@ describe('RIF Gateway', async () => {
     const signer = signers[0];
     const otherSigner = signers[2];
 
-    const { contract: serviceTypeManager } =
-      await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
+    ({ RIFGateway: rifGateway, serviceTypeManager: serviceTypeManager } =
+      await deployRIFGateway(false));
 
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
@@ -35,6 +37,7 @@ describe('RIF Gateway', async () => {
     tropykusLendingService = (await tropykusLendingServiceFactory
       .connect(signer)
       .deploy(
+        rifGateway.address,
         ethers.constants.AddressZero,
         ethers.constants.AddressZero
       )) as TropykusLendingService;
@@ -47,7 +50,7 @@ describe('RIF Gateway', async () => {
 
     tropykusBorrowingService = (await tropykusBorrowingServiceFactory
       .connect(signer)
-      .deploy(ethers.constants.AddressZero, {
+      .deploy(rifGateway.address, ethers.constants.AddressZero, {
         comptroller: ethers.constants.AddressZero,
         oracle: ethers.constants.AddressZero,
         crbtc: ethers.constants.AddressZero,
@@ -55,13 +58,6 @@ describe('RIF Gateway', async () => {
       })) as TropykusBorrowingService;
 
     await tropykusBorrowingService.deployed();
-
-    const { contract: rifGateway } = await deployContract<RIFGateway>(
-      'RIFGateway',
-      {
-        ServiceTypeManager: serviceTypeManager.address,
-      }
-    );
 
     return {
       rifGateway,

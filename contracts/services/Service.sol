@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IService.sol";
-import "./ISubscriptionManager.sol";
+import "../core/ISubscriptionReporter.sol";
 import {ServiceListing} from "./ServiceData.sol";
 
 abstract contract Service is Ownable, IService {
@@ -24,7 +24,7 @@ abstract contract Service is Ownable, IService {
     }
 
     modifier withSubscription(address subscriber, uint256 listingId) {
-        ISubscriptionManager(_rifGateway).subscribe(
+        ISubscriptionReporter(_rifGateway).subscribe(
             subscriber,
             address(this),
             listingId

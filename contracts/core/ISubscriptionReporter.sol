@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-interface ISubscriptionManager {
-    error ServiceNotFound(address service);
-
-    event Subscribed(address service);
-    event SubscriptionUpdated(address service, bool active);
+interface ISubscriptionReporter {
+    event NewSubscribtion(address subscriber, address service);
 
     struct Subscription {
         address service;

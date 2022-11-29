@@ -2,13 +2,13 @@
 pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./Service.sol";
-import "./ServiceTypeManager.sol";
 import "./IRIFGateway.sol";
-import "./SubscriptionManager.sol";
-import {Provider} from "./ServiceData.sol";
+import "./SubscriptionReporter.sol";
+import {Provider} from "../services/ServiceData.sol";
+import "../services/Service.sol";
+import "../services/ServiceTypeManager.sol";
 
-contract RIFGateway is Ownable, SubscriptionManager, IRIFGateway {
+contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager private _serviceTypeManager;
@@ -18,7 +18,7 @@ contract RIFGateway is Ownable, SubscriptionManager, IRIFGateway {
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
     constructor(ServiceTypeManager stm, IFeeManager feeManager)
-        SubscriptionManager(feeManager)
+        SubscriptionReporter(feeManager)
     {
         _serviceTypeManager = stm;
     }
@@ -104,7 +104,8 @@ contract RIFGateway is Ownable, SubscriptionManager, IRIFGateway {
         address service,
         uint256 listingId
     ) external override {
-        if (_uniqueServices[address(service)]) revert ServiceNotFound(service);
+        if (!_uniqueServices[address(service)])
+            revert InvalidService(Service(service));
 
         _subscribeInternal(subscriber, service, listingId);
     }
