@@ -103,10 +103,10 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         address subscriber,
         address service,
         uint256 listingId
-    ) external override {
+    ) public override {
         if (!_uniqueServices[address(service)])
             revert InvalidService(Service(service));
 
-        _subscribeInternal(subscriber, service, listingId);
+        super.subscribe(subscriber, service, listingId);
     }
 }

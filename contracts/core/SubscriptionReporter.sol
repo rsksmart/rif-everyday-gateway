@@ -12,11 +12,11 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
         _feeManager = feeManager;
     }
 
-    function _subscribeInternal(
+    function subscribe(
         address subscriber,
         address service,
         uint256 listingId
-    ) internal {
+    ) public virtual {
         _subscriptions[subscriber].push(Subscription(service, listingId));
         _feeManager.chargeFee(service);
 
