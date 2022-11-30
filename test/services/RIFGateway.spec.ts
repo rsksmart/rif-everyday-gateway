@@ -140,7 +140,7 @@ describe('RIF Gateway', () => {
         await rifGateway.addService(tropykusLendingService.address)
       ).wait();
 
-      expect(await rifGateway.requestValidation(signer.address))
+      await expect(rifGateway.requestValidation(signer.address))
         .to.emit(rifGateway, 'ValidationRequested')
         .withArgs(signer.address);
     });

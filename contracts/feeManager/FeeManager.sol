@@ -12,7 +12,7 @@ contract FeeManager is IFeeManager {
     // changes service consumption fees depending on other factors
     uint256 internal immutable _FIXED_SERVICE_CONSUMPTION_FEE = 1 gwei;
 
-    mapping(address => uint256) internal _beneficiares;
+    mapping(address => uint256) internal _beneficiaries;
     // this mapping only applies to service providers
     mapping(address => uint256) internal _debtors;
 
@@ -41,7 +41,7 @@ contract FeeManager is IFeeManager {
             revert InvalidAmount();
         }
 
-        _beneficiares[beneficiary] += msg.value;
+        _beneficiaries[beneficiary] += msg.value;
 
         // TODO: add support for ERC20 tokens
         emit Deposit(beneficiary, msg.value);
@@ -53,7 +53,7 @@ contract FeeManager is IFeeManager {
         override
         returns (uint256)
     {
-        return _beneficiares[beneficiary];
+        return _beneficiaries[beneficiary];
     }
 
     function getDebtBalance(address debtor)
@@ -66,11 +66,11 @@ contract FeeManager is IFeeManager {
     }
 
     function withdraw(uint256 amount) external override {
-        if (amount > _beneficiares[msg.sender]) {
+        if (amount > _beneficiaries[msg.sender]) {
             revert InsufficientFunds();
         }
 
-        _beneficiares[msg.sender] -= amount;
+        _beneficiaries[msg.sender] -= amount;
         (bool success, ) = msg.sender.call{value: amount}("");
 
         if (!success) {

@@ -4,6 +4,7 @@ import { expect } from 'chairc';
 import { ACME, ACME__factory, ERC677 } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployContract } from 'utils/deployment.utils';
+import { BigNumber } from 'ethers';
 
 const RBTC_SENT = ethers.utils.parseEther('10');
 const INTEREST_PER_100_BLOCKS = 10;
@@ -46,7 +47,7 @@ describe('Service Provider Lending Contract', () => {
     });
 
     it('should allow deposit and emit Deposit event', async () => {
-      expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+      await expect(acmeContract['deposit()']({ value: RBTC_SENT }))
         .to.emit(acmeContract, 'Deposit')
         .withArgs(owner.address, RBTC_SENT);
     });
@@ -115,13 +116,13 @@ describe('Service Provider Lending Contract', () => {
         await ACC_INTEREST(blockOnDeposit)
       );
 
-      expect(
-        await acmeContract['withdraw(uint256)'](balanceOnContract.deposited)
+      await expect(
+        acmeContract['withdraw(uint256)'](balanceOnContract.deposited)
       )
         .to.emit(acmeContract, 'Withdraw')
         .withArgs(
           owner.address,
-          RBTC_SENT.add(await ACC_INTEREST(blockOnDeposit))
+          RBTC_SENT.add(await ACC_INTEREST(blockOnDeposit - 1))
         );
 
       balanceOnContract = await acmeContract['getBalance()']();
@@ -198,7 +199,7 @@ describe('Service Provider Lending Contract', () => {
       });
 
       it('should be able to loan DOC', async () => {
-        expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+        await expect(acmeContract['deposit()']({ value: RBTC_SENT }))
           .to.emit(acmeContract, 'Deposit')
           .withArgs(owner.address, RBTC_SENT);
 
@@ -248,7 +249,7 @@ describe('Service Provider Lending Contract', () => {
       });
 
       it('should be able to repay doc debt', async () => {
-        expect(acmeContract['deposit()']({ value: RBTC_SENT }))
+        await expect(acmeContract['deposit()']({ value: RBTC_SENT }))
           .to.emit(acmeContract, 'Deposit')
           .withArgs(owner.address, RBTC_SENT);
 

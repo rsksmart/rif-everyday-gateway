@@ -2,7 +2,7 @@
 pragma solidity ^0.8.16;
 
 interface ISubscriptionReporter {
-    event NewSubscribtion(address subscriber, address service);
+    event NewSubscription(address subscriber, address service);
 
     struct Subscription {
         address service;

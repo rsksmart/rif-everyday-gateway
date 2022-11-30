@@ -20,6 +20,6 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
         _subscriptions[subscriber].push(Subscription(service, listingId));
         _feeManager.chargeFee(service);
 
-        emit NewSubscribtion(subscriber, service);
+        emit NewSubscription(subscriber, service);
     }
 }
