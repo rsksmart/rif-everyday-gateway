@@ -5,7 +5,7 @@ import "./ISubscriptionReporter.sol";
 import "../feeManager/IFeeManager.sol";
 
 abstract contract SubscriptionReporter is ISubscriptionReporter {
-    mapping(address => Subscription[]) private _subscriptions;
+    mapping(address => Subscription[]) public subscriptions;
     IFeeManager private _feeManager;
 
     constructor(IFeeManager feeManager) {
@@ -17,7 +17,7 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
         address service,
         uint256 listingId
     ) public virtual {
-        _subscriptions[subscriber].push(Subscription(service, listingId));
+        subscriptions[subscriber].push(Subscription(service, listingId));
         _feeManager.chargeFee(service);
 
         emit NewSubscription(subscriber, service);

@@ -7,9 +7,6 @@ import {ISubscriber} from "../common/IPublisher.sol";
 import "hardhat/console.sol";
 
 contract FeeManager is IFeeManager {
-    // TODO: should fee be something that can be changed/dynamic?
-    // if so, this can be placed somewhere where the Defi Gateway
-    // changes service consumption fees depending on other factors
     uint256 internal immutable _FIXED_SERVICE_CONSUMPTION_FEE = 1 gwei;
 
     mapping(address => uint256) internal _beneficiaries;

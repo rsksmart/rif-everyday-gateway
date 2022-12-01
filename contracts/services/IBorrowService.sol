@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 import "./IService.sol";
 import "../smartwallet/IForwarder.sol";
 
-interface IBorrowService is IService {
+interface IBorrowService {
     event Borrow(
         uint256 indexed listingId,
         address indexed borrower,

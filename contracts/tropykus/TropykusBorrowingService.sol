@@ -284,7 +284,7 @@ contract TropykusBorrowingService is BorrowService {
     function getListing(uint256 listingId)
         public
         view
-        override(Service, IService)
+        override
         returns (ServiceListing memory)
     {
         ServiceListing memory listing = listings[listingId];

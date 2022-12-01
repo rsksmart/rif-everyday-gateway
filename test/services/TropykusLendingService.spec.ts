@@ -4,7 +4,7 @@ import {
   IFeeManager,
   IRIFGateway,
   SmartWalletFactory,
-  ILendingService,
+  LendingService,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
@@ -20,7 +20,7 @@ import { deployContract } from '../../utils/deployment.utils';
 
 describe('Tropykus Lending Service', () => {
   let owner: SignerWithAddress;
-  let tropykusLendingService: ILendingService;
+  let tropykusLendingService: LendingService;
   let smartWalletFactory: SmartWalletFactory;
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
@@ -45,7 +45,7 @@ describe('Tropykus Lending Service', () => {
       await deployRIFGateway());
 
     ({ contract: tropykusLendingService } =
-      await deployContract<ILendingService>('TropykusLendingService', {
+      await deployContract<LendingService>('TropykusLendingService', {
         gateway: RIFGateway.address,
         crbtc,
         smartWalletFactory: smartWalletFactory.address,

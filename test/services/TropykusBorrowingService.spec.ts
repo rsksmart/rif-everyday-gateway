@@ -1,8 +1,8 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
+  BorrowService,
   ERC20,
-  IBorrowService,
   IFeeManager,
   IRIFGateway,
   SmartWalletFactory,
@@ -21,7 +21,7 @@ import { deployContract } from 'utils/deployment.utils';
 
 describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
-  let tropykusBorrowingService: IBorrowService;
+  let tropykusBorrowingService: BorrowService;
   let smartWalletFactory: SmartWalletFactory;
   let smartWalletAddress: string;
   let privateKey: string;
@@ -56,7 +56,7 @@ describe('Tropykus Borrowing Service', () => {
       await deployRIFGateway());
 
     ({ contract: tropykusBorrowingService } =
-      await deployContract<IBorrowService>('TropykusBorrowingService', {
+      await deployContract<BorrowService>('TropykusBorrowingService', {
         gateway: RIFGateway.address,
         smartWalletFactory: smartWalletFactory.address,
         contracts: tropykusContractsDeployed,
