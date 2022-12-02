@@ -5,14 +5,14 @@
   "main": "index.js",
   "scripts": {
     "prepare": "husky install",
-    "test": "REPORT_GAS=true hardhat test",
-    "clean": "rm -rf typechain-types cache bin dist artifacts contracts-exposed && hardhat clean",
-    "compile": "npm run clean && hardhat compile --force",
-    "coverage": "hardhat coverage",
+    "test": "REPORT_GAS=true npx hardhat test",
+    "clean": "rm -rf typechain-types cache bin dist artifacts contracts-exposed && npx hardhat clean",
+    "compile": "npm run clean && npx hardhat compile --force",
+    "coverage": "npx hardhat coverage",
     "ci:format": "prettier -c contracts/**/*.sol && prettier -c **/*.ts",
     "ci:lint": "solhint 'contracts/**/*.sol' && eslint test --ext .ts ",
     "ci:test": "npm run compile && npm run test",
-    "deploy": "hardhat run scripts/deploy.ts --network",
+    "deploy": "npx hardhat run scripts/deploy.ts --network",
     "lint:sol": "solhint --fix 'contracts/**/*.sol'",
     "lint:ts": "eslint test --ext .ts --fix",
     "lint": "npm run lint:sol && npm run lint:ts",
@@ -20,7 +20,7 @@
     "format:ts": "prettier -c -w --no-editorconfig **/*.ts",
     "format": "npm run format:sol && npm run format:ts",
     "postinstall": "npm run compile",
-    "tdd": "npm run compile && REPORT_GAS=true hardhat watch tdd"
+    "tdd": "npm run compile && REPORT_GAS=true npx hardhat watch tdd"
   },
   "lint-staged": {
     "*.ts": "eslint --cache --fix"
@@ -84,7 +84,7 @@
     "hardhat-exposed": "^0.2.14",
     "husky": "^7.0.4",
     "lint-staged": "^12.4.1",
-    "mocha": "^10.0.0",
+    "mocha": "^10.1.0",
     "moment": "^2.29.4",
     "prettier": "^2.6.2",
     "prettier-plugin-solidity": "^1.0.0-beta.19",

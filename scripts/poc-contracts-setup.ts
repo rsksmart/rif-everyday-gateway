@@ -21,11 +21,9 @@ async function deployServiceTypeManager() {
   return serviceTypeManager;
 }
 
-async function deploySmartWalletFactory(feeManagerAddr: string) {
+async function deploySmartWalletFactory() {
   const { contract: smartWalletFactory } =
-    await deployContract<ISmartWalletFactory>('SmartWalletFactory', {
-      feeManager: feeManagerAddr,
-    });
+    await deployContract<ISmartWalletFactory>('SmartWalletFactory', {});
   console.log('SmartWalletFactory deployed at: ', smartWalletFactory.address);
   return smartWalletFactory;
 }
@@ -47,6 +45,7 @@ async function deployAndSetupTropykusContracts() {
 }
 
 async function deployProviders(
+  rifGateway: IRIFGateway,
   smartWalletFactory: ISmartWalletFactory,
   contracts: {
     comptroller: string;
@@ -58,12 +57,14 @@ async function deployProviders(
 ) {
   const { contract: tropykusLendingService } =
     await deployContract<TropykusLendingService>('TropykusLendingService', {
+      gateway: rifGateway.address,
       crbtc: contracts.crbtc,
       smartWalletFactory: smartWalletFactory.address,
     });
 
   const { contract: tropykusBorrowingService } =
     await deployContract<TropykusBorrowingService>('TropykusBorrowingService', {
+      gateway: rifGateway.address,
       smartWalletFactory: smartWalletFactory.address,
       contracts: contracts,
     });
@@ -74,11 +75,15 @@ async function deployProviders(
   };
 }
 
-async function deployRIFGatewayContract(serviceTypeManagerAddr: string) {
+async function deployRIFGatewayContract(
+  serviceTypeManagerAddr: string,
+  feeManagerAddr: string
+) {
   const { contract: RIFGateway } = await deployContract<IRIFGateway>(
     'RIFGateway',
     {
       stm: serviceTypeManagerAddr,
+      feeManager: feeManagerAddr,
     }
   );
   console.log('RIFGateway contract deployed at: ', RIFGateway.address);
@@ -96,9 +101,7 @@ async function deployFeeManager() {
 
 async function setupServices() {
   const feeManagerContract = await deployFeeManager();
-  const smartWalletFactory = await deploySmartWalletFactory(
-    feeManagerContract.address
-  );
+  const smartWalletFactory = await deploySmartWalletFactory();
   const tropykusContracts = await deployAndSetupTropykusContracts();
   const serviceTypeManager = await deployServiceTypeManager();
 
@@ -107,25 +110,26 @@ async function setupServices() {
   const tLx = await serviceTypeManager.addServiceType(
     LENDING_SERVICE_INTERFACEID
   );
-  tLx.wait();
+  await tLx.wait();
 
   // allow borrowing service interface id
   const BORROW_SERVICE_INTERFACEID = '0x7337eabd';
   const tBx = await serviceTypeManager.addServiceType(
     BORROW_SERVICE_INTERFACEID
   );
-  tBx.wait();
-
-  //deploy providers contracts
-
-  // add providers
-  // deploy service provider contracts
-  const { tropykusLendingService, tropykusBorrowingService } =
-    await deployProviders(smartWalletFactory, tropykusContracts);
+  await tBx.wait();
 
   const RIFGatewayContract = await deployRIFGatewayContract(
-    serviceTypeManager.address
+    serviceTypeManager.address,
+    feeManagerContract.address
   );
+
+  const { tropykusLendingService, tropykusBorrowingService } =
+    await deployProviders(
+      RIFGatewayContract,
+      smartWalletFactory,
+      tropykusContracts
+    );
 
   console.log(
     'tropykusLendingService deployed at: ',
@@ -178,6 +182,7 @@ async function setupServices() {
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
+      owner: ethers.constants.AddressZero,
     })
   ).wait();
   await (
@@ -193,6 +198,7 @@ async function setupServices() {
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
+      owner: ethers.constants.AddressZero,
     })
   ).wait();
   await (
@@ -208,6 +214,7 @@ async function setupServices() {
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
+      owner: ethers.constants.AddressZero,
     })
   ).wait();
   await (
@@ -223,6 +230,7 @@ async function setupServices() {
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
+      owner: ethers.constants.AddressZero,
     })
   ).wait();
   await (
@@ -238,6 +246,7 @@ async function setupServices() {
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Lending Service',
+      owner: ethers.constants.AddressZero,
     })
   ).wait();
 
@@ -254,6 +263,7 @@ async function setupServices() {
       payBackOption: PaybackOption.Day,
       enabled: true,
       name: 'Tropykus Borrow Service',
+      owner: ethers.constants.AddressZero,
     })
   ).wait();
 }

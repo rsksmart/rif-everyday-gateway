@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IService.sol";
+import "../core/ISubscriptionReporter.sol";
 import {ServiceListing} from "./ServiceData.sol";
 
 abstract contract Service is Ownable, IService {
@@ -15,6 +16,21 @@ abstract contract Service is Ownable, IService {
     error InvalidAmount(uint256 amount);
     error FailedOperation(bytes data);
     error ListingDisabled(uint256 listingId);
+
+    address private _rifGateway;
+
+    constructor(address rifGateway) {
+        _rifGateway = rifGateway;
+    }
+
+    modifier withSubscription(address subscriber, uint256 listingId) {
+        ISubscriptionReporter(_rifGateway).subscribe(
+            subscriber,
+            address(this),
+            listingId
+        );
+        _;
+    }
 
     function addListing(ServiceListing memory listing)
         public

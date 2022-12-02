@@ -2,9 +2,9 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   IFeeManager,
+  IRIFGateway,
   SmartWalletFactory,
-  TropykusLendingService,
-  TropykusLendingService__factory,
+  LendingService,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
@@ -15,47 +15,43 @@ import { signTransactionForExecutor } from '../smartwallet/utils';
 import { Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
+import { deployRIFGateway } from './utils';
+import { deployContract } from '../../utils/deployment.utils';
 
-describe('Tropykus Lending Service', async () => {
+describe('Tropykus Lending Service', () => {
   let owner: SignerWithAddress;
-  let alice: SignerWithAddress;
-  let bob: SignerWithAddress;
-  let tropykusLendingService: TropykusLendingService;
+  let tropykusLendingService: LendingService;
   let smartWalletFactory: SmartWalletFactory;
-  let signers: SignerWithAddress[];
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let crbtc: string;
   let feeManager: IFeeManager;
+  let RIFGateway: IRIFGateway;
 
   before(async () => {
-    ({ smartWalletFactory, signers, feeManager } =
-      await smartwalletFactoryFixture());
-    // console.log('smartWalletFactory', smartWalletFactory.address);
-  });
+    [owner] = await ethers.getSigners();
 
-  beforeEach(async () => {
-    [owner, alice, bob] = await ethers.getSigners();
+    ({ smartWalletFactory } = await smartwalletFactoryFixture());
+    ({ crbtc: crbtc } = await tropykusFixture());
 
     ({ privateKey, externalWallet } = await externalSmartwalletFixture(
       smartWalletFactory,
-      signers
+      owner
     ));
-    // console.log('externalWallet', externalWallet.address);
+  });
 
-    ({ crbtc: crbtc } = await tropykusFixture());
+  beforeEach(async () => {
+    ({ RIFGateway: RIFGateway, feeManager: feeManager } =
+      await deployRIFGateway());
 
-    const tropykusLendingServiceFactory = (await ethers.getContractFactory(
-      'TropykusLendingService'
-    )) as TropykusLendingService__factory;
+    ({ contract: tropykusLendingService } =
+      await deployContract<LendingService>('TropykusLendingService', {
+        gateway: RIFGateway.address,
+        crbtc,
+        smartWalletFactory: smartWalletFactory.address,
+      }));
 
-    tropykusLendingService = (await tropykusLendingServiceFactory.deploy(
-      crbtc,
-      smartWalletFactory.address
-    )) as TropykusLendingService;
-
-    await tropykusLendingService.deployed();
-    // console.log('tropykusLendingService', tropykusLendingService.address);
+    await (await RIFGateway.addService(tropykusLendingService.address)).wait();
   });
 
   it('should retrieve service name', async () => {
@@ -69,7 +65,7 @@ describe('Tropykus Lending Service', async () => {
     expect(name).equals('Tropykus');
   });
 
-  describe('Lend/Withdraw', async () => {
+  describe('Lend/Withdraw', () => {
     beforeEach(async () => {
       await (
         await tropykusLendingService.addListing({

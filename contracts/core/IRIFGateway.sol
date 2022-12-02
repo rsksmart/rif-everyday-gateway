@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
-import "./Service.sol";
-import {Provider} from "./ServiceData.sol";
+import "../services/Service.sol";
+import {Provider} from "../services/ServiceData.sol";
 
 interface IRIFGateway {
     error InvalidProviderAddress(address provider);

@@ -36,9 +36,10 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     constructor(
+        address gateway,
         SmartWalletFactory smartWalletFactory,
         TropykusContracts memory contracts
-    ) BorrowService("Tropykus") {
+    ) BorrowService(gateway, "Tropykus") {
         _comptroller = contracts.comptroller;
         _oracle = contracts.oracle;
         _crbtc = contracts.crbtc;
@@ -53,7 +54,7 @@ contract TropykusBorrowingService is BorrowService {
         uint256 amount,
         uint256 listingId,
         uint256 duration
-    ) public payable override {
+    ) public payable override withSubscription(req.from, listingId) {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
@@ -283,7 +284,7 @@ contract TropykusBorrowingService is BorrowService {
     function getListing(uint256 listingId)
         public
         view
-        override(Service, IService)
+        override
         returns (ServiceListing memory)
     {
         ServiceListing memory listing = listings[listingId];

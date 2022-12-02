@@ -11,9 +11,11 @@ contract TropykusLendingService is LendingService {
     SmartWalletFactory private _smartWalletFactory;
     uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
 
-    constructor(address crbtc, SmartWalletFactory smartWalletFactory)
-        LendingService("Tropykus")
-    {
+    constructor(
+        address gateway,
+        address crbtc,
+        SmartWalletFactory smartWalletFactory
+    ) LendingService(gateway, "Tropykus") {
         _crbtc = crbtc;
         _smartWalletFactory = smartWalletFactory;
     }
@@ -24,7 +26,7 @@ contract TropykusLendingService is LendingService {
         bytes calldata sig,
         uint256 amount,
         uint256 listingId
-    ) public payable override {
+    ) public payable override withSubscription(req.from, listingId) {
         ServiceListing memory listing = listings[listingId];
         if (!listing.enabled) {
             revert ListingDisabled(listingId);

@@ -28,7 +28,7 @@ describe('Authorization', async () => {
     ({ authorization, signers } = await loadFixture(authorizationSetUp));
   });
 
-  describe('addOwner', async () => {
+  describe('addOwner', () => {
     it('should add a new owner', async () => {
       const [, newOwner] = signers;
       const newOwnerAddr = newOwner.address;
@@ -49,7 +49,7 @@ describe('Authorization', async () => {
     });
   });
 
-  describe('addServiceProvider', async () => {
+  describe('addServiceProvider', () => {
     it('should add a new service provider', async () => {
       const [, newServiceProvider] = signers;
       const newServiceProvideAddr = newServiceProvider.address;
@@ -73,7 +73,7 @@ describe('Authorization', async () => {
     });
   });
 
-  describe('addWalletProvider', async () => {
+  describe('addWalletProvider', () => {
     it('should add a new wallet provider', async () => {
       const [, newWalletProvider] = signers;
       const newWalletProvideAddr = newWalletProvider.address;

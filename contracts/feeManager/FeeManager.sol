@@ -6,28 +6,17 @@ import {ISubscriber} from "../common/IPublisher.sol";
 
 import "hardhat/console.sol";
 
-contract FeeManager is IFeeManager, ISubscriber {
-    // TODO: should fee be something that can be changed/dynamic?
-    // if so, this can be placed somewhere where the Defi Gateway
-    // changes service consumption fees depending on other factors
+contract FeeManager is IFeeManager {
     uint256 internal immutable _FIXED_SERVICE_CONSUMPTION_FEE = 1 gwei;
 
-    mapping(address => uint256) internal _beneficiares;
+    mapping(address => uint256) internal _beneficiaries;
     // this mapping only applies to service providers
     mapping(address => uint256) internal _debtors;
 
-    function update(address debtor) external {
-        chargeFee(debtor, _FIXED_SERVICE_CONSUMPTION_FEE);
-    }
+    function chargeFee(address debtor) public override {
+        _debtors[debtor] += _FIXED_SERVICE_CONSUMPTION_FEE;
 
-    function chargeFee(address debtor, uint256 fee) public {
-        if (fee == 0) {
-            revert InvalidFee();
-        }
-
-        _debtors[debtor] += fee;
-
-        emit ServiceConsumed(debtor, fee);
+        emit ServiceConsumed(debtor, _FIXED_SERVICE_CONSUMPTION_FEE);
     }
 
     function payDebt() public payable {
@@ -49,7 +38,7 @@ contract FeeManager is IFeeManager, ISubscriber {
             revert InvalidAmount();
         }
 
-        _beneficiares[beneficiary] += msg.value;
+        _beneficiaries[beneficiary] += msg.value;
 
         // TODO: add support for ERC20 tokens
         emit Deposit(beneficiary, msg.value);
@@ -61,7 +50,7 @@ contract FeeManager is IFeeManager, ISubscriber {
         override
         returns (uint256)
     {
-        return _beneficiares[beneficiary];
+        return _beneficiaries[beneficiary];
     }
 
     function getDebtBalance(address debtor)
@@ -74,11 +63,11 @@ contract FeeManager is IFeeManager, ISubscriber {
     }
 
     function withdraw(uint256 amount) external override {
-        if (amount > _beneficiares[msg.sender]) {
+        if (amount > _beneficiaries[msg.sender]) {
             revert InsufficientFunds();
         }
 
-        _beneficiares[msg.sender] -= amount;
+        _beneficiaries[msg.sender] -= amount;
         (bool success, ) = msg.sender.call{value: amount}("");
 
         if (!success) {

@@ -4,7 +4,7 @@ pragma solidity ^0.8.16;
 import "./IService.sol";
 import "../smartwallet/IForwarder.sol";
 
-interface ILendingService is IService {
+interface ILendingService {
     event Lend(
         uint256 indexed listingId,
         address indexed lender,
