@@ -173,7 +173,7 @@ describe('Tropykus Borrowing Service', () => {
 
       const amountToLend = +calculateAmountToLend / 1e18;
 
-      expect(amountToLend).to.be.closeTo(0.0002, 0.0001);
+      expect(amountToLend).to.be.closeTo(0.0007, 0.0001);
 
       const balanceUserBefore = await doc.balanceOf(externalWallet.address);
 
