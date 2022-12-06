@@ -37,7 +37,7 @@ export default <HardhatUserConfig>{
       chainId: 1337,
       accounts: {
         mnemonic:
-          'region camera keep actual absorb drive elegant chronic silver forget mammal enhance',
+          'maximum curtain toward fox digital hair put warrior obey travel friend insect',
       },
     },
     testnet: {

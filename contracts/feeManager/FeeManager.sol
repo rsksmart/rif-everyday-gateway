@@ -4,8 +4,6 @@ pragma solidity ^0.8.16;
 import {IFeeManager} from "./IFeeManager.sol";
 import {ISubscriber} from "../common/IPublisher.sol";
 
-import "hardhat/console.sol";
-
 contract FeeManager is IFeeManager {
     uint256 internal immutable _FIXED_SERVICE_CONSUMPTION_FEE = 1 gwei;
 
