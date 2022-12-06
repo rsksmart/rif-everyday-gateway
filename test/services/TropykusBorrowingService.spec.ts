@@ -130,7 +130,7 @@ describe('Tropykus Borrowing Service', () => {
       ).wait();
     });
 
-    it.only('should retrieve listing', async () => {
+    it('should retrieve listing', async () => {
       const listing = await tropykusBorrowingService.getListing(0);
       expect(listing.name).equals('Tropykus Borrow Service');
     });
