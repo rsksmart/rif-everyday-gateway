@@ -15,17 +15,37 @@ import { deployTropykusContracts } from 'test/utils/tropykusFixture';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
 
 async function deployServiceTypeManager() {
-  const { contract: serviceTypeManager } =
-    await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
-  console.log('ServiceTypeManager deployed at: ', serviceTypeManager.address);
-  return serviceTypeManager;
+  if (hre.network.config.chainId === 31) {
+    const owner = (await ethers.getSigners())[0];
+    const serviceTypeManager = await ethers.getContractAt(
+      'ServiceTypeManager',
+      '0x98C79984c16aEe51D8c56956C5AFa2127352285f',
+      owner
+    );
+    return serviceTypeManager;
+  } else {
+    const { contract: serviceTypeManager } =
+      await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
+    console.log('ServiceTypeManager deployed at: ', serviceTypeManager.address);
+    return serviceTypeManager;
+  }
 }
 
 async function deploySmartWalletFactory() {
-  const { contract: smartWalletFactory } =
-    await deployContract<ISmartWalletFactory>('SmartWalletFactory', {});
-  console.log('SmartWalletFactory deployed at: ', smartWalletFactory.address);
-  return smartWalletFactory;
+  if (hre.network.config.chainId === 31) {
+    const owner = (await ethers.getSigners())[0];
+    const smartWalletFactory = await ethers.getContractAt(
+      'SmartWalletFactory',
+      '0x677dae6b27F90F6fb4703fDb1D20e873881Fe81A',
+      owner
+    );
+    return smartWalletFactory;
+  } else {
+    const { contract: smartWalletFactory } =
+      await deployContract<ISmartWalletFactory>('SmartWalletFactory', {});
+    console.log('SmartWalletFactory deployed at: ', smartWalletFactory.address);
+    return smartWalletFactory;
+  }
 }
 
 async function deployAndSetupTropykusContracts() {
