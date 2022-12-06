@@ -22,4 +22,13 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
 
         emit NewSubscription(subscriber, service);
     }
+
+    function getSubscriptions(address subscriber)
+        external
+        view
+        override
+        returns (Subscription[] memory)
+    {
+        return subscriptions[subscriber];
+    }
 }

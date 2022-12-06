@@ -14,4 +14,9 @@ interface ISubscriptionReporter {
         address service,
         uint256 listingId
     ) external;
+
+    function getSubscriptions(address subscriber)
+        external
+        view
+        returns (Subscription[] memory);
 }
