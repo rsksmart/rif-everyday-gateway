@@ -17,7 +17,6 @@ import TropykusLensJSON from './tropykusCompiledContracts/TropykusLens.json';
 
 export const tropykusFixture = async () => {
   const chainId = hre.network.config.chainId;
-  // console.log('chainId', chainId);
 
   const tropykusTestnetContracts = {
     oracle: '0x9fbB872D3B45f95b4E3126BC767553D3Fa1e31C0',
@@ -96,9 +95,7 @@ export const deployTropykusContracts = async () => {
     deployer
   );
   const multiSig = await multiSigWalletContract.deploy([deployer.address], 1);
-  // console.log('multiSig', multiSig.address);
   await multiSig.deployed();
-  // console.log('multiSig deployed...');
 
   const priceOracleProxyContract = new ethers.ContractFactory(
     PriceOracleProxyJSON.abi,
@@ -108,9 +105,7 @@ export const deployTropykusContracts = async () => {
   const priceOracleProxyDeploy = await priceOracleProxyContract.deploy(
     deployer.address
   );
-  // console.log('priceOracleProxyDeploy', priceOracleProxyDeploy.address);
   await priceOracleProxyDeploy.deployed();
-  // console.log('priceOracleProxyDeploy deployed...');
 
   const unitrollerContract = new ethers.ContractFactory(
     UnitrollerJSON.abi,
@@ -119,9 +114,7 @@ export const deployTropykusContracts = async () => {
   );
 
   const unitrollerDeployed = await unitrollerContract.deploy();
-  // console.log('unitrollerDeployed', unitrollerDeployed.address);
   await unitrollerDeployed.deployed();
-  // console.log('unitrollerDeployed deployed...');
   const comptrollerContract = new ethers.ContractFactory(
     ComptrollerG6JSON.abi,
     ComptrollerG6JSON.bytecode,
@@ -129,11 +122,9 @@ export const deployTropykusContracts = async () => {
   );
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.OFF);
   const comptrollerDeployed = await comptrollerContract.deploy();
-  // console.log('comptrollerDeployed', comptrollerDeployed.address);
   ethers.utils.Logger.setLogLevel(ethers.utils.Logger.levels.INFO);
 
   await comptrollerDeployed.deployed();
-  // console.log('comptrollerDeployed deployed...');
 
   const standardTokenContract = new ethers.ContractFactory(
     StandardTokenJSON.abi,
@@ -148,9 +139,7 @@ export const deployTropykusContracts = async () => {
     'tRIF'
   );
 
-  // console.log('rifToken', rifToken.address);
   await rifToken.deployed();
-  // console.log('rifToken deployed...');
 
   const docToken = await standardTokenContract.deploy(
     parseEther('2000000'),
@@ -158,9 +147,7 @@ export const deployTropykusContracts = async () => {
     18,
     'tDOC'
   );
-  // console.log('docToken', docToken.address);
   await docToken.deployed();
-  // console.log('docToken deployed...');
 
   const rdocToken = await standardTokenContract.deploy(
     parseEther('2000000'),
@@ -168,9 +155,7 @@ export const deployTropykusContracts = async () => {
     18,
     'tRDOC'
   );
-  // console.log('rdocToken', rdocToken.address);
   await rdocToken.deployed();
-  // console.log('rdocToken deployed...');
 
   const usdtToken = await standardTokenContract.deploy(
     parseEther('2000000'),
@@ -178,9 +163,7 @@ export const deployTropykusContracts = async () => {
     18,
     'trUSDT'
   );
-  // console.log('usdtToken', usdtToken.address);
   await usdtToken.deployed();
-  // console.log('usdtToken deployed...');
 
   const mockPriceProviderMoC = new ethers.ContractFactory(
     MockProviderMOCJSON.abi,
@@ -192,41 +175,31 @@ export const deployTropykusContracts = async () => {
     deployer.address,
     parseEther('0.252')
   );
-  // console.log('rifOracle', rifOracle.address);
   await rifOracle.deployed();
-  // console.log('rifOracle deployed...');
 
   const rbtcOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('16000')
   );
-  // console.log('rbtcOracle', rbtcOracle.address);
   await rbtcOracle.deployed();
-  // console.log('rbtcOracle deployed...');
 
   const docOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
-  // console.log('docOracle', docOracle.address);
   await docOracle.deployed();
-  // console.log('docOracle deployed...');
 
   const rdocOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
-  // console.log('rdocOracle', rdocOracle.address);
   await rdocOracle.deployed();
-  // console.log('rdocOracle deployed...');
 
   const usdtOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
     parseEther('1')
   );
-  // console.log('usdtOracle', usdtOracle.address);
   await usdtOracle.deployed();
-  // console.log('usdtOracle deployed...');
 
   const priceOracleAdapterMoc = new ethers.ContractFactory(
     PriceOracleAdapterMOCJSON.abi,
@@ -237,49 +210,37 @@ export const deployTropykusContracts = async () => {
     deployer.address,
     rbtcOracle.address
   );
-  // console.log('rbtcPriceOracleAdapterMoC', rbtcPriceOracleAdapterMoC.address);
   await rbtcPriceOracleAdapterMoC.deployed();
-  // console.log('rbtcPriceOracleAdapterMoC deployed...');
 
   const satPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rbtcOracle.address
   );
-  // console.log('satPriceOracleAdapterMoC', satPriceOracleAdapterMoC.address);
   await satPriceOracleAdapterMoC.deployed();
-  // console.log('satPriceOracleAdapterMoC deployed...');
 
   const rifPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rifOracle.address
   );
-  // console.log('rifPriceOracleAdapterMoC', rifPriceOracleAdapterMoC.address);
   await rifPriceOracleAdapterMoC.deployed();
-  // console.log('rifPriceOracleAdapterMoC deployed...');
 
   const docPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     docOracle.address
   );
-  // console.log('docPriceOracleAdapterMoC', docPriceOracleAdapterMoC.address);
   await docPriceOracleAdapterMoC.deployed();
-  // console.log('docPriceOracleAdapterMoC deployed...');
 
   const rdocPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     rdocOracle.address
   );
-  // console.log('rdocPriceOracleAdapterMoC', rdocPriceOracleAdapterMoC.address);
   await rdocPriceOracleAdapterMoC.deployed();
-  // console.log('rdocPriceOracleAdapterMoC deployed...');
 
   const usdtPriceOracleAdapterMoC = await priceOracleAdapterMoc.deploy(
     deployer.address,
     usdtOracle.address
   );
-  // console.log('usdtPriceOracleAdapterMoC', usdtPriceOracleAdapterMoC.address);
   await usdtPriceOracleAdapterMoC.deployed();
-  // console.log('usdtPriceOracleAdapterMoC deployed...');
 
   const whitePaperInterestRateModel = new ethers.ContractFactory(
     WhitePaperInterestRateJSON.abi,
@@ -302,9 +263,7 @@ export const deployTropykusContracts = async () => {
     rif.baseBorrowRate,
     rif.multiplier
   );
-  // console.log('rifInterestRateModel', rifInterestRateModel.address);
   await rifInterestRateModel.deployed();
-  // console.log('rifInterestRateModel deployed...');
 
   const docInterestRateModel = await jumpInterestRateModelV2.deploy(
     doc.baseBorrowRate,
@@ -313,20 +272,16 @@ export const deployTropykusContracts = async () => {
     doc.kink,
     deployer.address
   );
-  // console.log('docInterestRateModel', docInterestRateModel.address);
   await docInterestRateModel.deployed();
-  // console.log('docInterestRateModel deployed...');
 
   const rdocInterestRateModel = await jumpInterestRateModelV2.deploy(
     rdoc.baseBorrowRate,
     rdoc.multiplier,
     rdoc.jumpMultiplier,
-    rdoc.kink,
+    rdoc.kink /**/,
     deployer.address
   );
-  // console.log('rdocInterestRateModel', rdocInterestRateModel.address);
   await rdocInterestRateModel.deployed();
-  // console.log('rdocInterestRateModel deployed...');
 
   const usdtInterestRateModel = await jumpInterestRateModelV2.deploy(
     usdt.baseBorrowRate,
@@ -335,17 +290,13 @@ export const deployTropykusContracts = async () => {
     usdt.kink,
     deployer.address
   );
-  // console.log('usdtInterestRateModel', usdtInterestRateModel.address);
   await usdtInterestRateModel.deployed();
-  // console.log('usdtInterestRateModel deployed...');
 
   const rbtcInterestRateModel = await whitePaperInterestRateModel.deploy(
     rbtc.baseBorrowRate,
     rbtc.multiplier
   );
-  // console.log('rbtcInterestRateModel', rbtcInterestRateModel.address);
   await rbtcInterestRateModel.deployed();
-  // console.log('rbtcInterestRateModel deployed...');
 
   const satInterestRateModel = await hurricaneInterestRateModel.deploy(
     sat.baseBorrowRate,
@@ -354,9 +305,7 @@ export const deployTropykusContracts = async () => {
     sat.borrowRateSlope,
     sat.supplyRateSlope
   );
-  // console.log('satInterestRateModel', satInterestRateModel.address);
   await satInterestRateModel.deployed();
-  // console.log('satInterestRateModel deployed...');
 
   const cErc20Immutable = new ethers.ContractFactory(
     CErc20ImmutableJSON.abi,
@@ -389,9 +338,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  // console.log('cRIFdeployed', cRIFdeployed.address);
   await cRIFdeployed.deployed();
-  // console.log('cRIFdeployed deployed...');
 
   const cDOCdeployed = await cErc20Immutable.deploy(
     docToken.address,
@@ -403,9 +350,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  // console.log('cDOCdeployed', cDOCdeployed.address);
   await cDOCdeployed.deployed();
-  // console.log('cDOCdeployed deployed...');
 
   const cRDOCdeployed = await cRDOCContract.deploy(
     rdocToken.address,
@@ -417,9 +362,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  // console.log('cRDOCdeployed', cRDOCdeployed.address);
   await cRDOCdeployed.deployed();
-  // console.log('cRDOCdeployed deployed...');
 
   const cUSDTdeployed = await cErc20Immutable.deploy(
     usdtToken.address,
@@ -431,9 +374,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  // console.log('cUSDTdeployed', cUSDTdeployed.address);
   await cUSDTdeployed.deployed();
-  // console.log('cUSDTdeployed deployed...');
 
   const cRBTCdeployed = await cRBTCContract.deploy(
     comptrollerDeployed.address,
@@ -444,9 +385,7 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  // console.log('cRBTCdeployed', cRBTCdeployed.address);
   await cRBTCdeployed.deployed();
-  // console.log('cRBTCdeployed deployed...');
 
   const cSATdeployed = await cRBTCContract.deploy(
     comptrollerDeployed.address,
@@ -457,18 +396,14 @@ export const deployTropykusContracts = async () => {
     18,
     deployer.address
   );
-  // console.log('cSATdeployed', cSATdeployed.address);
   await cSATdeployed.deployed();
-  // console.log('cSATdeployed deployed...');
 
   const cRBTCCompanionDeployed = await cRBTCCompanionContract.deploy(
     comptrollerDeployed.address,
     cSATdeployed.address,
     priceOracleProxyDeploy.address
   );
-  // console.log('cRBTCCompanionDeployed', cRBTCCompanionDeployed.address);
   await cRBTCCompanionDeployed.deployed();
-  // console.log('cRBTCCompanionDeployed deployed...');
 
   const tropykusLensContract = new ethers.ContractFactory(
     TropykusLensJSON.abi,
@@ -476,9 +411,7 @@ export const deployTropykusContracts = async () => {
     deployer
   );
   const tropykusLens = await tropykusLensContract.deploy();
-  // console.log('tropykusLens', tropykusLens.address);
   await tropykusLens.deployed();
-  // console.log('tropykusLens deployed...');
 
   const unitroller = new ethers.Contract(
     unitrollerDeployed.address,
