@@ -16,7 +16,17 @@ import CRDOCJSON from './tropykusCompiledContracts/CRDOC.json';
 import TropykusLensJSON from './tropykusCompiledContracts/TropykusLens.json';
 
 export const tropykusFixture = async () => {
-  const tropykusContracts = await deployTropykusContracts();
+  const chainId = hre.network.config.chainId;
+
+  const tropykusTestnetContracts = {
+    oracle: '0x9fbB872D3B45f95b4E3126BC767553D3Fa1e31C0',
+    comptroller: '0xb1bec5376929b4e0235f1353819dba92c4b0c6bb',
+    crbtc: '0x5b35072cd6110606c8421e013304110fa04a32a3',
+    cdoc: '0x71e6b108d823c2786f8ef63a3e0589576b4f3914',
+    doc: '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0',
+  };
+  const tropykusContracts =
+    chainId === 31 ? tropykusTestnetContracts : await deployTropykusContracts();
 
   return tropykusContracts;
 };
@@ -79,10 +89,6 @@ export const deployTropykusContracts = async () => {
     },
   };
 
-  const chainId = await getChainId(
-    hre.network.config.chainId?.toString() || '1337'
-  );
-
   const multiSigWalletContract = new ethers.ContractFactory(
     MultiSigWalletJSON.abi,
     MultiSigWalletJSON.bytecode,
@@ -132,6 +138,7 @@ export const deployTropykusContracts = async () => {
     18,
     'tRIF'
   );
+
   await rifToken.deployed();
 
   const docToken = await standardTokenContract.deploy(
@@ -172,7 +179,7 @@ export const deployTropykusContracts = async () => {
 
   const rbtcOracle = await mockPriceProviderMoC.deploy(
     deployer.address,
-    parseEther('54556.9')
+    parseEther('16000')
   );
   await rbtcOracle.deployed();
 
@@ -233,7 +240,6 @@ export const deployTropykusContracts = async () => {
     deployer.address,
     usdtOracle.address
   );
-
   await usdtPriceOracleAdapterMoC.deployed();
 
   const whitePaperInterestRateModel = new ethers.ContractFactory(
@@ -272,7 +278,7 @@ export const deployTropykusContracts = async () => {
     rdoc.baseBorrowRate,
     rdoc.multiplier,
     rdoc.jumpMultiplier,
-    rdoc.kink,
+    rdoc.kink /**/,
     deployer.address
   );
   await rdocInterestRateModel.deployed();

@@ -1,11 +1,6 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { ethers } from 'hardhat';
-import {
-  IFeeManager,
-  ISmartWalletFactory,
-  SmartWallet,
-  SmartWalletFactory,
-} from 'typechain-types';
+import hre, { ethers } from 'hardhat';
+import { ISmartWalletFactory, SmartWallet } from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
 
 export const smartwalletFactoryFixture = async () => {
@@ -27,14 +22,21 @@ export const externalSmartwalletFixture = async (
   signer: SignerWithAddress,
   deploySmartWallet: boolean = false
 ) => {
-  const externalWallet = ethers.Wallet.createRandom().connect(ethers.provider);
-  const privateKey = externalWallet.privateKey;
-  let smartWallet;
+  let externalWallet;
+  let privateKey;
+  if (hre.network.config.chainId === 31) {
+    externalWallet = signer;
+    privateKey = process.env.PRIVATE_KEY || '';
+  } else {
+    externalWallet = ethers.Wallet.createRandom().connect(ethers.provider);
+    privateKey = externalWallet.privateKey;
 
-  await signer.sendTransaction({
-    to: externalWallet.address,
-    value: ethers.utils.parseEther('1'),
-  });
+    await signer.sendTransaction({
+      to: externalWallet.address,
+      value: ethers.utils.parseEther('1'),
+    });
+  }
+  let smartWallet;
 
   if (deploySmartWallet) {
     await (

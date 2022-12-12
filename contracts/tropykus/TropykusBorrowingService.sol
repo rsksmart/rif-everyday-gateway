@@ -300,17 +300,17 @@ contract TropykusBorrowingService is BorrowService {
         view
         returns (address)
     {
+        if (currency == address(0)) {
+            return _crbtc;
+        }
         IcErc20[] memory markets = IComptrollerG6(_comptroller).getAllMarkets();
         for (uint256 i = 0; i < markets.length; i++) {
             if (
-                currency == address(0) &&
-                _compareStrings(IcErc20(markets[i]).symbol(), "kRBTC")
+                !_compareStrings(markets[i].symbol(), "kSAT") &&
+                !_compareStrings(markets[i].symbol(), "kRBTC") &&
+                markets[i].underlying() == currency
             ) {
                 return address(markets[i]);
-            } else {
-                if (currency == IcErc20(address(markets[i])).underlying()) {
-                    return address(markets[i]);
-                }
             }
         }
         return address(0);

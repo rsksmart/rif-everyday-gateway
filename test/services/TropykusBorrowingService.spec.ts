@@ -2,6 +2,7 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   BorrowService,
+  TropykusBorrowingService,
   ERC20,
   IFeeManager,
   IRIFGateway,
@@ -129,6 +130,33 @@ describe('Tropykus Borrowing Service', () => {
       ).wait();
     });
 
+    it('should retrieve listing', async () => {
+      const listing = await tropykusBorrowingService.getListing(0);
+      expect(listing.name).equals('Tropykus Borrow Service');
+    });
+
+    it('should retrieve market for currency', async () => {
+      const tropykusBorrow = (await ethers.getContractAt(
+        'TropykusBorrowingService',
+        tropykusBorrowingService.address,
+        owner
+      )) as TropykusBorrowingService;
+
+      const cdoc = await tropykusBorrow.getMarketForCurrency(
+        tropykusContractsDeployed.doc
+      );
+      expect(cdoc.toLowerCase()).equals(
+        tropykusContractsDeployed.cdoc.toLowerCase()
+      );
+
+      const crbtc = await tropykusBorrow.getMarketForCurrency(
+        ethers.constants.AddressZero
+      );
+      expect(crbtc.toLowerCase()).equals(
+        tropykusContractsDeployed.crbtc.toLowerCase()
+      );
+    });
+
     it('should allow to borrow DOC after lending RBTC on tropykus', async () => {
       const amountToBorrow = 2;
 
@@ -145,7 +173,7 @@ describe('Tropykus Borrowing Service', () => {
 
       const amountToLend = +calculateAmountToLend / 1e18;
 
-      expect(amountToLend).to.be.closeTo(0.0002, 0.0001);
+      expect(amountToLend).to.be.closeTo(0.0007, 0.0001);
 
       const balanceUserBefore = await doc.balanceOf(externalWallet.address);
 
