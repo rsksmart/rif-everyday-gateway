@@ -12,7 +12,8 @@ interface ISubscriptionReporter {
     function subscribe(
         address subscriber,
         address service,
-        uint256 listingId
+        uint256 listingId,
+        address wallet
     ) external;
 
     function getSubscriptions(address subscriber)

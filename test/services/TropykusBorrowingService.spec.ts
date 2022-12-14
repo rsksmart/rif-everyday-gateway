@@ -85,23 +85,21 @@ describe('Tropykus Borrowing Service', () => {
 
     const amountToLend = +calculateAmountToLend / 1e18;
 
-    const { forwardRequest, suffixData, signature } =
-      await signTransactionForExecutor(
-        externalWallet.address,
-        privateKey,
-        tropykusBorrowingService.address,
-        smartWalletFactory,
-        hre.network.config.chainId
-      );
+    const mtx = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusBorrowingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
 
     await expect(
       tropykusBorrowingService.connect(externalWallet).borrow(
-        suffixData,
-        forwardRequest,
-        signature,
+        mtx,
         ethers.utils.parseEther(amountToBorrow.toString()),
         0, // Not in use for now
         0, // Not in use for now
+        ethers.constants.AddressZero,
         {
           value: ethers.utils.parseEther(amountToLend.toString()),
           gasLimit: 5000000,
@@ -177,22 +175,20 @@ describe('Tropykus Borrowing Service', () => {
 
       const balanceUserBefore = await doc.balanceOf(externalWallet.address);
 
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          tropykusBorrowingService.address,
-          smartWalletFactory,
-          hre.network.config.chainId
-        );
+      const mtx = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusBorrowingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
 
       const tx = await tropykusBorrowingService.connect(externalWallet).borrow(
-        suffixData,
-        forwardRequest,
-        signature,
+        mtx,
         ethers.utils.parseEther(amountToBorrow.toString()),
         0, // Not in use for now
         0, // Not in use for now
+        ethers.constants.AddressZero,
         {
           value: ethers.utils.parseEther(amountToLend.toString()),
           gasLimit: 5000000,
@@ -237,22 +233,20 @@ describe('Tropykus Borrowing Service', () => {
 
       const docBalanceBefore = await doc.balanceOf(externalWallet.address);
 
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          tropykusBorrowingService.address,
-          smartWalletFactory,
-          hre.network.config.chainId
-        );
+      const mtx = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusBorrowingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
 
       const tx = await tropykusBorrowingService.connect(externalWallet).borrow(
-        suffixData,
-        forwardRequest,
-        signature,
+        mtx,
         amountToBorrow,
         0, // Not in use for now
         0, // Not in use for now
+        ethers.constants.AddressZero,
         { value: amountToLend, gasLimit: 5000000 }
       );
       await tx.wait();
@@ -290,7 +284,7 @@ describe('Tropykus Borrowing Service', () => {
         .approve(smartWalletAddress, approvedValue, { gasLimit: 300000 });
       await approveTx.wait();
 
-      const signedMessageForPayment = await signTransactionForExecutor(
+      const mtxForPayment = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         tropykusBorrowingService.address,
@@ -300,16 +294,9 @@ describe('Tropykus Borrowing Service', () => {
 
       const payTx = await tropykusBorrowingService
         .connect(externalWallet)
-        .pay(
-          signedMessageForPayment.suffixData,
-          signedMessageForPayment.forwardRequest,
-          signedMessageForPayment.signature,
-          approvedValue,
-          0,
-          {
-            gasLimit: 5000000,
-          }
-        );
+        .pay(mtxForPayment, approvedValue, 0, {
+          gasLimit: 5000000,
+        });
       await payTx.wait();
 
       const borrowBalanceAfter = await tropykusBorrowingService
@@ -337,22 +324,20 @@ describe('Tropykus Borrowing Service', () => {
 
       const docBalanceBefore = await doc.balanceOf(externalWallet.address);
 
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          tropykusBorrowingService.address,
-          smartWalletFactory,
-          hre.network.config.chainId
-        );
+      const mtx = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusBorrowingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
 
       const tx = await tropykusBorrowingService.connect(externalWallet).borrow(
-        suffixData,
-        forwardRequest,
-        signature,
+        mtx,
         amountToBorrow,
         0, // Not in use for now
         0, // Not in use for now
+        ethers.constants.AddressZero,
         { value: amountToLend, gasLimit: 5000000 }
       );
       await tx.wait();
@@ -396,7 +381,7 @@ describe('Tropykus Borrowing Service', () => {
         });
       await approveTx.wait();
 
-      const signedMessageForPayment = await signTransactionForExecutor(
+      const mtxForPayment = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         tropykusBorrowingService.address,
@@ -406,14 +391,7 @@ describe('Tropykus Borrowing Service', () => {
 
       const payTx = await tropykusBorrowingService
         .connect(externalWallet)
-        .pay(
-          signedMessageForPayment.suffixData,
-          signedMessageForPayment.forwardRequest,
-          signedMessageForPayment.signature,
-          approvedValue,
-          0,
-          { gasLimit: 5000000 }
-        );
+        .pay(mtxForPayment, approvedValue, 0, { gasLimit: 5000000 });
       await payTx.wait();
 
       const borrowBalanceAfter = await tropykusBorrowingService
@@ -444,7 +422,7 @@ describe('Tropykus Borrowing Service', () => {
         'Balance tropykus collateral after payment must be equals amount to lend'
       ).to.be.equals(amountToLend);
 
-      const signedMessageForWithdraw = await signTransactionForExecutor(
+      const mtxForWithdrawal = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         tropykusBorrowingService.address,
@@ -454,13 +432,9 @@ describe('Tropykus Borrowing Service', () => {
 
       const withdrawTx = await tropykusBorrowingService
         .connect(externalWallet)
-        .withdraw(
-          signedMessageForWithdraw.suffixData,
-          signedMessageForWithdraw.forwardRequest,
-          signedMessageForWithdraw.signature,
-          ethers.constants.AddressZero,
-          { gasLimit: 3000000 }
-        );
+        .withdraw(mtxForWithdrawal, ethers.constants.AddressZero, {
+          gasLimit: 3000000,
+        });
       await withdrawTx.wait();
 
       const balanceTropAfter = await tropykusBorrowingService

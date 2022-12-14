@@ -16,39 +16,32 @@ interface IFeeManager {
     /**
      * @notice Emitted when `serviceProvider` service is consumed
      * @param serviceProvider service provider address
-     * @param fee service provider debt per service consumption
+     * @param ownerFee service provider debt per service consumption for the gateway
+     * @param wallet wallet address
+     * @param walletFee service provider debt per service consumption for the wallet
      */
-    event ServiceConsumed(address serviceProvider, uint256 fee);
+    event ServiceConsumptionFee(
+        address serviceProvider,
+        uint256 ownerFee,
+        address wallet,
+        uint256 walletFee
+    );
 
     /**
      * @notice Emitted when `serviceProvider` service is consumed
      * @param serviceProvider service provider address
-     * @param fee service provider debt payed
+     * @param beneficiary account that received the payment
+     * @param fee service provider debt paid
      */
-    event DebtPayed(address serviceProvider, uint256 fee);
-
-    /**
-     * @notice Emitted when `payee` deposits to the RIF Gateway
-     * @param payer account that deposits
-     * @param amount funds to be deposited
-     */
-    event Deposit(address indexed payer, uint256 indexed amount);
+    event FeePayment(address serviceProvider, address beneficiary, uint256 fee);
 
     error InvalidAmount();
 
-    error InvalidFee();
+    error NoPendingFees();
 
     error InsufficientFunds();
 
     error RBTCTransferFailed();
-
-    /**
-     * @notice
-     * Funds the beneficiary with `amount` in fees
-     *
-     * @param beneficiary the address of beneficiary to be funded
-     */
-    function fundBeneficiary(address beneficiary) external payable;
 
     /**
      * @notice Returns the beneficiary fees amount
@@ -67,6 +60,18 @@ interface IFeeManager {
     function getDebtBalance(address debtor) external view returns (uint256);
 
     /**
+     * @notice Returns the debt amount for specific debtor and beneficiary
+     *
+     * @param debtor the address of debtor
+     * @param beneficiary the address of beneficiary
+     * @return fees
+     */
+    function getDebtBalanceFor(address debtor, address beneficiary)
+        external
+        view
+        returns (uint256);
+
+    /**
      * @notice Allow benificiaries to withdraw their funds
      *
      * @param amount fees to be withdrawn
@@ -75,6 +80,21 @@ interface IFeeManager {
 
     /**
      * @notice Charges a fixed amount to a debtor
+     *
+     * @param debtor the address of debtor
+     * @param wallet the address of wallet
      */
-    function chargeFee(address debtor) external;
+    function chargeFee(address debtor, address wallet) external;
+
+    /**
+     * @notice Pays the pending fees using `msg.sender` as the debtor
+     */
+    function pay() external payable;
+
+    /**
+     * @notice Pays the pending fees
+     *
+     * @param debtor the address of debtor
+     */
+    function payInBehalfOf(address debtor) external payable;
 }

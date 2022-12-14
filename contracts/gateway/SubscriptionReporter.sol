@@ -2,23 +2,24 @@
 pragma solidity ^0.8.16;
 
 import "./ISubscriptionReporter.sol";
-import "../feeManager/IFeeManager.sol";
+import "../feeManager/FeeManager.sol";
 
 abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
-    IFeeManager private _feeManager;
+    IFeeManager public feeManager;
 
-    constructor(IFeeManager feeManager) {
-        _feeManager = feeManager;
+    constructor() {
+        feeManager = new FeeManager(msg.sender);
     }
 
     function subscribe(
         address subscriber,
         address service,
-        uint256 listingId
+        uint256 listingId,
+        address wallet
     ) public virtual {
         subscriptions[subscriber].push(Subscription(service, listingId));
-        _feeManager.chargeFee(service);
+        feeManager.chargeFee(service, wallet);
 
         emit NewSubscription(subscriber, service);
     }

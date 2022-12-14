@@ -48,13 +48,17 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     function borrow(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 listingId,
-        uint256 duration
-    ) public payable override withSubscription(req.from, listingId) {
+        uint256 duration,
+        address wallet
+    )
+        public
+        payable
+        override
+        withSubscription(mtx.req.from, listingId, wallet)
+    {
         if (amount <= 0) revert NonZeroAmountAllowed();
         if (msg.value <= 0) revert NonZeroCollateralAllowed();
 
@@ -70,17 +74,19 @@ contract TropykusBorrowingService is BorrowService {
             msg.sender
         );
 
-        uint256 amountToLend = calculateRequiredCollateral(
-            amount,
-            listing.currency
-        );
-        if (msg.value < amountToLend)
-            revert InvalidCollateralAmount(msg.value, amountToLend);
+        {
+            uint256 amountToLend = calculateRequiredCollateral(
+                amount,
+                listing.currency
+            );
+            if (msg.value < amountToLend)
+                revert InvalidCollateralAmount(msg.value, amountToLend);
+        }
 
         smartWallet.execute{value: msg.value}(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("mint()"),
             getMarketForCurrency(listing.loanToValueCurrency),
             listing.loanToValueCurrency
@@ -92,18 +98,18 @@ contract TropykusBorrowingService is BorrowService {
         markets[1] = address(_cdoc); // kDOC
 
         smartWallet.execute(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("enterMarkets(address[])", markets),
             address(_comptroller),
             address(0)
         );
 
         smartWallet.execute(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("borrow(uint256)", amount),
             getMarketForCurrency(listing.currency),
             listing.currency
@@ -121,9 +127,7 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     function pay(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 listingId
     ) public payable override {
@@ -137,12 +141,12 @@ contract TropykusBorrowingService is BorrowService {
         address market = getMarketForCurrency(listing.currency);
 
         smartWallet.execute(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature(
                 "transferFrom(address,address,uint256)",
-                req.from,
+                mtx.req.from,
                 address(smartWallet),
                 amount
             ), // max uint to repay whole debt
@@ -151,18 +155,18 @@ contract TropykusBorrowingService is BorrowService {
         );
 
         smartWallet.execute(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("approve(address,uint256)", market, amount), // max uint to repay whole debt
             listing.currency,
             address(0)
         );
 
         smartWallet.execute(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
             market,
             listing.currency
@@ -214,12 +218,11 @@ contract TropykusBorrowingService is BorrowService {
                 _UNIT_DECIMAL_PRECISION) / (collateralFactor * rbtcPrice);
     }
 
-    function withdraw(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
-        address currency
-    ) public payable override {
+    function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
+        public
+        payable
+        override
+    {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
@@ -234,9 +237,9 @@ contract TropykusBorrowingService is BorrowService {
         (bool success, bytes memory ret) = smartWallet.execute{
             value: msg.value
         }(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             market,
             currency
