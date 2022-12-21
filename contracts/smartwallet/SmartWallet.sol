@@ -6,7 +6,6 @@ import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
-import {Publisher, SubscriptionEvent} from "../common/IPublisher.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */

@@ -68,51 +68,48 @@ describe('RIF Gateway SmartWallet', async () => {
     });
 
     it('should allow to sign a message', async () => {
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          externalWallet.address,
-          smartWalletFactory
-        );
+      const { req, suffixData, sig } = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        externalWallet.address,
+        smartWalletFactory
+      );
 
       await expect(
-        smartWallet!.verify(suffixData, forwardRequest, signature),
+        smartWallet!.verify(suffixData, req, sig),
         'Verification failed'
       ).not.to.be.rejected;
     });
 
     it('should revert if executor is different from the sender', async () => {
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          ethers.constants.AddressZero, // wrong executor specified
-          smartWalletFactory
-        );
+      const { req, suffixData, sig } = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        ethers.constants.AddressZero, // wrong executor specified
+        smartWalletFactory
+      );
 
       await expect(
-        smartWallet!.verify(suffixData, forwardRequest, signature),
+        smartWallet!.verify(suffixData, req, sig),
         'Executor verification failed'
       ).to.be.rejected;
     });
 
     it('should revert if nonce is too high', async () => {
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          externalWallet.address,
-          smartWalletFactory,
-          undefined,
-          '5'
-        );
+      const { req, suffixData, sig } = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        externalWallet.address,
+        smartWalletFactory,
+        undefined,
+        '5'
+      );
 
       await expect(
         smartWallet!.execute(
           suffixData,
-          forwardRequest,
-          signature,
+          req,
+          sig,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
@@ -127,19 +124,18 @@ describe('RIF Gateway SmartWallet', async () => {
     });
 
     it('should revert if nonce used twice', async () => {
-      const { forwardRequest, suffixData, signature } =
-        await signTransactionForExecutor(
-          externalWallet.address,
-          privateKey,
-          externalWallet.address,
-          smartWalletFactory
-        );
+      const { req, suffixData, sig } = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        externalWallet.address,
+        smartWalletFactory
+      );
 
       await expect(
         smartWallet!.execute(
           suffixData,
-          forwardRequest,
-          signature,
+          req,
+          sig,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
@@ -152,8 +148,8 @@ describe('RIF Gateway SmartWallet', async () => {
       await expect(
         smartWallet!.execute(
           suffixData,
-          forwardRequest,
-          signature,
+          req,
+          sig,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,

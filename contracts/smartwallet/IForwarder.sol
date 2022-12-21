@@ -9,6 +9,12 @@ interface IForwarder {
         address executor;
     }
 
+    struct MetaTransaction {
+        bytes32 suffixData;
+        ForwardRequest req;
+        bytes sig;
+    }
+
     function nonce() external view returns (uint256);
 
     /**

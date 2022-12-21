@@ -21,27 +21,35 @@ contract TropykusLendingService is LendingService {
     }
 
     function lend(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
-        uint256 listingId
-    ) public payable override withSubscription(req.from, listingId) {
-        ServiceListing memory listing = listings[listingId];
-        if (!listing.enabled) {
-            revert ListingDisabled(listingId);
-        }
+        uint256 listingId,
+        address wallet
+    )
+        public
+        payable
+        override
+        withSubscription(mtx.req.from, listingId, wallet)
+    {
+        uint256 amountToLend;
+        {
+            ServiceListing memory listing = listings[listingId];
+            if (!listing.enabled) {
+                revert ListingDisabled(listingId);
+            }
 
-        uint256 amountToLend = amount;
-        if (listing.currency == address(0)) amountToLend = msg.value;
-        if (amountToLend == 0) {
-            revert InvalidAmount(amountToLend);
-        }
+            amountToLend = amount;
+            if (listing.currency == address(0)) amountToLend = msg.value;
+            if (amountToLend == 0) {
+                revert InvalidAmount(amountToLend);
+            }
 
-        if (
-            listing.maxAmount < amountToLend || listing.minAmount > amountToLend
-        ) {
-            revert InvalidAmount(amountToLend);
+            if (
+                listing.maxAmount < amountToLend ||
+                listing.minAmount > amountToLend
+            ) {
+                revert InvalidAmount(amountToLend);
+            }
         }
 
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
@@ -51,9 +59,9 @@ contract TropykusLendingService is LendingService {
         (bool success, bytes memory ret) = smartWallet.execute{
             value: amountToLend
         }(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("mint()"),
             address(_crbtc),
             address(0)
@@ -62,7 +70,7 @@ contract TropykusLendingService is LendingService {
         if (success) {
             _removeLiquidityInternal(amountToLend, listingId);
             emit Lend({
-                listingId: 0,
+                listingId: listingId,
                 lender: msg.sender,
                 currency: address(0),
                 amount: msg.value
@@ -72,11 +80,11 @@ contract TropykusLendingService is LendingService {
         }
     }
 
-    function withdraw(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig
-    ) public payable override {
+    function withdraw(IForwarder.MetaTransaction calldata mtx)
+        public
+        payable
+        override
+    {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
@@ -89,9 +97,9 @@ contract TropykusLendingService is LendingService {
         (bool success, bytes memory ret) = smartWallet.execute{
             value: msg.value
         }(
-            suffixData,
-            req,
-            sig,
+            mtx.suffixData,
+            mtx.req,
+            mtx.sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             address(_crbtc),
             address(0)

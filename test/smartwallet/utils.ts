@@ -1,5 +1,5 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { isAddress, ParamType } from 'ethers/lib/utils';
+import { BytesLike, isAddress, ParamType } from 'ethers/lib/utils';
 import { ethers } from 'hardhat';
 import {
   MessageTypeProperty,
@@ -10,6 +10,7 @@ import {
   TypedDataUtils,
 } from '@metamask/eth-sig-util';
 import { IForwarder, ISmartWalletFactory } from 'typechain-types';
+import { PromiseOrValue } from 'typechain-types/common';
 
 export const ONE_FIELD_IN_BYTES = 32;
 export const HARDHAT_CHAIN_ID = 31337;
@@ -136,11 +137,7 @@ export const signTransactionForExecutor = async (
   smartwalletFactory: ISmartWalletFactory,
   chainId: number = HARDHAT_CHAIN_ID,
   nonce?: string
-): Promise<{
-  forwardRequest: IForwarder.ForwardRequestStruct;
-  signature: string;
-  suffixData: string;
-}> => {
+): Promise<MetaTransactionStruct> => {
   const smartWalletAddress = await smartwalletFactory.getSmartWalletAddress(
     from
   );
@@ -175,5 +172,11 @@ export const signTransactionForExecutor = async (
 
   const signature = getLocalEip712Signature(typedRequestData, privateKeyBuf);
 
-  return { forwardRequest, signature, suffixData };
+  return { req: forwardRequest, sig: signature, suffixData: suffixData };
+};
+
+export type MetaTransactionStruct = {
+  suffixData: PromiseOrValue<BytesLike>;
+  req: IForwarder.ForwardRequestStruct;
+  sig: PromiseOrValue<BytesLike>;
 };

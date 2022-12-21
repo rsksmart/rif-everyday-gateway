@@ -17,9 +17,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
 
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
-    constructor(ServiceTypeManager stm, IFeeManager feeManager)
-        SubscriptionReporter(feeManager)
-    {
+    constructor(ServiceTypeManager stm) {
         _serviceTypeManager = stm;
     }
 
@@ -102,11 +100,12 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     function subscribe(
         address subscriber,
         address service,
-        uint256 listingId
+        uint256 listingId,
+        address wallet
     ) public override {
         if (!_uniqueServices[address(service)])
             revert InvalidService(Service(service));
 
-        super.subscribe(subscriber, service, listingId);
+        super.subscribe(subscriber, service, listingId, wallet);
     }
 }

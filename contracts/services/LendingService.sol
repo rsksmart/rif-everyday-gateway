@@ -12,11 +12,10 @@ abstract contract LendingService is Service, ILendingService {
     }
 
     function lend(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
-        uint256 listingId
+        uint256 listingId,
+        address wallet
     ) public payable virtual;
 
     function supportsInterface(bytes4 interfaceId) public view returns (bool) {
@@ -25,9 +24,8 @@ abstract contract LendingService is Service, ILendingService {
             interfaceId == this.supportsInterface.selector;
     }
 
-    function withdraw(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig
-    ) public payable virtual;
+    function withdraw(IForwarder.MetaTransaction calldata mtx)
+        public
+        payable
+        virtual;
 }

@@ -12,6 +12,10 @@ import { deployContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
 import { PaybackOption } from 'test/constants/service';
 import { deployTropykusContracts } from 'test/utils/tropykusFixture';
+import {
+  BORROW_SERVICE_INTERFACEID,
+  LENDING_SERVICE_INTERFACEID,
+} from 'test/utils/interfaceIDs';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
 
 async function deployServiceTypeManager() {
@@ -126,14 +130,12 @@ async function setupServices() {
   const serviceTypeManager = await deployServiceTypeManager();
 
   // allow lending service interface id
-  const LENDING_SERVICE_INTERFACEID = '0xd9eedeca';
   const tLx = await serviceTypeManager.addServiceType(
     LENDING_SERVICE_INTERFACEID
   );
   await tLx.wait();
 
   // allow borrowing service interface id
-  const BORROW_SERVICE_INTERFACEID = '0x7337eabd';
   const tBx = await serviceTypeManager.addServiceType(
     BORROW_SERVICE_INTERFACEID
   );

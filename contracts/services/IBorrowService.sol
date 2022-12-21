@@ -20,28 +20,22 @@ interface IBorrowService {
     );
 
     function borrow(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 duration,
-        uint256 listingId
+        uint256 listingId,
+        address wallet
     ) external payable;
 
     function pay(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 listingId
     ) external payable;
 
-    function withdraw(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
-        address currency
-    ) external payable;
+    function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
+        external
+        payable;
 
     function calculateRequiredCollateral(uint256 amount, address currency)
         external

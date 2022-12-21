@@ -12,28 +12,23 @@ abstract contract BorrowService is Service, IBorrowService {
     }
 
     function borrow(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 duration,
-        uint256 listingId
+        uint256 listingId,
+        address wallet
     ) public payable virtual;
 
     function pay(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 listingId
     ) public payable virtual;
 
-    function withdraw(
-        bytes32 suffixData,
-        IForwarder.ForwardRequest memory req,
-        bytes calldata sig,
-        address currency
-    ) public payable virtual;
+    function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
+        public
+        payable
+        virtual;
 
     function calculateRequiredCollateral(uint256 amount, address currency)
         external

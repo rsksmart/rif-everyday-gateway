@@ -13,6 +13,10 @@ import {
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployRIFGateway } from './utils';
+import {
+  BORROW_SERVICE_INTERFACEID,
+  LENDING_SERVICE_INTERFACEID,
+} from 'test/utils/interfaceIDs';
 
 describe('RIF Gateway', () => {
   let rifGateway: IRIFGateway;
@@ -86,14 +90,13 @@ describe('RIF Gateway', () => {
   describe('Gateway actions', () => {
     beforeEach(async () => {
       // allow lending service interface id
-      const LENDING_SERVICE_INTERFACEID = '0xd9eedeca';
       const tLx = await serviceTypeManager.addServiceType(
         LENDING_SERVICE_INTERFACEID
       );
       await tLx.wait();
 
       // allow borrowing service interface id
-      const BORROW_SERVICE_INTERFACEID = '0x7337eabd';
+
       const tBx = await serviceTypeManager.addServiceType(
         BORROW_SERVICE_INTERFACEID
       );
