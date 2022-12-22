@@ -107,24 +107,27 @@ async function deployRIFGatewayContract(
     'RIFGateway',
     {
       stm: serviceTypeManagerAddr,
-      feeManager: feeManagerAddr,
     }
   );
   console.log('RIFGateway contract deployed at: ', RIFGateway.address);
   return RIFGateway;
 }
 
-async function deployFeeManager() {
+async function deployFeeManager(feesOwner: string) {
   const { contract: FeeManager } = await deployContract<IFeeManager>(
     'FeeManager',
-    {}
+    {
+      feesOwner,
+    }
   );
   console.log('FeeManager contract deployed at: ', FeeManager.address);
   return FeeManager;
 }
 
 async function setupServices() {
-  const feeManagerContract = await deployFeeManager();
+  // TODO: pass owner address through ENV
+  const [owner] = await ethers.getSigners();
+  const feeManagerContract = await deployFeeManager(owner.address);
   const smartWalletFactory = await deploySmartWalletFactory();
   const tropykusContracts = await deployAndSetupTropykusContracts();
   const serviceTypeManager = await deployServiceTypeManager();

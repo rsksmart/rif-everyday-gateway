@@ -12,7 +12,7 @@
     "ci:format": "prettier -c contracts/**/*.sol && prettier -c **/*.ts",
     "ci:lint": "solhint 'contracts/**/*.sol' && eslint test --ext .ts ",
     "ci:test": "npm run compile && npm run test",
-    "deploy": "npx hardhat run scripts/deploy.ts --network",
+    "deploy": "npx hardhat run scripts/poc-contracts-setup.ts --network",
     "lint:sol": "solhint --fix 'contracts/**/*.sol'",
     "lint:ts": "eslint test --ext .ts --fix",
     "lint": "npm run lint:sol && npm run lint:ts",
