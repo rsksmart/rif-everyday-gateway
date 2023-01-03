@@ -12,12 +12,11 @@ abstract contract Service is Ownable, IService {
     mapping(uint256 => ServiceListing) public listings;
 
     uint256 private _listingCounter;
+    address private _rifGateway;
 
     error InvalidAmount(uint256 amount);
     error FailedOperation(bytes data);
     error ListingDisabled(uint256 listingId);
-
-    address private _rifGateway;
 
     constructor(address rifGateway) {
         _rifGateway = rifGateway;
@@ -77,49 +76,38 @@ abstract contract Service is Ownable, IService {
         listings[listing.id] = listing;
     }
 
-    function getServiceType() external view override returns (bytes4) {
-        return serviceType;
-    }
-
-    function getServiceProviderName()
-        external
-        view
-        override
-        returns (string memory)
-    {
-        return serviceProviderName;
-    }
-
-    function getThisAddress() public view returns (address) {
-        return address(this);
-    }
-
-    function currentLiquidity(uint256 index)
+    function currentLiquidity(uint256 listingId)
         public
         view
         virtual
         returns (uint256 liquidity)
     {
-        return listings[index].maxAmount;
+        return listings[listingId].maxAmount;
     }
 
-    function addLiquidity(uint256 amount, uint256 index)
+    function addLiquidity(uint256 amount, uint256 listingId)
         public
         virtual
         onlyOwner
     {
-        listings[index].maxAmount += amount;
+        _addLiquidityInternal(amount, listingId);
     }
 
-    function removeLiquidity(uint256 amount, uint256 index)
+    function _addLiquidityInternal(uint256 amount, uint256 listingId) internal {
+        listings[listingId].maxAmount += amount;
+    }
+
+    function removeLiquidity(uint256 amount, uint256 listingId)
         public
         virtual
         onlyOwner
     {
-        _removeLiquidityInternal(amount, index);
+        _removeLiquidityInternal(amount, listingId);
     }
 
-    function _removeLiquidityInternal(uint256 amount, uint256 index) internal {
-        listings[index].maxAmount -= amount;
+    function _removeLiquidityInternal(uint256 amount, uint256 listingId)
+        internal
+    {
+        listings[listingId].maxAmount -= amount;
     }
 }
