@@ -10,7 +10,7 @@ interface IRIFGateway {
     error NonConformity(string nonConformityErrMsg);
     error DuplicatedService(Service service);
     error InvalidService(Service service);
-    error InvalidProvider(address provider);
+    error ProviderAlreadyValidated(address provider);
 
     event ServiceAdded(address provider, address service);
     event ValidationRequested(address provider);
