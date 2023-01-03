@@ -9,7 +9,7 @@ import "../smartwallet/IForwarder.sol";
 contract TropykusLendingService is LendingService {
     address private _crbtc;
     SmartWalletFactory private _smartWalletFactory;
-    uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
+    uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
 
     constructor(
         address gateway,

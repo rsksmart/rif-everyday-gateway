@@ -150,7 +150,7 @@ contract ACME is Ownable {
     function _withdraw(uint256 amount, address withdrawer) internal {
         require(
             !_balances[withdrawer][address(0)].locked,
-            "balance compromised as collateral"
+            "balance is collateral"
         );
         if (
             _balances[withdrawer][address(0)].amount == 0 ||

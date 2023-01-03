@@ -14,6 +14,10 @@ interface IService is IERC165 {
         uint256 amount
     );
 
+    error InvalidAmount(uint256 amount);
+    error FailedOperation(bytes data);
+    error ListingDisabled(uint256 listingId);
+
     function addListing(ServiceListing memory listing)
         external
         returns (uint256);

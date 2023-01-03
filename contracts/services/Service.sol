@@ -14,10 +14,6 @@ abstract contract Service is Ownable, IService {
     uint256 private _listingCounter;
     address private _rifGateway;
 
-    error InvalidAmount(uint256 amount);
-    error FailedOperation(bytes data);
-    error ListingDisabled(uint256 listingId);
-
     constructor(address rifGateway) {
         _rifGateway = rifGateway;
     }
