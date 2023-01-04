@@ -77,7 +77,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     }
 
     function validateProvider(address provider) external override onlyOwner {
-        _addProviderIfNotExists(provider);
+        if (_providerIndexes[provider] == 0) revert ValidationNotRequested(provider);
         _checkIfProviderIsAlreadyValidated(provider);
 
         _providers[_providerIndexes[provider] - 1].validated = true;

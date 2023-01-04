@@ -11,6 +11,8 @@ interface IRIFGateway {
     error DuplicatedService(Service service);
     error InvalidService(Service service);
     error ProviderAlreadyValidated(address provider);
+    error ValidationNotRequested(address provider);
+
 
     event ServiceAdded(address provider, address service);
     event ValidationRequested(address provider);

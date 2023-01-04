@@ -169,8 +169,9 @@ describe('RIF Gateway', () => {
       });
     });
 
-    describe('validateProvider', () => {
+    describe.only('validateProvider', () => {
       it('should validate a provider when no services have been added by the provider', async () => {
+        await (await rifGateway.requestValidation(signer.address)).wait();
         await (await rifGateway.validateProvider(signer.address)).wait();
 
         const [, afterProviders] = await rifGateway.getServicesAndProviders();
@@ -195,6 +196,12 @@ describe('RIF Gateway', () => {
 
         const [, afterProviders] = await rifGateway.getServicesAndProviders();
         expect(afterProviders[0].validated).equals(true);
+      });
+
+      it('should revert if validation was not requested before', async () => {
+        await expect(rifGateway.validateProvider(ethers.constants.AddressZero))
+          .to.revertedWith('ValidationNotRequested')
+          .withArgs(ethers.constants.AddressZero);
       });
     });
 
