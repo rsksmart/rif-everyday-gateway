@@ -131,12 +131,7 @@ contract FeeManager is IFeeManager, Ownable {
             remainingFunds = _payOwner(debtor, remainingFunds);
 
             if (remainingFunds > 0) {
-                (bool success, ) = msg.sender.call{value: remainingFunds}("");
-
-                if (!success) {
-                    // If the msg.sender can't receive the remaining funds, store them for future withdrawal
-                    _funds[msg.sender] += remainingFunds;
-                }
+                _funds[msg.sender] += remainingFunds;
             }
         }
     }

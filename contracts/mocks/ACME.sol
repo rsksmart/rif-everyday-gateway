@@ -108,7 +108,8 @@ contract ACME is Ownable {
             locked: false
         });
 
-        ERC20(currency).transfer(loaner, amount);
+        bool success = ERC20(currency).transfer(loaner, amount);
+        if (!success) revert();
 
         emit Loan(loaner, amount, currency);
     }
@@ -139,8 +140,13 @@ contract ACME is Ownable {
         uint256 debt = _debts[loaner][currency].amount;
         if (amount > debt) revert PaymentBiggerThanDebt(debt);
 
-        ERC20(currency).transferFrom(payer, address(this), amount);
         _debts[loaner][currency].amount -= amount;
+        bool success = ERC20(currency).transferFrom(
+            payer,
+            address(this),
+            amount
+        );
+        if (!success) revert();
         if (_debts[loaner][currency].amount == 0)
             _debts[loaner][currency].locked = false;
 

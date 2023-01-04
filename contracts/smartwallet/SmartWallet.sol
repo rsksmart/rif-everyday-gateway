@@ -4,13 +4,14 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
-contract SmartWallet is IForwarder {
+contract SmartWallet is IForwarder, ReentrancyGuard {
     using ECDSA for bytes32;
 
     uint256 public override nonce;

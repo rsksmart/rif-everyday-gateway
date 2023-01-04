@@ -57,7 +57,6 @@ contract TropykusBorrowingService is BorrowService {
         public
         payable
         override
-        nonReentrant
         withSubscription(mtx.req.from, listingId, wallet)
     {
         if (amount <= 0) revert NonZeroAmountAllowed();
@@ -84,14 +83,19 @@ contract TropykusBorrowingService is BorrowService {
                 revert InvalidCollateralAmount(msg.value, amountToLend);
         }
 
-        smartWallet.execute{value: msg.value}(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature("mint()"),
-            getMarketForCurrency(listing.loanToValueCurrency),
-            listing.loanToValueCurrency
-        );
+        _removeLiquidityInternal(amount, listingId);
+
+        {
+            (bool success, ) = smartWallet.execute{value: msg.value}(
+                mtx.suffixData,
+                mtx.req,
+                mtx.sig,
+                abi.encodeWithSignature("mint()"),
+                getMarketForCurrency(listing.loanToValueCurrency),
+                listing.loanToValueCurrency
+            );
+            if (!success) revert();
+        }
 
         address[] memory markets = new address[](2);
 
@@ -116,8 +120,6 @@ contract TropykusBorrowingService is BorrowService {
             listing.currency
         );
 
-        _removeLiquidityInternal(amount, listingId);
-
         emit Borrow({
             listingId: listingId,
             borrower: msg.sender,
@@ -131,7 +133,7 @@ contract TropykusBorrowingService is BorrowService {
         IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 listingId
-    ) public payable override nonReentrant {
+    ) public payable override {
         if (amount <= 0) revert NonZeroAmountAllowed();
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
@@ -223,7 +225,6 @@ contract TropykusBorrowingService is BorrowService {
         public
         payable
         override
-        nonReentrant
     {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
