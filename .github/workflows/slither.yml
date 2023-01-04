@@ -26,7 +26,7 @@ jobs:
                   sarif: results.sarif
                   fail-on: none
                   ignore-compile: true
-                  slither-args: --filter-paths "node_modules/@openzeppelin"
+                  slither-args: --filter-paths "node_modules/@openzeppelin","contracts-exposed"
 
             - name: Fix "uri" field in sarif field.
               run: sed -i 's/\.\.\/\.\.\/home\/runner\/work\/rif-everyday-gateway\/rif-everyday-gateway\///g' ${{ steps.slither.outputs.sarif }}
