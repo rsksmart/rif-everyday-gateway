@@ -29,6 +29,7 @@ contract TropykusLendingService is LendingService {
         public
         payable
         override
+        nonReentrant
         withSubscription(mtx.req.from, listingId, wallet)
     {
         uint256 amountToLend;
@@ -84,6 +85,7 @@ contract TropykusLendingService is LendingService {
         public
         payable
         override
+        nonReentrant
     {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))

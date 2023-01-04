@@ -57,6 +57,7 @@ contract TropykusBorrowingService is BorrowService {
         public
         payable
         override
+        nonReentrant
         withSubscription(mtx.req.from, listingId, wallet)
     {
         if (amount <= 0) revert NonZeroAmountAllowed();
@@ -130,7 +131,7 @@ contract TropykusBorrowingService is BorrowService {
         IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
         uint256 listingId
-    ) public payable override {
+    ) public payable override nonReentrant {
         if (amount <= 0) revert NonZeroAmountAllowed();
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
@@ -222,6 +223,7 @@ contract TropykusBorrowingService is BorrowService {
         public
         payable
         override
+        nonReentrant
     {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
