@@ -121,7 +121,10 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
                 address(this)
             );
             if (currentERC20Balance > 0) {
-                ERC20(currency).transfer(req.from, currentERC20Balance);
+                success = ERC20(currency).transfer(
+                    req.from,
+                    currentERC20Balance
+                );
             }
         }
     }
