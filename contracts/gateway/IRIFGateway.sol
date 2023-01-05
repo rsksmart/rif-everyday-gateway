@@ -13,7 +13,6 @@ interface IRIFGateway {
     error ProviderAlreadyValidated(address provider);
     error ValidationNotRequested(address provider);
 
-
     event ServiceAdded(address provider, address service);
     event ValidationRequested(address provider);
     event ServiceValidated(address provider, address service);
