@@ -16,6 +16,12 @@ contract TropykusBorrowingService is BorrowService {
     error MissingIdentity(address user);
     error NonZeroAmountAllowed();
     error NonZeroCollateralAllowed();
+    error TransferFailed(
+        address from,
+        address to,
+        uint256 amount,
+        address currency
+    );
 
     uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
     // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
@@ -94,7 +100,14 @@ contract TropykusBorrowingService is BorrowService {
                 getMarketForCurrency(listing.loanToValueCurrency),
                 listing.loanToValueCurrency
             );
-            if (!success) revert();
+            if (!success) {
+                revert TransferFailed(
+                    msg.sender,
+                    getMarketForCurrency(listing.loanToValueCurrency),
+                    msg.value,
+                    listing.loanToValueCurrency
+                );
+            }
         }
 
         address[] memory markets = new address[](2);
