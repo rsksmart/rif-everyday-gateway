@@ -53,8 +53,8 @@ interface IService is IERC165 {
      * @return listingId The id of the listing
      */
     function addListing(ServiceListing memory listing)
-    external
-    returns (uint256);
+        external
+        returns (uint256);
 
     /**
      * @notice Disables a listing
@@ -68,9 +68,9 @@ interface IService is IERC165 {
      * @return listing The listing
      */
     function getListing(uint256 listingId)
-    external
-    view
-    returns (ServiceListing memory);
+        external
+        view
+        returns (ServiceListing memory);
 
     /**
      * @notice Returns the number of listings
@@ -96,9 +96,9 @@ interface IService is IERC165 {
      * @return liquidity The liquidity of the listing
      */
     function currentLiquidity(uint256 listingId)
-    external
-    view
-    returns (uint256 liquidity);
+        external
+        view
+        returns (uint256 liquidity);
 
     /**
      * @notice Allows service owner to add liquidity to a given listing id

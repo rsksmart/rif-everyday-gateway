@@ -49,9 +49,9 @@ abstract contract Service is Ownable, IService {
      * @inheritdoc IService
      */
     function addListing(ServiceListing memory listing)
-    public
-    override
-    returns (uint256)
+        public
+        override
+        returns (uint256)
     {
         //todo: check mandatory values.
         uint256 listingId = _listingCounter++;
@@ -74,10 +74,10 @@ abstract contract Service is Ownable, IService {
      * @inheritdoc IService
      */
     function getListing(uint256 listingId)
-    public
-    view
-    virtual
-    returns (ServiceListing memory)
+        public
+        view
+        virtual
+        returns (ServiceListing memory)
     {
         return listings[listingId];
     }
@@ -93,9 +93,9 @@ abstract contract Service is Ownable, IService {
      * @inheritdoc IService
      */
     function updateListing(ServiceListing memory listing)
-    public
-    override
-    onlyOwner
+        public
+        override
+        onlyOwner
     {
         listings[listing.id] = listing;
     }
@@ -104,10 +104,10 @@ abstract contract Service is Ownable, IService {
      * @inheritdoc IService
      */
     function currentLiquidity(uint256 listingId)
-    public
-    view
-    virtual
-    returns (uint256 liquidity)
+        public
+        view
+        virtual
+        returns (uint256 liquidity)
     {
         return listings[listingId].maxAmount;
     }
@@ -116,9 +116,9 @@ abstract contract Service is Ownable, IService {
      * @inheritdoc IService
      */
     function addLiquidity(uint256 amount, uint256 listingId)
-    public
-    virtual
-    onlyOwner
+        public
+        virtual
+        onlyOwner
     {
         _addLiquidityInternal(amount, listingId);
     }
@@ -137,9 +137,9 @@ abstract contract Service is Ownable, IService {
      * @inheritdoc IService
      */
     function removeLiquidity(uint256 amount, uint256 listingId)
-    public
-    virtual
-    onlyOwner
+        public
+        virtual
+        onlyOwner
     {
         _removeLiquidityInternal(amount, listingId);
     }
@@ -151,7 +151,7 @@ abstract contract Service is Ownable, IService {
      * @param listingId The id of the listing from where to remove liquidity
      */
     function _removeLiquidityInternal(uint256 amount, uint256 listingId)
-    internal
+        internal
     {
         listings[listingId].maxAmount -= amount;
     }
