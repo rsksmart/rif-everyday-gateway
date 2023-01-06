@@ -4,26 +4,27 @@ pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
 
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
-contract SmartWallet is IForwarder {
+contract SmartWallet is IForwarder, ReentrancyGuard {
     using ECDSA for bytes32;
-
-    error InvalidNonce(uint256 nonce);
-    error InvalidBlockForNonce(uint256 nonce);
-    error InvalidExecutor(address executor);
-    error UnexpectedError(bytes data);
-    error ReadNoLongerValid();
 
     uint256 public override nonce;
     bytes32 public constant DATA_VERSION_HASH = keccak256("1");
     bytes32 public domainSeparator;
 
     uint256 private _currentBlockForNonce;
+
+    error InvalidNonce(uint256 nonce);
+    error InvalidBlockForNonce(uint256 nonce);
+    error InvalidExecutor(address executor);
+    error UnexpectedError(bytes data);
+    error ReadNoLongerValid();
 
     constructor(address owner) {
         _setOwner(owner);
@@ -120,33 +121,12 @@ contract SmartWallet is IForwarder {
                 address(this)
             );
             if (currentERC20Balance > 0) {
-                ERC20(currency).transfer(req.from, currentERC20Balance);
+                success = ERC20(currency).transfer(
+                    req.from,
+                    currentERC20Balance
+                );
             }
         }
-    }
-
-    function read(
-        bytes32 suffixData,
-        ForwardRequest memory req,
-        bytes calldata sig,
-        address targetContract,
-        bytes calldata data
-    ) external view returns (bytes memory) {
-        _verifySig(suffixData, req, sig);
-
-        if (
-            keccak256(abi.encodePacked(msg.sender)) != _getOwner() &&
-            nonce > req.nonce &&
-            _currentBlockForNonce != block.number
-        ) revert ReadNoLongerValid();
-
-        (bool success, bytes memory ret) = targetContract.staticcall(data);
-
-        if (!success) {
-            revert UnexpectedError(ret);
-        }
-
-        return ret;
     }
 
     function _getChainID() private view returns (uint256 id) {

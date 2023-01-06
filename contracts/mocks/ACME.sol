@@ -10,6 +10,12 @@ contract ACME is Ownable {
     error NotEnoughCollateral(uint256 balance);
     error NotEnoughDocBalance(uint256 docBalance);
     error PaymentBiggerThanDebt(uint256 debt);
+    error TransferFailed(
+        address from,
+        address to,
+        uint256 amount,
+        address currency
+    );
 
     struct Balance {
         uint256 amount;
@@ -108,7 +114,9 @@ contract ACME is Ownable {
             locked: false
         });
 
-        ERC20(currency).transfer(loaner, amount);
+        bool success = ERC20(currency).transfer(loaner, amount);
+        if (!success)
+            revert TransferFailed(address(this), loaner, amount, currency);
 
         emit Loan(loaner, amount, currency);
     }
@@ -139,8 +147,14 @@ contract ACME is Ownable {
         uint256 debt = _debts[loaner][currency].amount;
         if (amount > debt) revert PaymentBiggerThanDebt(debt);
 
-        ERC20(currency).transferFrom(payer, address(this), amount);
         _debts[loaner][currency].amount -= amount;
+        bool success = ERC20(currency).transferFrom(
+            payer,
+            address(this),
+            amount
+        );
+        if (!success)
+            revert TransferFailed(payer, address(this), amount, currency);
         if (_debts[loaner][currency].amount == 0)
             _debts[loaner][currency].locked = false;
 
@@ -150,7 +164,7 @@ contract ACME is Ownable {
     function _withdraw(uint256 amount, address withdrawer) internal {
         require(
             !_balances[withdrawer][address(0)].locked,
-            "balance compromised as collateral"
+            "balance is collateral"
         );
         if (
             _balances[withdrawer][address(0)].amount == 0 ||

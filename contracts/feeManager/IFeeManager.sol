@@ -36,11 +36,8 @@ interface IFeeManager {
     event FeePayment(address serviceProvider, address beneficiary, uint256 fee);
 
     error InvalidAmount();
-
     error NoPendingFees();
-
     error InsufficientFunds();
-
     error RBTCTransferFailed();
 
     /**

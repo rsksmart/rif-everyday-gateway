@@ -9,7 +9,7 @@ import "../smartwallet/IForwarder.sol";
 contract TropykusLendingService is LendingService {
     address private _crbtc;
     SmartWalletFactory private _smartWalletFactory;
-    uint256 constant _UNIT_DECIMAL_PRECISION = 1e18;
+    uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
 
     constructor(
         address gateway,
@@ -55,6 +55,7 @@ contract TropykusLendingService is LendingService {
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
+        _removeLiquidityInternal(amountToLend, listingId);
 
         (bool success, bytes memory ret) = smartWallet.execute{
             value: amountToLend
@@ -68,7 +69,6 @@ contract TropykusLendingService is LendingService {
         );
 
         if (success) {
-            _removeLiquidityInternal(amountToLend, listingId);
             emit Lend({
                 listingId: listingId,
                 lender: msg.sender,

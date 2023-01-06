@@ -5,16 +5,16 @@ import "../services/Service.sol";
 import {Provider} from "../services/ServiceData.sol";
 
 interface IRIFGateway {
+    event ServiceAdded(address provider, address service);
+    event ValidationRequested(address provider);
+    event ServiceValidated(address provider, address service);
+
     error InvalidProviderAddress(address provider);
     error InvalidServiceImplementation(Service service, bytes4 serviceType);
     error NonConformity(string nonConformityErrMsg);
     error DuplicatedService(Service service);
     error InvalidService(Service service);
     error InvalidProvider(address provider);
-
-    event ServiceAdded(address provider, address service);
-    event ValidationRequested(address provider);
-    event ServiceValidated(address provider, address service);
 
     function addService(Service service) external;
 

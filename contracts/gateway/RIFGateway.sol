@@ -30,11 +30,8 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         }
 
         // Checks that the provider adheres to the service interface
-        if (!_serviceTypeManager.supportsInterface(service.getServiceType())) {
-            revert InvalidServiceImplementation(
-                service,
-                service.getServiceType()
-            );
+        if (!_serviceTypeManager.supportsInterface(service.serviceType())) {
+            revert InvalidServiceImplementation(service, service.serviceType());
         }
 
         // Proceeds to add the provider and service

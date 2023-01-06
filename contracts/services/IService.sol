@@ -14,6 +14,10 @@ interface IService is IERC165 {
         uint256 amount
     );
 
+    error InvalidAmount(uint256 amount);
+    error FailedOperation(bytes data);
+    error ListingDisabled(uint256 listingId);
+
     function addListing(ServiceListing memory listing)
         external
         returns (uint256);
@@ -31,18 +35,14 @@ interface IService is IERC165 {
 
     function getBalance(address currency) external view returns (uint256);
 
-    function getServiceType() external view returns (bytes4);
-
-    function getServiceProviderName() external view returns (string memory);
-
-    function currentLiquidity(uint256 index)
+    function currentLiquidity(uint256 listingId)
         external
         view
         returns (uint256 liquidity);
 
-    function addLiquidity(uint256 amount, uint256 index) external;
+    function addLiquidity(uint256 amount, uint256 listingId) external;
 
-    function removeLiquidity(uint256 amount, uint256 index) external;
+    function removeLiquidity(uint256 amount, uint256 listingId) external;
 
     function serviceProviderName() external view returns (string memory);
 
