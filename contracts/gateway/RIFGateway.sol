@@ -37,10 +37,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         // Proceeds to add the provider and service
         address provider = service.owner();
         if (provider == address(0)) revert InvalidProviderAddress(provider);
-        if (_providerIndexes[provider] == 0) {
-            _providers.push(Provider({provider: provider, validated: false}));
-            _providerIndexes[provider] = _providers.length;
-        }
+        _addProviderIfNotExists(provider);
         _allServices.push(service);
         _uniqueServices[address(service)] = true;
     }
@@ -53,14 +50,34 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         return (_allServices, _providers);
     }
 
+    function _addProviderIfNotExists(address provider) internal {
+        if (_providerIndexes[provider] == 0) {
+            _providers.push(Provider({provider: provider, validated: false}));
+            _providerIndexes[provider] = _providers.length;
+        }
+    }
+
+    function _checkIfProviderIsAlreadyValidated(address provider)
+        internal
+        view
+    {
+        if (_providers[_providerIndexes[provider] - 1].validated) {
+            revert ProviderAlreadyValidated(provider);
+        }
+    }
+
     function requestValidation(address provider) external override {
-        if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
-        if (!_providers[_providerIndexes[provider] - 1].validated)
-            emit ValidationRequested(provider);
+        _addProviderIfNotExists(provider);
+        _checkIfProviderIsAlreadyValidated(provider);
+
+        emit ValidationRequested(provider);
     }
 
     function validateProvider(address provider) external override onlyOwner {
-        if (_providerIndexes[provider] == 0) revert InvalidProvider(provider);
+        if (_providerIndexes[provider] == 0)
+            revert ValidationNotRequested(provider);
+        _checkIfProviderIsAlreadyValidated(provider);
+
         _providers[_providerIndexes[provider] - 1].validated = true;
     }
 

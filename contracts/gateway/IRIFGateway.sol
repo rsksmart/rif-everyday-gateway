@@ -14,7 +14,8 @@ interface IRIFGateway {
     error NonConformity(string nonConformityErrMsg);
     error DuplicatedService(Service service);
     error InvalidService(Service service);
-    error InvalidProvider(address provider);
+    error ProviderAlreadyValidated(address provider);
+    error ValidationNotRequested(address provider);
 
     function addService(Service service) external;
 
