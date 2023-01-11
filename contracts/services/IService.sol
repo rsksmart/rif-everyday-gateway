@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/interfaces/IERC165.sol";
 
 /**
  * @title Service Interface
- * @dev Interface for the Service Interface contract
+ * @dev Interface for the Service contract
  * @author RIF protocols team
  */
 interface IService is IERC165 {

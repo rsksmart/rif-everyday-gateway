@@ -19,6 +19,9 @@ abstract contract Service is Ownable, IService {
     uint256 private _listingCounter;
     address private _rifGateway;
 
+    /**
+     * @dev Sets the value for {_rifGateway}.
+     */
     constructor(address rifGateway) {
         _rifGateway = rifGateway;
     }
