@@ -5,19 +5,28 @@ import "../services/LendingService.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
+import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITropykus.sol";
+import "./TropykusCommon.sol";
 
-contract TropykusLendingService is LendingService {
-    address private _crbtc;
+contract TropykusLendingService is LendingService, TropykusCommon {
     SmartWalletFactory private _smartWalletFactory;
     uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
+    address private _comptroller;
+    address private _crbtc;
+
+    struct TropykusContracts {
+        address comptroller;
+        address crbtc;
+    }
 
     constructor(
         address gateway,
-        address crbtc,
-        SmartWalletFactory smartWalletFactory
+        SmartWalletFactory smartWalletFactory,
+        TropykusContracts memory contracts
     ) LendingService(gateway, "Tropykus") {
-        _crbtc = crbtc;
         _smartWalletFactory = smartWalletFactory;
+        _comptroller = contracts.comptroller;
+        _crbtc = contracts.crbtc;
     }
 
     function lend(
@@ -32,8 +41,9 @@ contract TropykusLendingService is LendingService {
         withSubscription(mtx.req.from, listingId, wallet)
     {
         uint256 amountToLend;
+        ServiceListing memory listing = listings[listingId];
+
         {
-            ServiceListing memory listing = listings[listingId];
             if (!listing.enabled) {
                 revert ListingDisabled(listingId);
             }
@@ -52,27 +62,27 @@ contract TropykusLendingService is LendingService {
             }
         }
 
-        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
-            msg.sender
+        address market = _getMarketForCurrency(
+            listing.currency,
+            _comptroller,
+            _crbtc
         );
+
         _removeLiquidityInternal(amountToLend, listingId);
 
-        (bool success, bytes memory ret) = smartWallet.execute{
-            value: amountToLend
-        }(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature("mint()"),
-            address(_crbtc),
-            address(0)
+        (bool success, bytes memory ret) = _mintMarketTokens(
+            mtx,
+            _smartWalletFactory,
+            listing.currency,
+            amount,
+            market
         );
 
         if (success) {
             emit Lend({
                 listingId: listingId,
                 lender: msg.sender,
-                currency: address(0),
+                currency: listing.currency,
                 amount: msg.value
             });
         } else {
@@ -80,16 +90,22 @@ contract TropykusLendingService is LendingService {
         }
     }
 
-    function withdraw(IForwarder.MetaTransaction calldata mtx)
-        public
-        payable
-        override
-    {
+    function withdraw(
+        IForwarder.MetaTransaction calldata mtx,
+        uint256 listingId
+    ) public payable override {
+        ServiceListing memory listing = listings[listingId];
+        address market = _getMarketForCurrency(
+            listing.currency,
+            _comptroller,
+            _crbtc
+        );
+
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        (, bytes memory balanceData) = address(_crbtc).staticcall(
+        (, bytes memory balanceData) = address(market).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
@@ -101,20 +117,20 @@ contract TropykusLendingService is LendingService {
             mtx.req,
             mtx.sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
-            address(_crbtc),
+            address(market),
             address(0)
         );
 
         if (success) {
-            (, bytes memory exchangeRateData) = address(_crbtc).staticcall(
+            (, bytes memory exchangeRateData) = address(market).staticcall(
                 abi.encodeWithSignature("exchangeRateStored()")
             );
             uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
 
             emit Withdraw({
-                listingId: 0,
+                listingId: listingId,
                 withdrawer: msg.sender,
-                currency: address(0),
+                currency: listing.currency,
                 amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
             });
         } else {
@@ -128,16 +144,18 @@ contract TropykusLendingService is LendingService {
         override
         returns (uint256)
     {
+        address market = _getMarketForCurrency(currency, _comptroller, _crbtc);
+
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        (, bytes memory exchangeRateData) = address(_crbtc).staticcall(
+        (, bytes memory exchangeRateData) = address(market).staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
 
-        (, bytes memory balanceData) = address(_crbtc).staticcall(
+        (, bytes memory balanceData) = address(market).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));

@@ -41,8 +41,8 @@ abstract contract LendingService is Service, ILendingService {
     /**
      * @inheritdoc ILendingService
      */
-    function withdraw(IForwarder.MetaTransaction calldata mtx)
-        public
-        payable
-        virtual;
+    function withdraw(
+        IForwarder.MetaTransaction calldata mtx,
+        uint256 listingId
+    ) public payable virtual;
 }

@@ -38,11 +38,10 @@ describe('RIF Gateway', () => {
 
     tropykusLendingService = (await tropykusLendingServiceFactory
       .connect(signer)
-      .deploy(
-        rifGateway.address,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero
-      )) as TropykusLendingService;
+      .deploy(rifGateway.address, ethers.constants.AddressZero, {
+        comptroller: ethers.constants.AddressZero,
+        crbtc: ethers.constants.AddressZero,
+      })) as TropykusLendingService;
 
     await tropykusLendingService.deployed();
 

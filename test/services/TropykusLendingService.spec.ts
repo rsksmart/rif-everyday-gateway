@@ -25,6 +25,7 @@ describe('Tropykus Lending Service', () => {
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let crbtc: string;
+  let comptroller: string;
   let feeManager: IFeeManager;
   let RIFGateway: IRIFGateway;
 
@@ -32,7 +33,7 @@ describe('Tropykus Lending Service', () => {
     [owner] = await ethers.getSigners();
 
     ({ smartWalletFactory } = await smartwalletFactoryFixture());
-    ({ crbtc: crbtc } = await tropykusFixture());
+    ({ crbtc, comptroller } = await tropykusFixture());
 
     ({ privateKey, externalWallet } = await externalSmartwalletFixture(
       smartWalletFactory,
@@ -47,8 +48,11 @@ describe('Tropykus Lending Service', () => {
     ({ contract: tropykusLendingService } =
       await deployContract<LendingService>('TropykusLendingService', {
         gateway: RIFGateway.address,
-        crbtc,
         smartWalletFactory: smartWalletFactory.address,
+        contracts: {
+          comptroller,
+          crbtc,
+        },
       }));
 
     await (await RIFGateway.addService(tropykusLendingService.address)).wait();
@@ -145,6 +149,8 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .getBalance(ethers.constants.AddressZero);
 
+      console.log(balanceTroBefore);
+
       expect(+balanceTroBefore / 1e18).to.be.closeTo(0.0001, 0.001);
 
       const mtxForWithdrawal = await signTransactionForExecutor(
@@ -157,7 +163,7 @@ describe('Tropykus Lending Service', () => {
 
       const withdrawTx = await tropykusLendingService
         .connect(externalWallet)
-        .withdraw(mtxForWithdrawal, {
+        .withdraw(mtxForWithdrawal, 0, {
           gasLimit: 3000000,
         });
 
