@@ -5,6 +5,11 @@ import "../services/Service.sol";
 import "../services/IBorrowService.sol";
 import "../smartwallet/IForwarder.sol";
 
+/**
+ * @title Borrow Service
+ * @dev Implementation of the Borrow Service interface
+ * @author RIF protocols team
+ */
 abstract contract BorrowService is Service, IBorrowService {
     /**
      * @dev Sets the values for {serviceType} and {serviceProviderName}.

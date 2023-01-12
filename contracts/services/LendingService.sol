@@ -5,6 +5,11 @@ import "./Service.sol";
 import "./ILendingService.sol";
 import "../smartwallet/IForwarder.sol";
 
+/**
+ * @title Lending Service
+ * @dev Implementation of the Lending Service interface
+ * @author RIF protocols team
+ */
 abstract contract LendingService is Service, ILendingService {
     /**
      * @dev Sets the values for {serviceType} and {serviceProviderName}.
