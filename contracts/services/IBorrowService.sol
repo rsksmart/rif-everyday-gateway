@@ -15,6 +15,7 @@ interface IBorrowService {
      * @param borrower The address of the borrower
      * @param currency The address of the currency
      * @param amount The amount of the loan
+     * @param duration The duration of the loan
      */
     event Borrow(
         uint256 indexed listingId,
