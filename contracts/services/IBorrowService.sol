@@ -88,7 +88,7 @@ interface IBorrowService {
         returns (uint256);
 
     /**
-     * @notice Gets the balance of the currency add as collateral
+     * @notice Gets the balance of the currency as collateral
      * @return The balance of the currency add as collateral
      */
     function getCollateralBalance() external view returns (uint256);
