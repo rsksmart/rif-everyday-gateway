@@ -127,7 +127,7 @@ abstract contract Service is Ownable, IService {
     }
 
     /**
-     * @notice Adds the given amount of liquidity from a given listing id
+     * @notice Adds the given amount of liquidity to a given listing id
      * @dev Allows this contract to add liquidity on internal calls
      * @param amount The amount of liquidity to be added
      * @param listingId The id of the listing from where to add liquidity
