@@ -44,16 +44,25 @@ abstract contract TropykusCommon {
                 currency,
                 address(0)
             );
-        }
 
-        (success, ret) = smartWallet.execute{value: amount}(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature("mint()"),
-            address(market),
-            address(0)
-        );
+            (success, ret) = smartWallet.execute(
+                mtx.suffixData,
+                mtx.req,
+                mtx.sig,
+                abi.encodeWithSignature("mint(uint256)", amount),
+                address(market),
+                address(0)
+            );
+        } else {
+            (success, ret) = smartWallet.execute{value: amount}(
+                mtx.suffixData,
+                mtx.req,
+                mtx.sig,
+                abi.encodeWithSignature("mint()"),
+                address(market),
+                address(0)
+            );
+        }
     }
 
     function _getMarketForCurrency(

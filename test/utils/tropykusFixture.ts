@@ -584,11 +584,13 @@ export const deployTropykusContracts = async () => {
 
   // Supply DOC to the cDOC contract
   await (
-    await docToken.functions['transfer(address,uint256)'](
+    await docToken.functions['approve(address,uint256)'](
       cDOC.address,
       parseEther('1000')
     )
   ).wait();
+
+  await (await cDOC.functions['mint(uint256)'](parseEther('1000'))).wait();
 
   // Supply rBTC to the cRBTC contract
   await (

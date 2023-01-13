@@ -117,8 +117,8 @@ contract TropykusLendingService is LendingService, TropykusCommon {
             mtx.req,
             mtx.sig,
             abi.encodeWithSignature("redeem(uint256)", tokens),
-            address(market),
-            address(0)
+            market,
+            listing.currency
         );
 
         if (success) {
