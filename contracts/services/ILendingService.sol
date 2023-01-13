@@ -25,7 +25,7 @@ interface ILendingService {
     );
 
     /**
-     * @notice Lends funds to an user using a service listing
+     * @notice Lends funds to a user from a service listing
      * @param mtx The meta transaction { bytes32 suffixData, ForwardRequest req { address from, uint256 nonce, address executor }, bytes sig }
      * @param amount The amount of the loan
      * @param listingId The id of the listing
