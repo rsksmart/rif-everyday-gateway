@@ -167,7 +167,7 @@ describe('RIF Gateway', () => {
           .withArgs(signer.address);
       });
     });
-    describe.only('validateProvider', () => {
+    describe('validateProvider', () => {
       it('should validate a provider when no services have been added by the provider', async () => {
         await (await rifGateway.requestValidation(signer.address)).wait();
         await (await rifGateway.validateProvider(signer.address)).wait();
