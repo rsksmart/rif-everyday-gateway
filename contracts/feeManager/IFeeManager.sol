@@ -2,8 +2,10 @@
 pragma solidity ^0.8.16;
 
 /**
- * @notice Handles all fee distribution accross the RIF Gateway
- *         Beneficiaries may consult/withdraw their funds using this contract
+ * @title Fee Manager Interface
+ * @notice Handles all fee distribution across the RIF Gateway
+ * Beneficiaries may consult/withdraw their funds using this contract
+ * @author RIF protocols team
  */
 interface IFeeManager {
     /**
@@ -42,26 +44,23 @@ interface IFeeManager {
 
     /**
      * @notice Returns the beneficiary fees amount
-     *
      * @param beneficiary the address of beneficiary to be funded
-     * @return fees
+     * @return fees available for beneficiary
      */
     function getBalance(address beneficiary) external view returns (uint256);
 
     /**
      * @notice Returns the debt amount
-     *
      * @param debtor the address of debtor
-     * @return fees
+     * @return fees owed by debtor
      */
     function getDebtBalance(address debtor) external view returns (uint256);
 
     /**
      * @notice Returns the debt amount for specific debtor and beneficiary
-     *
      * @param debtor the address of debtor
      * @param beneficiary the address of beneficiary
-     * @return fees
+     * @return fees owed from debtor to beneficiary
      */
     function getDebtBalanceFor(address debtor, address beneficiary)
         external
@@ -69,15 +68,13 @@ interface IFeeManager {
         returns (uint256);
 
     /**
-     * @notice Allow benificiaries to withdraw their funds
-     *
+     * @notice Allow beneficiaries to withdraw their funds
      * @param amount fees to be withdrawn
      */
     function withdraw(uint256 amount) external;
 
     /**
      * @notice Charges a fixed amount to a debtor
-     *
      * @param debtor the address of debtor
      * @param wallet the address of wallet
      */
@@ -90,7 +87,6 @@ interface IFeeManager {
 
     /**
      * @notice Pays the pending fees
-     *
      * @param debtor the address of debtor
      */
     function payInBehalfOf(address debtor) external payable;

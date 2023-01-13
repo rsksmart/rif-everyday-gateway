@@ -6,6 +6,10 @@ import {IFeeManager} from "./IFeeManager.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
+/**
+ * @title Fee Manager
+ * @author RIF protocols team
+ */
 contract FeeManager is IFeeManager, Ownable {
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
@@ -26,6 +30,9 @@ contract FeeManager is IFeeManager, Ownable {
         _feesOwner = feesOwner;
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function chargeFee(address debtor, address beneficiary)
         public
         override
@@ -55,6 +62,9 @@ contract FeeManager is IFeeManager, Ownable {
         );
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function getDebtBalance(address debtor)
         external
         view
@@ -70,6 +80,9 @@ contract FeeManager is IFeeManager, Ownable {
         balance += _amounts[keccak256(abi.encodePacked(debtor, _feesOwner))];
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function getDebtBalanceFor(address debtor, address beneficiary)
         external
         view
@@ -79,6 +92,9 @@ contract FeeManager is IFeeManager, Ownable {
         return _amounts[keccak256(abi.encodePacked(debtor, beneficiary))];
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function getBalance(address beneficiary)
         external
         view
@@ -88,14 +104,23 @@ contract FeeManager is IFeeManager, Ownable {
         return _funds[beneficiary];
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function pay() external payable override {
         return _pay(msg.sender);
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function payInBehalfOf(address debtor) external payable override {
         return _pay(debtor);
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function withdraw(uint256 amount) external override {
         if (amount > _funds[msg.sender]) {
             revert InsufficientFunds();
@@ -112,6 +137,13 @@ contract FeeManager is IFeeManager, Ownable {
         emit Withdraw(msg.sender, amount);
     }
 
+    /**
+     * @notice Pays fees from the debtor to beneficiaries in order
+     * first to the service providers and then to the gateway
+     * If there is any remaining balance the debtor will be able to
+     * withdraw it from this contract
+     * @param debtor The address of the debtor
+     */
     function _pay(address debtor) internal {
         if (msg.value == 0) {
             revert InvalidAmount();
@@ -136,6 +168,12 @@ contract FeeManager is IFeeManager, Ownable {
         }
     }
 
+    /**
+     * @notice Pays fees from the debtor to beneficiaries
+     * @param debtor The address of the debtor
+     * @param funds The funds available to pay beneficiaries
+     * @return The remaining funds after paying the beneficiaries
+     */
     function _payBeneficiaries(address debtor, uint256 funds)
         internal
         returns (uint256)
@@ -167,6 +205,12 @@ contract FeeManager is IFeeManager, Ownable {
         return funds;
     }
 
+    /**
+     * @notice Pays fees from the debtor to the gateway
+     * @param debtor The address of the debtor
+     * @param funds The funds available to pay the gateway
+     * @return The remaining funds after paying the gateway
+     */
     function _payOwner(address debtor, uint256 funds)
         internal
         returns (uint256)
