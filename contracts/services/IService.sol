@@ -86,7 +86,7 @@ interface IService is IERC165 {
     function updateListing(ServiceListing memory listing) external;
 
     /**
-     * @notice Returns balance on a given currency for the user on the service
+     * @notice Returns the balance of a given currency for the user on the service
      * @param currency The currency to check the balance
      */
     function getBalance(address currency) external view returns (uint256);
