@@ -80,7 +80,7 @@ interface IService is IERC165 {
     function getListingsCount() external view returns (uint256);
 
     /**
-     * @notice Allows service owner to update a giving listing
+     * @notice Allows service owner to update a given listing
      * @param listing The listing to be updated
      */
     function updateListing(ServiceListing memory listing) external;
