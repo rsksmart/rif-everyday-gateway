@@ -284,7 +284,7 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .lend(
           mtx,
-          ethers.utils.parseEther('2'),
+          ethers.utils.parseEther(amountToLend.toString()),
           1,
           ethers.constants.AddressZero,
           {
