@@ -38,11 +38,12 @@ describe('RIF Gateway', () => {
 
     tropykusLendingService = (await tropykusLendingServiceFactory
       .connect(signer)
-      .deploy(
-        rifGateway.address,
-        ethers.constants.AddressZero,
-        ethers.constants.AddressZero
-      )) as TropykusLendingService;
+      .deploy(rifGateway.address, ethers.constants.AddressZero, {
+        comptroller: ethers.constants.AddressZero,
+        crbtc: ethers.constants.AddressZero,
+        oracle: ethers.constants.AddressZero,
+        cdoc: ethers.constants.AddressZero,
+      })) as TropykusLendingService;
 
     await tropykusLendingService.deployed();
 
@@ -168,7 +169,7 @@ describe('RIF Gateway', () => {
           .withArgs(signer.address);
       });
     });
-    describe.only('validateProvider', () => {
+    describe('validateProvider', () => {
       it('should validate a provider when no services have been added by the provider', async () => {
         await (await rifGateway.requestValidation(signer.address)).wait();
         await (await rifGateway.validateProvider(signer.address)).wait();

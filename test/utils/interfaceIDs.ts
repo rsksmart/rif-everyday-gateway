@@ -1,2 +1,2 @@
 export const BORROW_SERVICE_INTERFACEID = '0xb203cb2e';
-export const LENDING_SERVICE_INTERFACEID = '0x96cf656d';
+export const LENDING_SERVICE_INTERFACEID = '0xcc2ee280';
