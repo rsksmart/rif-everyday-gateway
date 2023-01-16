@@ -172,7 +172,9 @@ describe('Tropykus Lending Service', () => {
       await (
         await doc
           .connect(externalWallet)
-          .approve(smartWalletAddr, ethers.utils.parseEther('2'))
+          .approve(smartWalletAddr, ethers.utils.parseEther('2'), {
+            gasLimit: 300000,
+          })
       ).wait();
 
       const lendTx = await tropykusLendingService
@@ -271,7 +273,9 @@ describe('Tropykus Lending Service', () => {
       await (
         await doc
           .connect(externalWallet)
-          .approve(smartWalletAddr, ethers.utils.parseEther('2'))
+          .approve(smartWalletAddr, ethers.utils.parseEther('2'), {
+            gasLimit: 300000,
+          })
       ).wait();
 
       const lendTx = await tropykusLendingService
