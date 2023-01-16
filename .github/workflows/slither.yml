@@ -4,7 +4,8 @@ on:
     push:
         paths:
             - 'contracts/**'
-
+permissions:
+    security-events: write
 jobs:
     analyze:
         runs-on: ubuntu-latest
