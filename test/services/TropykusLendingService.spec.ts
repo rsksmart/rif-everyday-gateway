@@ -205,7 +205,7 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .getBalance(doc.address, { gasLimit: 3000000 });
 
-      expect(+tropBalance / 1e18).to.be.closeTo(2, 0.1);
+      expect(+tropBalance / 1e18).to.be.closeTo(amountToLend, 0.1);
     });
 
     it('should allow to withdraw RBTC on tropykus', async () => {
