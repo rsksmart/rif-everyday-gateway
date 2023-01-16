@@ -41,6 +41,8 @@ describe('RIF Gateway', () => {
       .deploy(rifGateway.address, ethers.constants.AddressZero, {
         comptroller: ethers.constants.AddressZero,
         crbtc: ethers.constants.AddressZero,
+        oracle: ethers.constants.AddressZero,
+        cdoc: ethers.constants.AddressZero,
       })) as TropykusLendingService;
 
     await tropykusLendingService.deployed();

@@ -6,6 +6,13 @@ import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/IForwarder.sol";
 
 abstract contract TropykusCommon {
+    struct TropykusContracts {
+        address comptroller;
+        address oracle;
+        address crbtc;
+        address cdoc;
+    }
+
     function _mintMarketTokens(
         IForwarder.MetaTransaction calldata mtx,
         SmartWalletFactory _smartWalletFactory,

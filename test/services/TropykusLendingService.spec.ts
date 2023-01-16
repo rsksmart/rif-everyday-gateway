@@ -52,6 +52,8 @@ describe('Tropykus Lending Service', () => {
         contracts: {
           comptroller,
           crbtc,
+          oracle: ethers.constants.AddressZero,
+          cdoc: ethers.constants.AddressZero,
         },
       }));
 

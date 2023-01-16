@@ -14,11 +14,6 @@ contract TropykusLendingService is LendingService, TropykusCommon {
     address private _comptroller;
     address private _crbtc;
 
-    struct TropykusContracts {
-        address comptroller;
-        address crbtc;
-    }
-
     constructor(
         address gateway,
         SmartWalletFactory smartWalletFactory,
