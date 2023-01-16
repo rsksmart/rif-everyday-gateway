@@ -297,7 +297,7 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .getBalance(doc.address);
 
-      expect(+balanceTropBefore / 1e18).to.be.equals(2);
+      expect(+balanceTropBefore / 1e18).to.be.equals(amountToLend);
 
       const mtxForWithdrawal = await signTransactionForExecutor(
         externalWallet.address,
