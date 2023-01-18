@@ -69,6 +69,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         //slot for owner = bytes32(uint256(keccak256('eip1967.proxy.owner')) - 1) = a7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a
         bytes32 ownerCell = keccak256(abi.encodePacked(owner));
 
+        //slither-disable-next-line assembly
         assembly {
             sstore(
                 0xa7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a,
@@ -86,6 +87,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     }
 
     function _getOwner() private view returns (bytes32 owner) {
+        //slither-disable-next-line assembly
         assembly {
             owner := sload(
                 0xa7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a
@@ -130,6 +132,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     }
 
     function _getChainID() private view returns (uint256 id) {
+        //slither-disable-next-line assembly
         assembly {
             id := chainid()
         }

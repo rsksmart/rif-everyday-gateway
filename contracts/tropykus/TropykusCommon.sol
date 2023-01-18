@@ -61,6 +61,9 @@ abstract contract TropykusCommon {
                 address(0)
             );
         } else {
+            // Suppressed: The success bool is validated outside of this function
+            // and the market will always be a CToken
+            //slither-disable-next-line arbitrary-send-eth
             (success, ret) = smartWallet.execute{value: amount}(
                 mtx.suffixData,
                 mtx.req,
