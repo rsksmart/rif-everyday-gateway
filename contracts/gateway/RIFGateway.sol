@@ -8,6 +8,11 @@ import {Provider} from "../services/ServiceData.sol";
 import "../services/Service.sol";
 import "../services/ServiceTypeManager.sol";
 
+/**
+ * @title RIF Gateway
+ * @dev Contract for the RIF Gateway contract
+ * @author RIF protocols team
+ */
 contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
@@ -21,6 +26,9 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         _serviceTypeManager = stm;
     }
 
+    /**
+     * @inheritdoc IRIFGateway
+     */
     function addService(Service service) external {
         if (_uniqueServices[address(service)])
             revert DuplicatedService(service);
@@ -42,6 +50,9 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         _uniqueServices[address(service)] = true;
     }
 
+    /**
+     * @inheritdoc IRIFGateway
+     */
     function getServicesAndProviders()
         external
         view
@@ -66,6 +77,9 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         }
     }
 
+    /**
+     * @inheritdoc IRIFGateway
+     */
     function requestValidation(address provider) external override {
         _addProviderIfNotExists(provider);
         _checkIfProviderIsAlreadyValidated(provider);
@@ -73,14 +87,22 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
         emit ValidationRequested(provider);
     }
 
+    /**
+     * @inheritdoc IRIFGateway
+     */
     function validateProvider(address provider) external override onlyOwner {
         if (_providerIndexes[provider] == 0)
             revert ValidationNotRequested(provider);
         _checkIfProviderIsAlreadyValidated(provider);
 
         _providers[_providerIndexes[provider] - 1].validated = true;
+
+        emit ProviderValidated(provider);
     }
 
+    /**
+     * @inheritdoc IRIFGateway
+     */
     function removeService(Service service) external override {
         if (msg.sender != service.owner())
             revert InvalidProviderAddress(msg.sender);
@@ -109,8 +131,13 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
             }
             upperIndex--;
         }
+
+        emit ServiceRemoved(service.owner(), address(service));
     }
 
+    /**
+     * @inheritdoc ISubscriptionReporter
+     */
     function subscribe(
         address subscriber,
         address service,
