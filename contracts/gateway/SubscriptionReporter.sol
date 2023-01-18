@@ -4,6 +4,11 @@ pragma solidity ^0.8.16;
 import "./ISubscriptionReporter.sol";
 import "../feeManager/FeeManager.sol";
 
+/**
+ * @title Subscription Reporter
+ * @dev Contract for the Subscription Reporter contract
+ * @author RIF protocols team
+ */
 abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
     IFeeManager public feeManager;
@@ -12,6 +17,9 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
         feeManager = new FeeManager(msg.sender);
     }
 
+    /**
+     * @inheritdoc ISubscriptionReporter
+     */
     function subscribe(
         address subscriber,
         address service,
@@ -24,6 +32,9 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
         emit NewSubscription(subscriber, service);
     }
 
+    /**
+     * @inheritdoc ISubscriptionReporter
+     */
     function getSubscriptions(address subscriber)
         external
         view
