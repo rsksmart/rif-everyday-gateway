@@ -99,8 +99,9 @@ contract ACME is Ownable {
     ) internal {
         uint256 collateralFactor = _collateralFactors[currency];
         uint256 balance = _balances[loaner][address(0)].amount;
-        uint256 balanceUSD = (balance * _rbtcPrice) / 1e18;
-        uint256 collateralBalance = (balanceUSD * collateralFactor) / 1e18;
+        uint256 balanceUSD = (balance * _rbtcPrice);
+        uint256 collateralBalance = ((balanceUSD * collateralFactor) / 1e18) /
+            1e18;
 
         if (collateralBalance < amount) revert NotEnoughCollateral(balance);
         uint256 docBalance = ERC20(currency).balanceOf(address(this));
