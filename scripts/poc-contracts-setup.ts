@@ -202,7 +202,7 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.01'), // 1%
-      loanToValueCurrency: NATIVE_CURRENCY,
+      collateralCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -218,7 +218,7 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.00002'), // ~ 0.0002%
-      loanToValueCurrency: tropykusContracts.doc,
+      collateralCurrency: tropykusContracts.doc,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -234,7 +234,7 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.03'), // 3%
-      loanToValueCurrency: NATIVE_CURRENCY,
+      collateralCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -250,7 +250,7 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 1000,
       interestRate: ethers.utils.parseEther('0.05'), // 5%
-      loanToValueCurrency: NATIVE_CURRENCY,
+      collateralCurrency: NATIVE_CURRENCY,
       currency: tropykusContracts.doc,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -266,7 +266,7 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 0,
       interestRate: ethers.utils.parseEther('0.05'), // 5%
-      loanToValueCurrency: NATIVE_CURRENCY,
+      collateralCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,
@@ -283,7 +283,7 @@ async function setupServices() {
       minDuration: 0,
       maxDuration: 0,
       interestRate: ethers.utils.parseEther('0.4'), // 4%
-      loanToValueCurrency: NATIVE_CURRENCY,
+      collateralCurrency: NATIVE_CURRENCY,
       currency: NATIVE_CURRENCY,
       payBackOption: PaybackOption.Day,
       enabled: true,

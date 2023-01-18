@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 pragma experimental ABIEncoderV2;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
@@ -127,18 +127,17 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     /**
      * @inheritdoc IForwarder
      */
+    // TODO: Add a nested structure to `IForwarder.MetaTransaction` in order to
     function execute(
-        bytes32 suffixData,
-        ForwardRequest memory req,
-        bytes calldata sig,
+        IForwarder.MetaTransaction calldata mtx,
         bytes calldata data,
         address to,
         address currency
     ) external payable override returns (bool success, bytes memory ret) {
-        (sig); // This line saves gas TODO: Research why 🤷‍♂️
+        (mtx.sig); // This line saves gas TODO: Research why 🤷‍♂️
 
-        _verifyNonce(req);
-        _verifySig(suffixData, req, sig);
+        _verifyNonce(mtx.req);
+        _verifySig(mtx.suffixData, mtx.req, mtx.sig);
 
         (success, ret) = to.call{value: msg.value}(data);
 
@@ -146,19 +145,23 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         uint256 currentBalance = address(this).balance;
         if (currentBalance > 0) {
             //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
-            payable(req.from).transfer(currentBalance);
+            payable(mtx.req.from).call{value: currentBalance}("");
         }
 
-        //If any given ERC20 had been added tokens then transfer it to the owner EOA
+        _forwardTokensIfAny(mtx.req.from, currency);
+    }
+
+    function _forwardTokensIfAny(address to, address currency)
+        internal
+        returns (bool success)
+    {
         if (currency != address(0)) {
-            uint256 currentERC20Balance = ERC20(currency).balanceOf(
+            uint256 currentERC20Balance = IERC20(currency).balanceOf(
                 address(this)
             );
+
             if (currentERC20Balance > 0) {
-                success = ERC20(currency).transfer(
-                    req.from,
-                    currentERC20Balance
-                );
+                success = IERC20(currency).transfer(to, currentERC20Balance);
             }
         }
     }
@@ -206,6 +209,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         ForwardRequest memory req,
         bytes memory sig
     ) private view {
+        // TODO: this can be removes since the signature validation already verifies the req.from
         //Verify Owner
         require(
             _getOwner() == keccak256(abi.encodePacked(req.from)),

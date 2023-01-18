@@ -46,14 +46,21 @@ contract TropykusLendingService is LendingService, TropykusCommon {
             amountToLend = amount;
             if (listing.currency == address(0)) amountToLend = msg.value;
             if (amountToLend == 0) {
-                revert InvalidAmount(amountToLend);
+                // TODO: use the actual lending currency
+                revert ZeroAmountNotAllowed({currency: address(0)});
             }
 
             if (
                 listing.maxAmount < amountToLend ||
                 listing.minAmount > amountToLend
             ) {
-                revert InvalidAmount(amountToLend);
+                // TODO: use the actual lending currency
+                revert AmountOutOfBounds({
+                    currency: address(0),
+                    amount: amountToLend,
+                    min: listing.minAmount,
+                    max: listing.maxAmount
+                });
             }
         }
 
@@ -108,9 +115,7 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         (bool success, bytes memory ret) = smartWallet.execute{
             value: msg.value
         }(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
+            mtx,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             market,
             listing.currency

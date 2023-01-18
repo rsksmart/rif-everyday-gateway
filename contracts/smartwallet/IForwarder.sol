@@ -43,21 +43,19 @@ interface IForwarder {
 
     /**
      * @notice Executes a transaction on behalf of the owner of the SmartWallet
-     * @param forwardRequest - all transaction parameters
-     * @param suffixData - the extension data used when signing this request.
-     * @param signature - signature to validate.
+     * @param mtx signed meta tx to be executed.
      * @param data - function call data
      * @param to - target contract to call
+     * @param currency - currency exchanged in this tx
      *
      * the transaction is verified, and then executed.
-     * the success and ret of "call" are returned.
-     * This method would revert only verification errors. target errors
+     * the success and response (ret) of "call" are returned.
+     * This method would return only verification errors. target errors 
+     * so it doesn't revert when a error happens when on the callee
      * are reported using the returned "success" and ret string
      */
     function execute(
-        bytes32 suffixData,
-        ForwardRequest memory forwardRequest,
-        bytes calldata signature,
+        IForwarder.MetaTransaction calldata mtx,
         bytes calldata data,
         address to,
         address currency

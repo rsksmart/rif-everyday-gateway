@@ -14,14 +14,19 @@ import "./ITropykus.sol";
 contract TropykusBorrowingService is BorrowService {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
-    error NonZeroAmountAllowed();
-    error NonZeroCollateralAllowed();
-    error TransferFailed(
+    error CollateralTransferFailed(
+        address smartWallet,
+        address collateralMarket,
+        address collateralCurrency,
+        uint256 amount
+    );
+    error ERC20TransferFromFailed(
+        address currency,
         address from,
         address to,
-        uint256 amount,
-        address currency
+        uint256 amount
     );
+    error ERC20ApproveFailed(address currency, address spender, uint256 amount);
 
     uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
     // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
@@ -63,78 +68,166 @@ contract TropykusBorrowingService is BorrowService {
         public
         payable
         override
+        onlyValidAmount(listingId, amount)
         withSubscription(mtx.req.from, listingId, wallet)
     {
-        if (amount <= 0) revert NonZeroAmountAllowed();
-        if (msg.value <= 0) revert NonZeroCollateralAllowed();
-
         ServiceListing memory listing = listings[listingId];
-        if (!listing.enabled) {
-            revert ListingDisabled(listingId);
-        }
-
-        if (listing.maxAmount < amount || listing.minAmount > amount)
-            revert InvalidAmount(amount);
-
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
 
-        {
-            uint256 amountToLend = calculateRequiredCollateral(
-                amount,
-                listing.currency
-            );
-            if (msg.value < amountToLend)
-                revert InvalidCollateralAmount(msg.value, amountToLend);
-        }
+        uint256 collateralPayment = _validateAndCalculateRequiredCollateral(
+            smartWallet,
+            listing,
+            amount
+        );
 
         _removeLiquidityInternal(amount, listingId);
+        _sendCollateralToProtocol(smartWallet, mtx, listing, collateralPayment);
+        _enterMarkets(smartWallet, mtx, listing);
+        _borrow(mtx, listing, amount, duration);
+    }
 
-        {
-            (bool success, ) = smartWallet.execute{value: msg.value}(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
-                abi.encodeWithSignature("mint()"),
-                getMarketForCurrency(listing.loanToValueCurrency),
-                listing.loanToValueCurrency
-            );
-            if (!success) {
-                revert TransferFailed(
-                    msg.sender,
-                    getMarketForCurrency(listing.loanToValueCurrency),
-                    msg.value,
-                    listing.loanToValueCurrency
-                );
-            }
+    function _validateAndCalculateRequiredCollateral(
+        IForwarder smartWallet,
+        ServiceListing memory listing,
+        uint256 amountToBorrow
+    ) internal returns (uint256 collateralPayment) {
+        if (listing.collateralCurrency != address(0) && msg.value > 0) {
+            revert InvalidCollateralCurrency({
+                expectedCurrency: listing.collateralCurrency
+            });
         }
 
+        collateralPayment = _transferHasRBTC()
+            ? msg.value
+            : IERC20(listing.collateralCurrency).allowance(
+                msg.sender,
+                address(smartWallet)
+            );
+
+        if (collateralPayment == 0) {
+            revert InsufficientCollateral(listing.collateralCurrency);
+        }
+
+        uint256 requiredCollateral = calculateRequiredCollateral(
+            listing.id,
+            amountToBorrow
+        );
+
+        if (collateralPayment != requiredCollateral) {
+            revert InvalidCollateralAmount(
+                collateralPayment,
+                requiredCollateral
+            );
+        }
+    }
+
+    // Only using RBTC as collateral after will be defining by the listing collateralCurrency
+    function calculateRequiredCollateral(
+        uint256 listingId,
+        uint256 amountToBorrow
+    ) public view override returns (uint256) {
+        ServiceListing memory listing = listings[listingId];
+        uint256 collateralMarketPrice = IPriceOracleProxy(_oracle)
+            .getUnderlyingPrice(
+                getMarketForCurrency(listing.collateralCurrency)
+            );
+        (, uint256 collateralFactor) = IComptrollerG6(_comptroller).markets(
+            getMarketForCurrency(listing.collateralCurrency)
+        );
+        uint256 borrowCurrencyMarketPrice = IPriceOracleProxy(_oracle)
+            .getUnderlyingPrice(getMarketForCurrency(listing.currency));
+
+        return
+            (((amountToBorrow + _DELTA_COLLATERAL_WITH_PRECISION) *
+                borrowCurrencyMarketPrice) * _UNIT_DECIMAL_PRECISION) /
+            (collateralFactor * collateralMarketPrice);
+    }
+
+    function _sendCollateralToProtocol(
+        IForwarder smartWallet,
+        IForwarder.MetaTransaction calldata mtx,
+        ServiceListing memory listing,
+        uint256 collateral
+    ) internal {
+        address collateralCurrencyMarket = getMarketForCurrency(
+            listing.collateralCurrency
+        );
+        bool success;
+        bool isCollateralInRBTC = _transferHasRBTC();
+
+        if (isCollateralInRBTC) {
+            assert(msg.value == collateral);
+        } else {
+            _transferAndApproveERC20ToMarket(
+                smartWallet,
+                mtx,
+                listing.collateralCurrency,
+                collateral
+            );
+        }
+
+        bytes memory mintSignature = isCollateralInRBTC
+            ? abi.encodeWithSignature("mint()")
+            : abi.encodeWithSignature("mint(uint256)", collateral);
+
+        (success, ) = smartWallet.execute{
+            value: isCollateralInRBTC ? msg.value : 0
+        }(
+            mtx,
+            mintSignature,
+            collateralCurrencyMarket,
+            isCollateralInRBTC ? listing.collateralCurrency : address(0)
+        );
+
+        if (!success) {
+            revert CollateralTransferFailed(
+                address(smartWallet),
+                collateralCurrencyMarket,
+                listing.collateralCurrency,
+                isCollateralInRBTC ? msg.value : collateral
+            );
+        }
+    }
+
+    function _enterMarkets(
+        IForwarder smartWallet,
+        IForwarder.MetaTransaction calldata mtx,
+        ServiceListing memory listing
+    ) internal {
         address[] memory markets = new address[](2);
 
-        markets[0] = address(_crbtc); // kRBTC
-        markets[1] = address(_cdoc); // kDOC
+        // TODO: are these the only markets to be used?
+        markets[0] = getMarketForCurrency(listing.collateralCurrency);
+        markets[1] = getMarketForCurrency(listing.currency);
 
         smartWallet.execute(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
+            mtx,
             abi.encodeWithSignature("enterMarkets(address[])", markets),
             address(_comptroller),
             address(0)
         );
+    }
 
+    function _borrow(
+        IForwarder.MetaTransaction calldata mtx,
+        ServiceListing memory listing,
+        uint256 amount,
+        uint256 duration
+    ) internal {
+        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
+            msg.sender
+        );
         smartWallet.execute(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
+            mtx,
             abi.encodeWithSignature("borrow(uint256)", amount),
             getMarketForCurrency(listing.currency),
             listing.currency
         );
 
         emit Borrow({
-            listingId: listingId,
+            listingId: listing.id,
             borrower: msg.sender,
             currency: listing.currency,
             amount: amount,
@@ -147,44 +240,32 @@ contract TropykusBorrowingService is BorrowService {
         uint256 amount,
         uint256 listingId
     ) public payable override {
-        if (amount <= 0) revert NonZeroAmountAllowed();
+        ServiceListing memory listing = listings[listingId];
+
+        if (amount <= 0)
+            revert InsufficientCollateral(listing.collateralCurrency);
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        ServiceListing memory listing = listings[listingId];
-
-        address market = getMarketForCurrency(listing.currency);
-
-        smartWallet.execute(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature(
-                "transferFrom(address,address,uint256)",
-                mtx.req.from,
-                address(smartWallet),
-                amount
-            ), // max uint to repay whole debt
+        _transferAndApproveERC20ToMarket(
+            smartWallet,
+            mtx,
             listing.currency,
-            address(0)
+            amount
         );
 
-        smartWallet.execute(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature("approve(address,uint256)", market, amount), // max uint to repay whole debt
-            listing.currency,
-            address(0)
-        );
+        bytes memory repayBorrowSignature = _transferHasRBTC()
+            ? abi.encodeWithSignature("repayBorrowAll()")
+            : abi.encodeWithSignature(
+                "repayBorrow(uint256)",
+                type(uint256).max
+            );
 
-        smartWallet.execute(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature("repayBorrow(uint256)", type(uint256).max), // max uint to repay whole debt
-            market,
+        smartWallet.execute{value: msg.value}(
+            mtx,
+            repayBorrowSignature,
+            getMarketForCurrency(listing.currency),
             listing.currency
         );
 
@@ -196,17 +277,74 @@ contract TropykusBorrowingService is BorrowService {
         });
     }
 
-    function getCollateralBalance() public view returns (uint256) {
+    function _transferAndApproveERC20ToMarket(
+        IForwarder smartWallet,
+        IForwarder.MetaTransaction calldata mtx,
+        address erc20Token,
+        uint256 amount
+    ) internal {
+        bool transferFromTxSuccess;
+        bool approveTxSuccess;
+        (transferFromTxSuccess, ) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                mtx.req.from,
+                address(smartWallet),
+                amount
+            ),
+            erc20Token,
+            address(0)
+        );
+
+        if (!transferFromTxSuccess) {
+            revert ERC20TransferFromFailed({
+                currency: erc20Token,
+                from: mtx.req.from,
+                to: address(smartWallet),
+                amount: amount
+            });
+        }
+
+        (approveTxSuccess, ) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature(
+                "approve(address,uint256)",
+                getMarketForCurrency(erc20Token),
+                amount
+            ),
+            erc20Token,
+            address(0)
+        );
+
+        if (!approveTxSuccess) {
+            revert ERC20ApproveFailed({
+                currency: erc20Token,
+                spender: getMarketForCurrency(erc20Token),
+                amount: amount
+            });
+        }
+    }
+
+    function getCollateralBalance(uint256 listingId)
+        public
+        view
+        returns (uint256)
+    {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        (, bytes memory exchangeRatedata) = address(_crbtc).staticcall(
+        address collateralCurrencyMarket = getMarketForCurrency(
+            listings[listingId].collateralCurrency
+        );
+
+        (, bytes memory exchangeRatedata) = collateralCurrencyMarket.staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(exchangeRatedata, (uint256));
 
-        (, bytes memory balanceData) = address(_crbtc).staticcall(
+        (, bytes memory balanceData) = collateralCurrencyMarket.staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
         uint256 tokens = abi.decode(balanceData, (uint256));
@@ -214,29 +352,8 @@ contract TropykusBorrowingService is BorrowService {
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
-    // Only using RBTC as collateral after will be defining by the listing loanToValueCurrency
-    function calculateRequiredCollateral(uint256 amount, address currency)
-        public
-        view
-        override
-        returns (uint256)
-    {
-        uint256 rbtcPrice = IPriceOracleProxy(_oracle).getUnderlyingPrice(
-            _crbtc
-        );
-        uint256 docPrice = IPriceOracleProxy(_oracle).getUnderlyingPrice(_cdoc);
-        (, uint256 collateralFactor) = IComptrollerG6(_comptroller).markets(
-            _crbtc
-        );
-
-        return
-            (((amount + _DELTA_COLLATERAL_WITH_PRECISION) * docPrice) *
-                _UNIT_DECIMAL_PRECISION) / (collateralFactor * rbtcPrice);
-    }
-
     function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
         public
-        payable
         override
     {
         SmartWallet smartWallet = SmartWallet(
@@ -244,18 +361,17 @@ contract TropykusBorrowingService is BorrowService {
         );
 
         address market = getMarketForCurrency(currency);
-
         (, bytes memory balanceData) = market.call(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
-        uint256 tokens = abi.decode(balanceData, (uint256));
 
-        (bool success, bytes memory ret) = smartWallet.execute{
-            value: msg.value
-        }(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
+        uint256 tokens = abi.decode(balanceData, (uint256));
+        if (tokens == 0) {
+            revert("no tokens to withdraw");
+        }
+
+        (bool success, bytes memory res) = smartWallet.execute(
+            mtx,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             market,
             currency
@@ -265,8 +381,8 @@ contract TropykusBorrowingService is BorrowService {
             (, bytes memory data) = market.call(
                 abi.encodeWithSignature("exchangeRateStored()")
             );
-            uint256 exchangeRate = abi.decode(data, (uint256));
 
+            uint256 exchangeRate = abi.decode(data, (uint256));
             emit Withdraw({
                 listingId: 0,
                 withdrawer: msg.sender,
@@ -274,7 +390,7 @@ contract TropykusBorrowingService is BorrowService {
                 amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
             });
         } else {
-            revert FailedOperation(ret);
+            revert FailedOperation(res);
         }
     }
 
@@ -282,7 +398,7 @@ contract TropykusBorrowingService is BorrowService {
         public
         view
         override(IService)
-        returns (uint256)
+        returns (uint256 balanceBorrowed)
     {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
@@ -295,9 +411,7 @@ contract TropykusBorrowingService is BorrowService {
             )
         );
 
-        uint256 borrowBalance = abi.decode(data, (uint256));
-
-        return borrowBalance;
+        balanceBorrowed = abi.decode(data, (uint256));
     }
 
     function getListing(uint256 listingId)
@@ -323,6 +437,7 @@ contract TropykusBorrowingService is BorrowService {
             return _crbtc;
         }
         IcErc20[] memory markets = IComptrollerG6(_comptroller).getAllMarkets();
+
         for (uint256 i = 0; i < markets.length; i++) {
             if (
                 !_compareStrings(markets[i].symbol(), "kSAT") &&

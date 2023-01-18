@@ -32,14 +32,25 @@ interface IService is IERC165 {
     );
 
     /**
-     * @notice Throws when the amount sent is invalid
-     * @param amount The amount sent
+     * @notice Reverts when the amount is zero
+     * @param currency requested currency in which the listing operates
      */
-    error InvalidAmount(uint256 amount);
+    error ZeroAmountNotAllowed(address currency);
+
     /**
-     * @notice Throws when execution fails
-     * @param data The detail of the failure
+     * @notice Reverts when the amount is not between limits
+     * @param currency requested currency in which the listing operates
+     * @param amount amount requested
+     * @param min min amount of the listing
+     * @param max max amount of the listing
      */
+    error AmountOutOfBounds(
+        address currency,
+        uint256 amount,
+        uint256 min,
+        uint256 max
+    );
+
     error FailedOperation(bytes data);
     /**
      * @notice Throws when the listing is not enabled

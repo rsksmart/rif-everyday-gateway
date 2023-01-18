@@ -9,6 +9,11 @@ import "../smartwallet/IForwarder.sol";
  * @author RIF protocols team
  */
 interface IBorrowService {
+
+    error UnexpectedRBTC();
+    error InsufficientCollateral(address currency);
+    error InvalidCollateralCurrency(address expectedCurrency);
+
     /**
      * @notice Emitted when a new borrow service is consumed
      * @param listingId The id of the listing
@@ -73,23 +78,25 @@ interface IBorrowService {
      * @param currency The address of the currency from the funds will be withdrawn
      */
     function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
-        external
-        payable;
+        external;
 
     /**
      * @notice Gets the amount of required collateral
-     * @param amount The amount of the loan
-     * @param currency The address of the currency of the loan
-     * @return The amount of required collateral
+     * @param listingId the listing id
+     * @param amountToBorrow amount to be borrowed
+     * @return amountToLend The amount of required collateral
      */
-    function calculateRequiredCollateral(uint256 amount, address currency)
-        external
-        view
-        returns (uint256);
+    function calculateRequiredCollateral(
+        uint256 listingId,
+        uint256 amountToBorrow
+    ) external view returns (uint256 amountToLend);
 
     /**
      * @notice Gets the balance of the currency as collateral
      * @return The balance of the currency add as collateral
      */
-    function getCollateralBalance() external view returns (uint256);
+    function getCollateralBalance(uint256 listingId)
+        external
+        view
+        returns (uint256);
 }

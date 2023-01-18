@@ -48,6 +48,32 @@ abstract contract Service is Ownable, IService {
         _;
     }
 
+    modifier onlyValidAmount(uint256 listingId, uint256 amount) virtual {
+        ServiceListing memory listing = listings[listingId];
+
+        if (amount == 0) {
+            revert ZeroAmountNotAllowed({currency: listing.currency});
+        }
+
+        if (listing.maxAmount < amount || listing.minAmount > amount) {
+            revert AmountOutOfBounds({
+                currency: listing.currency,
+                amount: amount,
+                min: listing.minAmount,
+                max: listing.maxAmount
+            });
+        }
+
+        if (!listing.enabled) {
+            revert ListingDisabled(listingId);
+        }
+        _;
+    }
+    
+    function _transferHasRBTC() internal returns (bool) {
+        return msg.value > 0;
+    }
+
     /**
      * @inheritdoc IService
      */

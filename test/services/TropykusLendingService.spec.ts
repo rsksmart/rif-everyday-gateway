@@ -89,7 +89,7 @@ describe('Tropykus Lending Service', () => {
           minDuration: 0,
           maxDuration: 0,
           interestRate: ethers.utils.parseEther('0.05'), // 5%
-          loanToValueCurrency: ethers.constants.AddressZero,
+          collateralCurrency: ethers.constants.AddressZero,
           currency: ethers.constants.AddressZero,
           payBackOption: PaybackOption.Day,
           enabled: true,

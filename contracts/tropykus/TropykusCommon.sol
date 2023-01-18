@@ -26,9 +26,7 @@ abstract contract TropykusCommon {
 
         if (currency != address(0)) {
             smartWallet.execute(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
+                mtx,
                 abi.encodeWithSignature(
                     "transferFrom(address,address,uint256)",
                     mtx.req.from,
@@ -40,9 +38,7 @@ abstract contract TropykusCommon {
             );
 
             smartWallet.execute(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
+                mtx,
                 abi.encodeWithSignature(
                     "approve(address,uint256)",
                     market,
@@ -52,10 +48,9 @@ abstract contract TropykusCommon {
                 address(0)
             );
 
+
             (success, ret) = smartWallet.execute(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
+                mtx,
                 abi.encodeWithSignature("mint(uint256)", amount),
                 address(market),
                 address(0)
@@ -65,13 +60,60 @@ abstract contract TropykusCommon {
             // and the market will always be a CToken
             //slither-disable-next-line arbitrary-send-eth
             (success, ret) = smartWallet.execute{value: amount}(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
+                mtx,
                 abi.encodeWithSignature("mint()"),
                 address(market),
                 address(0)
             );
+        }
+    }
+
+    function _transferAndApproveERC20ToMarket(
+        IForwarder smartWallet,
+        IForwarder.MetaTransaction calldata mtx,
+        address erc20Token,
+        uint256 amount
+    ) internal {
+        bool transferFromTxSuccess;
+        bool approveTxSuccess;
+        (transferFromTxSuccess, ) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                mtx.req.from,
+                address(smartWallet),
+                amount
+            ),
+            erc20Token,
+            address(0)
+        );
+
+        if (!transferFromTxSuccess) {
+            revert ERC20TransferFromFailed({
+                currency: erc20Token,
+                from: mtx.req.from,
+                to: address(smartWallet),
+                amount: amount
+            });
+        }
+
+        (approveTxSuccess, ) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature(
+                "approve(address,uint256)",
+                getMarketForCurrency(erc20Token),
+                amount
+            ),
+            erc20Token,
+            address(0)
+        );
+
+        if (!approveTxSuccess) {
+            revert ERC20ApproveFailed({
+                currency: erc20Token,
+                spender: getMarketForCurrency(erc20Token),
+                amount: amount
+            });
         }
     }
 
