@@ -174,7 +174,7 @@ describe.only('Tropykus Borrowing Service', () => {
         await createListing(ethers.constants.AddressZero, doc.address);
       });
 
-      it('should allow to borrow DOC after lending on tropykus', async () => {
+      it('should borrow ERC20 after lending RBTC on tropykus', async () => {
         const amountToBorrow = 2;
 
         const beforeLiquidity = await tropykusBorrowingService
@@ -245,7 +245,7 @@ describe.only('Tropykus Borrowing Service', () => {
         expect(actualBalanceUserAfter).to.equal(expectedUserBalanceAfterBorrow);
       });
 
-      it('should allow to repay borrow debt', async () => {
+      it('should repay ERC20 borrow debt', async () => {
         const amountToBorrow = 5;
 
         const calculateAmountToLend = await tropykusBorrowingService
@@ -352,7 +352,7 @@ describe.only('Tropykus Borrowing Service', () => {
         );
       });
 
-      it('should allow withdraw collateral after repaying debt', async () => {
+      it('should withdraw RBTC collateral after paying ERC20 debt', async () => {
         const amountToBorrow = 5;
 
         const calculateAmountToLend = await tropykusBorrowingService
@@ -516,7 +516,7 @@ describe.only('Tropykus Borrowing Service', () => {
         await createListing(doc.address, ethers.constants.AddressZero);
       });
 
-      it('should allow to borrow RBTC after lending on tropykus', async () => {
+      it('should borrow RBTC after lending ERC20 on tropykus', async () => {
         const amountToBorrow = 1;
 
         const userLiquidityBeforeBorrow = await tropykusBorrowingService
@@ -602,7 +602,7 @@ describe.only('Tropykus Borrowing Service', () => {
         );
       });
 
-      it('should allow to repay ERC20 borrow debt', async () => {
+      it('should repay RBTC borrow debt', async () => {
         const amountToBorrow = 1;
 
         const calculateAmountToLend = await tropykusBorrowingService
@@ -724,7 +724,7 @@ describe.only('Tropykus Borrowing Service', () => {
         );
       });
 
-      it('should allow withdraw collateral after repaying debt', async () => {
+      it('should withdraw ERC20 collateral after paying RBTC debt', async () => {
         const amountToBorrow = 1;
 
         const calculateAmountToLend = await tropykusBorrowingService
