@@ -20,7 +20,8 @@
     "format:ts": "prettier -c -w --no-editorconfig **/*.ts",
     "format": "npm run format:sol && npm run format:ts",
     "postinstall": "npm run compile",
-    "tdd": "npm run compile && REPORT_GAS=true npx hardhat watch tdd"
+    "tdd": "npm run compile && REPORT_GAS=true npx hardhat watch tdd",
+    "docs": "npx hardhat docgen"
   },
   "lint-staged": {
     "*.ts": "eslint --cache --fix"
