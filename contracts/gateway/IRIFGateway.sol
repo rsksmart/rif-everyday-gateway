@@ -51,7 +51,7 @@ interface IRIFGateway {
     /**
      * @notice Returns services and providers registered on the gateway
      * @return services array of services registered on the gateway
-     * @return providers array of providers registered at the gateway
+     * @return providers array of providers registered on the gateway
      */
     function getServicesAndProviders()
         external
