@@ -42,7 +42,7 @@ interface IRIFGateway {
 
     /**
      * @notice Adds a new service to the gateway
-     * @dev Checks if the service adheres to the service interface
+     * @dev Checks if the service adheres to the service interface (EIP-165)
      * and adds the provider if it is the first service
      * @param service The address of the service to be added
      */
