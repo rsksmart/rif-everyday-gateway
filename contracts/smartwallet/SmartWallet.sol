@@ -11,6 +11,14 @@ import "./RSKAddrValidator.sol";
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
+/**
+ * @title SmartWallet
+ * @notice SmartWallet is a contract that allows users to execute transactions on behalf of them
+ * without having to send ETH to the contract. It also allows users to execute transactions
+ * without having to sign all of them with their private key.
+ * Based on rif-relay-contracts smartwallet/SmartWallet.sol
+ * @author RIF protocols team
+ */
 contract SmartWallet is IForwarder, ReentrancyGuard {
     using ECDSA for bytes32;
 
@@ -31,21 +39,30 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         _buildDomainSeparator();
     }
 
+    /**
+     * @notice Sets the domainSeparator to the value defined on EIP-712
+     */
     function _buildDomainSeparator() internal {
-        domainSeparator = keccak256(
-            abi.encode(
-                keccak256(
-                    "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
-                ), //hex"8b73c3c69bb8fe3d512ecc4cf759cc79239f7b179b0ffacaa9a75d522b39400f",
-                keccak256("RSK RIF GATEWAY"), //DOMAIN_NAME hex"d41b7f69f4d7734774d21b5548d74704ad02f9f1545db63927a1d58479c576c8"
-                DATA_VERSION_HASH,
-                _getChainID(),
-                address(this)
-            )
-        );
+        domainSeparator = _encodedDomainSeparator();
     }
 
+    /**
+     * @notice Returns the domain separator for the smart wallet
+     * Domain separator is defined on EIP-712
+     * https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
+     * @return Encoded domain separator
+     */
     function getDomainSeparator() public view returns (bytes32) {
+        return _encodedDomainSeparator();
+    }
+
+    /**
+     * @notice Returns the domain separator for the smart wallet
+     * Domain separator is defined on EIP-712
+     * https://eips.ethereum.org/EIPS/eip-712#definition-of-domainseparator
+     * @return Encoded domain separator
+     */
+    function _encodedDomainSeparator() internal view returns (bytes32) {
         return
             keccak256(
                 abi.encode(
@@ -60,13 +77,16 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
             );
     }
 
+    /**
+     * @notice Sets the owner of the smart wallet
+     * @dev To avoid re-entrancy attacks by external contracts,
+     * we set the variable that controls "is initialized"
+     * set this instance as initialized, by storing on the EVM
+     * storage the address of the owner of the smart wallet on
+     * the slot bytes32(uint256(keccak256('eip1967.proxy.owner')) - 1) = a7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a
+     * @param owner The address of the owner of the SmartWallet
+     */
     function _setOwner(address owner) private {
-        //To avoid re-entrancy attacks by external contracts, the first thing we do is set
-        //the variable that controls "is initialized"
-        //We set this instance as initialized, by
-        //storing the logic address
-        //Set the owner of this Smart Wallet
-        //slot for owner = bytes32(uint256(keccak256('eip1967.proxy.owner')) - 1) = a7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a
         bytes32 ownerCell = keccak256(abi.encodePacked(owner));
 
         //slither-disable-next-line assembly
@@ -78,6 +98,9 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         }
     }
 
+    /**
+     * @inheritdoc IForwarder
+     */
     function verify(
         bytes32 suffixData,
         ForwardRequest memory req,
@@ -86,6 +109,12 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         _verifySig(suffixData, req, sig);
     }
 
+    /**
+     * @notice Returns the address of the owner of the SmartWallet+
+     * @dev Loads from EVM storage the slot where the owner is stored
+     * slot = bytes32(uint256(keccak256('eip1967.proxy.owner')) - 1) = a7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a
+     * @return owner the address of the owner of the SmartWallet
+     */
     function _getOwner() private view returns (bytes32 owner) {
         //slither-disable-next-line assembly
         assembly {
@@ -95,6 +124,9 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         }
     }
 
+    /**
+     * @inheritdoc IForwarder
+     */
     function execute(
         bytes32 suffixData,
         ForwardRequest memory req,
@@ -131,6 +163,10 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice Returns the value of the current chain ID obtained from the chain ID configuration
+     * @return id chainId the chain id
+     */
     function _getChainID() private view returns (uint256 id) {
         //slither-disable-next-line assembly
         assembly {
@@ -138,6 +174,10 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice Verifies that the nonce is valid
+     * @param req the forward request
+     */
     function _verifyNonce(ForwardRequest memory req) private {
         //Verify nonce
         if (nonce == req.nonce) {
@@ -155,6 +195,12 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         }
     }
 
+    /**
+     * @notice Verifies that the signature is valid
+     * @param suffixData the suffix data
+     * @param req the forward request
+     * @param sig the signature
+     */
     function _verifySig(
         bytes32 suffixData,
         ForwardRequest memory req,
@@ -187,6 +233,12 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         );
     }
 
+    /**
+     * @notice Returns the encoded data given the suffix data and the forward request
+     * @param suffixData the suffix data
+     * @param req the forward request
+     * @return encodedData the encoded data
+     */
     function _getEncoded(bytes32 suffixData, ForwardRequest memory req)
         private
         pure

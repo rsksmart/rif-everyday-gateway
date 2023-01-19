@@ -2,6 +2,12 @@
 pragma solidity ^0.8.16;
 pragma experimental ABIEncoderV2;
 
+/**
+ * @title IForwarder
+ * @dev Interface for the Forwarder contract
+ * Based on rif-relay-contracts interfaces/IForwarder.sol
+ * @author RIF protocols team
+ */
 interface IForwarder {
     struct ForwardRequest {
         address from;
@@ -15,12 +21,19 @@ interface IForwarder {
         bytes sig;
     }
 
+    /**
+     * @notice Returns the nonce of the user transactions
+     * @return nonce The nonce of the user transactions
+     */
     function nonce() external view returns (uint256);
 
     /**
-     * verify the transaction would execute.
+     * @notice verify the transaction would execute.
      * validate the signature and the nonce of the request.
      * revert if either signature or nonce are incorrect.
+     + @param suffixData the extension data used when signing this request
+     * @param forwardRequest the request to verify
+     * @param signature the signature to verify
      */
     function verify(
         bytes32 suffixData,
@@ -29,7 +42,7 @@ interface IForwarder {
     ) external view;
 
     /**
-     * execute a transaction
+     * @notice Executes a transaction on behalf of the owner of the SmartWallet
      * @param forwardRequest - all transaction parameters
      * @param suffixData - the extension data used when signing this request.
      * @param signature - signature to validate.

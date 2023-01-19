@@ -8,10 +8,15 @@ import "./SmartWallet.sol";
 /* solhint-disable no-inline-assembly */
 /* solhint-disable avoid-low-level-calls */
 
+/**
+ * @title SmartWalletFactory
+ * @dev Factory contract for creating SmartWallets
+ * Based on rif-relay-contracts factory/SmartWalletFactory.sol
+ * @author RIF protocols team
+ */
 contract SmartWalletFactory is ISmartWalletFactory {
     /**
-     * Calculates the Smart Wallet address for an owner EOA
-     * @param owner - EOA of the owner of the smart wallet
+     * @inheritdoc ISmartWalletFactory
      */
     function getSmartWalletAddress(address owner)
         external
@@ -38,12 +43,20 @@ contract SmartWalletFactory is ISmartWalletFactory {
             );
     }
 
+    /**
+     * @notice Returns the encoded bytecode for a SmartWallet and owner
+     * @param owner The address of the owner of the SmartWallet
+     * @return Encoded data of the SmartWallet bytecode and the owner address
+     */
     function _getBytecode(address owner) private view returns (bytes memory) {
         bytes memory bytecode = type(SmartWallet).creationCode;
 
         return abi.encodePacked(bytecode, abi.encode(owner));
     }
 
+    /**
+     * @inheritdoc ISmartWalletFactory
+     */
     function createUserSmartWallet(address owner) external override {
         _deploy(
             owner,
@@ -57,6 +70,11 @@ contract SmartWalletFactory is ISmartWalletFactory {
         );
     }
 
+    /**
+     * @notice Creates a new SmartWallet using Salted contract creations / create2
+     * @param owner The address of the owner of the SmartWallet
+     * @param salt The salt used to deploy the SmartWallet
+     */
     function _deploy(address owner, bytes32 salt)
         internal
         returns (address addr)
@@ -69,6 +87,9 @@ contract SmartWalletFactory is ISmartWalletFactory {
         emit Deployed(addr, uint256(salt));
     }
 
+    /**
+     * @inheritdoc ISmartWalletFactory
+     */
     function getSmartWallet(address owner) public returns (SmartWallet) {
         address smartWalletAddress = this.getSmartWalletAddress(owner);
         uint32 size;
