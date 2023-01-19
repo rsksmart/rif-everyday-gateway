@@ -42,9 +42,10 @@ abstract contract BorrowService is Service, IBorrowService {
     /**
      * @inheritdoc IBorrowService
      */
-    function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
-        public
-        virtual;
+    function withdraw(
+        IForwarder.MetaTransaction calldata mtx,
+        uint256 listingId
+    ) public virtual;
 
     function calculateRequiredCollateral(
         uint256 listingId,

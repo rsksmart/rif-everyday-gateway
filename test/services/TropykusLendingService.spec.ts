@@ -16,7 +16,7 @@ import { signTransactionForExecutor } from '../smartwallet/utils';
 import { Wallet } from 'ethers';
 import { tropykusFixture } from 'test/utils/tropykusFixture';
 import { PaybackOption } from '../constants/service';
-import { deployRIFGateway } from './utils';
+import { deployRIFGateway, toSmallNumber } from './utils';
 import { deployContract } from '../../utils/deployment.utils';
 
 describe('Tropykus Lending Service', () => {
@@ -106,7 +106,7 @@ describe('Tropykus Lending Service', () => {
           minDuration: 0,
           maxDuration: 0,
           interestRate: ethers.utils.parseEther('0.05'), // 5%
-          loanToValueCurrency: ethers.constants.AddressZero,
+          collateralCurrency: ethers.constants.AddressZero,
           currency: doc.address,
           payBackOption: PaybackOption.Day,
           enabled: true,
@@ -142,16 +142,18 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .currentLiquidity(0);
 
-      expect(amountToLend).to.be.closeTo(
-        +beforeLiquidity / 1e18 - +afterLiquidity / 1e18,
-        0.0001
-      );
+      const expectedAmountLent =
+        toSmallNumber(beforeLiquidity) - toSmallNumber(afterLiquidity);
+      expect(amountToLend).to.be.closeTo(expectedAmountLent, 0.0001);
 
-      const tropBalance = await tropykusLendingService
+      const actualUserTropykusBalance = await tropykusLendingService
         .connect(externalWallet)
         .getBalance(ethers.constants.AddressZero, { gasLimit: 3000000 });
 
-      expect(+tropBalance / 1e18).to.be.closeTo(0.0001, 0.001);
+      expect(toSmallNumber(actualUserTropykusBalance)).to.be.closeTo(
+        0.0001,
+        0.001
+      );
     });
 
     it('should allow to lend DOC on tropykus', async () => {
@@ -200,16 +202,18 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .currentLiquidity(1);
 
-      expect(amountToLend).to.be.closeTo(
-        +beforeLiquidity / 1e18 - +afterLiquidity / 1e18,
-        0.1
-      );
+      const expectedAmountLent =
+        toSmallNumber(beforeLiquidity) - toSmallNumber(afterLiquidity);
+      expect(amountToLend).to.be.closeTo(expectedAmountLent, 0.0001);
 
-      const tropBalance = await tropykusLendingService
+      const actualUserTropykusBalance = await tropykusLendingService
         .connect(externalWallet)
         .getBalance(doc.address, { gasLimit: 3000000 });
 
-      expect(+tropBalance / 1e18).to.be.closeTo(amountToLend, 0.1);
+      expect(toSmallNumber(actualUserTropykusBalance)).to.be.closeTo(
+        amountToLend,
+        0.1
+      );
     });
 
     it('should allow to withdraw RBTC on tropykus', async () => {
@@ -234,7 +238,7 @@ describe('Tropykus Lending Service', () => {
         .connect(externalWallet)
         .getBalance(ethers.constants.AddressZero);
 
-      expect(+balanceTroBefore / 1e18).to.be.closeTo(0.0001, 0.001);
+      expect(toSmallNumber(balanceTroBefore)).to.be.closeTo(0.0001, 0.001);
 
       const mtxForWithdrawal = await signTransactionForExecutor(
         externalWallet.address,
@@ -252,11 +256,11 @@ describe('Tropykus Lending Service', () => {
 
       await withdrawTx.wait();
 
-      const balanceTropAfter = await tropykusLendingService
+      const userTropykusBalanceAfterWithdraw = await tropykusLendingService
         .connect(externalWallet)
         .getBalance(ethers.constants.AddressZero);
 
-      expect(+balanceTropAfter / 1e18).to.be.equals(0);
+      expect(toSmallNumber(userTropykusBalanceAfterWithdraw)).to.be.equals(0);
 
       expect(
         await feeManager.getDebtBalance(tropykusLendingService.address)
@@ -301,11 +305,13 @@ describe('Tropykus Lending Service', () => {
         );
       await lendTx.wait();
 
-      const balanceTropBefore = await tropykusLendingService
+      const userBalanceTropykusBeforeWithdraw = await tropykusLendingService
         .connect(externalWallet)
         .getBalance(doc.address);
 
-      expect(+balanceTropBefore / 1e18).to.be.equals(amountToLend);
+      expect(toSmallNumber(userBalanceTropykusBeforeWithdraw)).to.be.equals(
+        amountToLend
+      );
 
       const mtxForWithdrawal = await signTransactionForExecutor(
         externalWallet.address,
@@ -323,11 +329,11 @@ describe('Tropykus Lending Service', () => {
 
       await withdrawTx.wait();
 
-      const balanceTropAfter = await tropykusLendingService
+      const userTropykusBalanceAfterWithdraw = await tropykusLendingService
         .connect(externalWallet)
         .getBalance(doc.address);
 
-      expect(+balanceTropAfter / 1e18).to.be.equals(0);
+      expect(toSmallNumber(userTropykusBalanceAfterWithdraw)).to.be.equals(0);
 
       expect(
         await feeManager.getDebtBalance(tropykusLendingService.address)

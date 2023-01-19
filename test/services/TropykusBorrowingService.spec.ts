@@ -18,10 +18,11 @@ import { PaybackOption } from '../constants/service';
 import { deployRIFGateway, toSmallNumber } from './utils';
 import { ContractReceipt, Wallet } from 'ethers';
 import { deployContract } from 'utils/deployment.utils';
+import { $TropykusBorrowingService } from '../../typechain-types/contracts-exposed/tropykus/TropykusBorrowingService.sol/$TropykusBorrowingService';
 
-describe.only('Tropykus Borrowing Service', () => {
+describe('Tropykus Borrowing Service', () => {
   let owner: SignerWithAddress;
-  let tropykusBorrowingService: TropykusBorrowingService;
+  let tropykusBorrowingService: $TropykusBorrowingService;
   let smartWalletFactory: SmartWalletFactory;
   let smartWalletAddress: string;
   let privateKey: string;
@@ -63,8 +64,8 @@ describe.only('Tropykus Borrowing Service', () => {
       await deployRIFGateway());
 
     ({ contract: tropykusBorrowingService } =
-      await deployContract<TropykusBorrowingService>(
-        'TropykusBorrowingService',
+      await deployContract<$TropykusBorrowingService>(
+        '$TropykusBorrowingService',
         {
           gateway: RIFGateway.address,
           smartWalletFactory: smartWalletFactory.address,
@@ -149,20 +150,24 @@ describe.only('Tropykus Borrowing Service', () => {
     it('should retrieve market for currency', async () => {
       await createListing(ethers.constants.AddressZero, doc.address);
       const tropykusBorrow = (await ethers.getContractAt(
-        'TropykusBorrowingService',
+        '$TropykusBorrowingService',
         tropykusBorrowingService.address,
         owner
-      )) as TropykusBorrowingService;
+      )) as $TropykusBorrowingService;
 
-      const cdoc = await tropykusBorrow.getMarketForCurrency(
-        tropykusContractsDeployed.doc
+      const cdoc = await tropykusBorrow.$_getMarketForCurrency(
+        tropykusContractsDeployed.doc,
+        tropykusContractsDeployed.comptroller,
+        tropykusContractsDeployed.crbtc
       );
       expect(cdoc.toLowerCase()).equals(
         tropykusContractsDeployed.cdoc.toLowerCase()
       );
 
-      const crbtc = await tropykusBorrow.getMarketForCurrency(
-        ethers.constants.AddressZero
+      const crbtc = await tropykusBorrow.$_getMarketForCurrency(
+        ethers.constants.AddressZero,
+        tropykusContractsDeployed.comptroller,
+        tropykusContractsDeployed.crbtc
       );
       expect(crbtc.toLowerCase()).equals(
         tropykusContractsDeployed.crbtc.toLowerCase()
@@ -819,7 +824,7 @@ describe.only('Tropykus Borrowing Service', () => {
 
         const withdrawTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .withdraw(mtxForWithdrawal, doc.address, {
+          .withdraw(mtxForWithdrawal, 0, {
             gasLimit: 3000000,
           });
         await withdrawTx.wait();

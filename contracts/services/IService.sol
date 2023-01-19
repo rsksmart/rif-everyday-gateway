@@ -18,20 +18,6 @@ interface IService is IERC165 {
     event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     /**
-     * @notice Emitted when funds get withdrawn from the service
-     * @param listingId The id of the listing
-     * @param withdrawer The address of the withdrawer
-     * @param currency The currency of the listing
-     * @param amount The amount of funds withdrawn
-     */
-    event Withdraw(
-        uint256 indexed listingId,
-        address indexed withdrawer,
-        address indexed currency,
-        uint256 amount
-    );
-
-    /**
      * @notice Reverts when the amount is zero
      * @param currency requested currency in which the listing operates
      */

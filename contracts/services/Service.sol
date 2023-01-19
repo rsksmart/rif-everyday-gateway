@@ -48,12 +48,11 @@ abstract contract Service is Ownable, IService {
         _;
     }
 
-    modifier onlyValidAmount(uint256 listingId, uint256 amount) virtual {
+    function _onlyValidListingArgs(uint256 listingId, uint256 amount)
+        internal
+        view
+    {
         ServiceListing memory listing = listings[listingId];
-
-        if (amount == 0) {
-            revert ZeroAmountNotAllowed({currency: listing.currency});
-        }
 
         if (listing.maxAmount < amount || listing.minAmount > amount) {
             revert AmountOutOfBounds({
@@ -67,11 +66,6 @@ abstract contract Service is Ownable, IService {
         if (!listing.enabled) {
             revert ListingDisabled(listingId);
         }
-        _;
-    }
-    
-    function _transferHasRBTC() internal returns (bool) {
-        return msg.value > 0;
     }
 
     /**

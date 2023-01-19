@@ -8,10 +8,11 @@ import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
 import "./ITropykus.sol";
+import {TropykusCommon} from "./TropykusCommon.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
-contract TropykusBorrowingService is BorrowService {
+contract TropykusBorrowingService is BorrowService, TropykusCommon {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
     error CollateralTransferFailed(
@@ -20,15 +21,7 @@ contract TropykusBorrowingService is BorrowService {
         address collateralCurrency,
         uint256 amount
     );
-    error ERC20TransferFromFailed(
-        address currency,
-        address from,
-        address to,
-        uint256 amount
-    );
-    error ERC20ApproveFailed(address currency, address spender, uint256 amount);
 
-    uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
     // Amount that will prevent the user to get liquidated at a first instance for a price fluctuation on the collateral.
     uint256 private constant _DELTA_COLLATERAL_WITH_PRECISION = 5e18;
 
@@ -36,26 +29,17 @@ contract TropykusBorrowingService is BorrowService {
     address private _oracle;
     address private _crbtc;
     address private _cdoc;
-    SmartWalletFactory private _smartWalletFactory;
     uint256 private constant _BLOCKS_PER_YEAR = 2 * 60 * 24 * 365; // blocks created every 30 seconds aprox
-
-    struct TropykusContracts {
-        address comptroller;
-        address oracle;
-        address crbtc;
-        address cdoc;
-    }
 
     constructor(
         address gateway,
         SmartWalletFactory smartWalletFactory,
         TropykusContracts memory contracts
-    ) BorrowService(gateway, "Tropykus") {
+    ) BorrowService(gateway, "Tropykus") TropykusCommon(smartWalletFactory) {
         _comptroller = contracts.comptroller;
         _oracle = contracts.oracle;
         _crbtc = contracts.crbtc;
         _cdoc = contracts.cdoc;
-        _smartWalletFactory = smartWalletFactory;
     }
 
     function borrow(
@@ -68,16 +52,26 @@ contract TropykusBorrowingService is BorrowService {
         public
         payable
         override
-        onlyValidAmount(listingId, amount)
         withSubscription(mtx.req.from, listingId, wallet)
     {
         ServiceListing memory listing = listings[listingId];
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
+        uint256 _amountToLend = listing.collateralCurrency == address(0)
+            ? msg.value
+            : amount;
+
+        if (amount == 0) {
+            revert ZeroAmountNotAllowed({currency: listing.currency});
+        }
+        if (_amountToLend == 0) {
+            revert ZeroAmountNotAllowed({currency: listing.collateralCurrency});
+        }
+
+        _onlyValidListingArgs(listingId, amount);
 
         uint256 collateralPayment = _validateAndCalculateRequiredCollateral(
-            smartWallet,
             listing,
             amount
         );
@@ -89,26 +83,12 @@ contract TropykusBorrowingService is BorrowService {
     }
 
     function _validateAndCalculateRequiredCollateral(
-        IForwarder smartWallet,
         ServiceListing memory listing,
         uint256 amountToBorrow
     ) internal returns (uint256 collateralPayment) {
-        if (listing.collateralCurrency != address(0) && msg.value > 0) {
-            revert InvalidCollateralCurrency({
-                expectedCurrency: listing.collateralCurrency
-            });
-        }
-
-        collateralPayment = _transferHasRBTC()
-            ? msg.value
-            : IERC20(listing.collateralCurrency).allowance(
-                msg.sender,
-                address(smartWallet)
-            );
-
-        if (collateralPayment == 0) {
-            revert InsufficientCollateral(listing.collateralCurrency);
-        }
+        collateralPayment = _validateAndGetAmountToLend(
+            listing.collateralCurrency
+        );
 
         uint256 requiredCollateral = calculateRequiredCollateral(
             listing.id,
@@ -129,15 +109,21 @@ contract TropykusBorrowingService is BorrowService {
         uint256 amountToBorrow
     ) public view override returns (uint256) {
         ServiceListing memory listing = listings[listingId];
+        address collateralMarket = _getMarketForCurrency(
+            listing.collateralCurrency,
+            _comptroller,
+            _crbtc
+        );
+
         uint256 collateralMarketPrice = IPriceOracleProxy(_oracle)
-            .getUnderlyingPrice(
-                getMarketForCurrency(listing.collateralCurrency)
-            );
+            .getUnderlyingPrice(collateralMarket);
         (, uint256 collateralFactor) = IComptrollerG6(_comptroller).markets(
-            getMarketForCurrency(listing.collateralCurrency)
+            collateralMarket
         );
         uint256 borrowCurrencyMarketPrice = IPriceOracleProxy(_oracle)
-            .getUnderlyingPrice(getMarketForCurrency(listing.currency));
+            .getUnderlyingPrice(
+                _getMarketForCurrency(listing.currency, _comptroller, _crbtc)
+            );
 
         return
             (((amountToBorrow + _DELTA_COLLATERAL_WITH_PRECISION) *
@@ -151,18 +137,20 @@ contract TropykusBorrowingService is BorrowService {
         ServiceListing memory listing,
         uint256 collateral
     ) internal {
-        address collateralCurrencyMarket = getMarketForCurrency(
-            listing.collateralCurrency
+        address collateralCurrencyMarket = _getMarketForCurrency(
+            listing.collateralCurrency,
+            _comptroller,
+            _crbtc
         );
         bool success;
-        bool isCollateralInRBTC = _transferHasRBTC();
+        bool isCollateralInRBTC = msg.value > 0;
 
         if (isCollateralInRBTC) {
             assert(msg.value == collateral);
         } else {
             _transferAndApproveERC20ToMarket(
-                smartWallet,
                 mtx,
+                collateralCurrencyMarket,
                 listing.collateralCurrency,
                 collateral
             );
@@ -174,12 +162,7 @@ contract TropykusBorrowingService is BorrowService {
 
         (success, ) = smartWallet.execute{
             value: isCollateralInRBTC ? msg.value : 0
-        }(
-            mtx,
-            mintSignature,
-            collateralCurrencyMarket,
-            isCollateralInRBTC ? listing.collateralCurrency : address(0)
-        );
+        }(mtx, mintSignature, collateralCurrencyMarket, address(0));
 
         if (!success) {
             revert CollateralTransferFailed(
@@ -199,8 +182,16 @@ contract TropykusBorrowingService is BorrowService {
         address[] memory markets = new address[](2);
 
         // TODO: are these the only markets to be used?
-        markets[0] = getMarketForCurrency(listing.collateralCurrency);
-        markets[1] = getMarketForCurrency(listing.currency);
+        markets[0] = _getMarketForCurrency(
+            listing.collateralCurrency,
+            _comptroller,
+            _crbtc
+        );
+        markets[1] = _getMarketForCurrency(
+            listing.currency,
+            _comptroller,
+            _crbtc
+        );
 
         smartWallet.execute(
             mtx,
@@ -219,12 +210,16 @@ contract TropykusBorrowingService is BorrowService {
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
-        smartWallet.execute(
+        (bool success, bytes memory resp) = smartWallet.execute(
             mtx,
             abi.encodeWithSignature("borrow(uint256)", amount),
-            getMarketForCurrency(listing.currency),
+            _getMarketForCurrency(listing.currency, _comptroller, _crbtc),
             listing.currency
         );
+
+        if (!success) {
+            revert FailedOperation(resp);
+        }
 
         emit Borrow({
             listingId: listing.id,
@@ -241,33 +236,36 @@ contract TropykusBorrowingService is BorrowService {
         uint256 listingId
     ) public payable override {
         ServiceListing memory listing = listings[listingId];
+        address market = _getMarketForCurrency(
+            listing.currency,
+            _comptroller,
+            _crbtc
+        );
 
-        if (amount <= 0)
+        if (amount <= 0) {
             revert InsufficientCollateral(listing.collateralCurrency);
+        }
+
+        _transferAndApproveERC20ToMarket(mtx, market, listing.currency, amount);
+
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        _transferAndApproveERC20ToMarket(
-            smartWallet,
-            mtx,
-            listing.currency,
-            amount
-        );
-
-        bytes memory repayBorrowSignature = _transferHasRBTC()
+        bytes memory repayBorrowSignature = msg.value > 0
             ? abi.encodeWithSignature("repayBorrowAll()")
             : abi.encodeWithSignature(
                 "repayBorrow(uint256)",
                 type(uint256).max
             );
 
-        smartWallet.execute{value: msg.value}(
-            mtx,
-            repayBorrowSignature,
-            getMarketForCurrency(listing.currency),
-            listing.currency
-        );
+        (bool success, bytes memory resp) = smartWallet.execute{
+            value: msg.value
+        }(mtx, repayBorrowSignature, market, listing.currency);
+
+        if (!success) {
+            revert FailedOperation(resp);
+        }
 
         emit Pay({
             listingId: listingId,
@@ -275,55 +273,6 @@ contract TropykusBorrowingService is BorrowService {
             currency: listing.currency,
             amount: amount
         });
-    }
-
-    function _transferAndApproveERC20ToMarket(
-        IForwarder smartWallet,
-        IForwarder.MetaTransaction calldata mtx,
-        address erc20Token,
-        uint256 amount
-    ) internal {
-        bool transferFromTxSuccess;
-        bool approveTxSuccess;
-        (transferFromTxSuccess, ) = smartWallet.execute(
-            mtx,
-            abi.encodeWithSignature(
-                "transferFrom(address,address,uint256)",
-                mtx.req.from,
-                address(smartWallet),
-                amount
-            ),
-            erc20Token,
-            address(0)
-        );
-
-        if (!transferFromTxSuccess) {
-            revert ERC20TransferFromFailed({
-                currency: erc20Token,
-                from: mtx.req.from,
-                to: address(smartWallet),
-                amount: amount
-            });
-        }
-
-        (approveTxSuccess, ) = smartWallet.execute(
-            mtx,
-            abi.encodeWithSignature(
-                "approve(address,uint256)",
-                getMarketForCurrency(erc20Token),
-                amount
-            ),
-            erc20Token,
-            address(0)
-        );
-
-        if (!approveTxSuccess) {
-            revert ERC20ApproveFailed({
-                currency: erc20Token,
-                spender: getMarketForCurrency(erc20Token),
-                amount: amount
-            });
-        }
     }
 
     function getCollateralBalance(uint256 listingId)
@@ -335,8 +284,10 @@ contract TropykusBorrowingService is BorrowService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        address collateralCurrencyMarket = getMarketForCurrency(
-            listings[listingId].collateralCurrency
+        address collateralCurrencyMarket = _getMarketForCurrency(
+            listings[listingId].collateralCurrency,
+            _comptroller,
+            _crbtc
         );
 
         (, bytes memory exchangeRatedata) = collateralCurrencyMarket.staticcall(
@@ -352,46 +303,25 @@ contract TropykusBorrowingService is BorrowService {
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
-    function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
-        public
-        override
-    {
+    function withdraw(
+        IForwarder.MetaTransaction calldata mtx,
+        uint256 listingId
+    ) public override {
+        ServiceListing memory listing = listings[listingId];
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        address market = getMarketForCurrency(currency);
+        address market = _getMarketForCurrency(
+            listing.collateralCurrency,
+            _comptroller,
+            _crbtc
+        );
         (, bytes memory balanceData) = market.call(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
 
-        uint256 tokens = abi.decode(balanceData, (uint256));
-        if (tokens == 0) {
-            revert("no tokens to withdraw");
-        }
-
-        (bool success, bytes memory res) = smartWallet.execute(
-            mtx,
-            abi.encodeWithSignature("redeem(uint256)", tokens),
-            market,
-            currency
-        );
-
-        if (success) {
-            (, bytes memory data) = market.call(
-                abi.encodeWithSignature("exchangeRateStored()")
-            );
-
-            uint256 exchangeRate = abi.decode(data, (uint256));
-            emit Withdraw({
-                listingId: 0,
-                withdrawer: msg.sender,
-                currency: address(0),
-                amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
-            });
-        } else {
-            revert FailedOperation(res);
-        }
+        _withdraw(mtx, listingId, listing.collateralCurrency, market);
     }
 
     function getBalance(address currency)
@@ -404,12 +334,16 @@ contract TropykusBorrowingService is BorrowService {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
-        (, bytes memory data) = getMarketForCurrency(currency).staticcall(
-            abi.encodeWithSignature(
-                "borrowBalanceStored(address)",
-                address(smartWallet)
-            )
-        );
+        (, bytes memory data) = _getMarketForCurrency(
+            currency,
+            _comptroller,
+            _crbtc
+        ).staticcall(
+                abi.encodeWithSignature(
+                    "borrowBalanceStored(address)",
+                    address(smartWallet)
+                )
+            );
 
         balanceBorrowed = abi.decode(data, (uint256));
     }
@@ -422,40 +356,10 @@ contract TropykusBorrowingService is BorrowService {
     {
         ServiceListing memory listing = listings[listingId];
         listing.interestRate =
-            IcErc20(getMarketForCurrency(listing.currency))
-                .borrowRatePerBlock() *
+            IcErc20(
+                _getMarketForCurrency(listing.currency, _comptroller, _crbtc)
+            ).borrowRatePerBlock() *
             _BLOCKS_PER_YEAR;
         return listing;
-    }
-
-    function getMarketForCurrency(address currency)
-        public
-        view
-        returns (address)
-    {
-        if (currency == address(0)) {
-            return _crbtc;
-        }
-        IcErc20[] memory markets = IComptrollerG6(_comptroller).getAllMarkets();
-
-        for (uint256 i = 0; i < markets.length; i++) {
-            if (
-                !_compareStrings(markets[i].symbol(), "kSAT") &&
-                !_compareStrings(markets[i].symbol(), "kRBTC") &&
-                markets[i].underlying() == currency
-            ) {
-                return address(markets[i]);
-            }
-        }
-        return address(0);
-    }
-
-    function _compareStrings(string memory a, string memory b)
-        internal
-        pure
-        returns (bool)
-    {
-        return (keccak256(abi.encodePacked((a))) ==
-            keccak256(abi.encodePacked((b))));
     }
 }

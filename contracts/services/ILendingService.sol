@@ -46,5 +46,5 @@ interface ILendingService {
     function withdraw(
         IForwarder.MetaTransaction calldata mtx,
         uint256 listingId
-    ) external payable;
+    ) external;
 }
