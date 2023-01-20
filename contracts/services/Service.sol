@@ -34,18 +34,17 @@ abstract contract Service is Ownable, IService {
      * @param listingId The id of the listing
      * @param wallet The address of the wallet
      */
-    modifier withSubscription(
+    function _withSubscription(
         address subscriber,
         uint256 listingId,
         address wallet
-    ) {
+    ) internal {
         ISubscriptionReporter(_rifGateway).subscribe(
             subscriber,
             address(this),
             listingId,
             wallet
         );
-        _;
     }
 
     function _onlyValidListingArgs(uint256 listingId, uint256 amount)

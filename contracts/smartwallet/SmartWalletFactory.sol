@@ -93,6 +93,7 @@ contract SmartWalletFactory is ISmartWalletFactory {
     function getSmartWallet(address owner) public returns (SmartWallet) {
         address smartWalletAddress = this.getSmartWalletAddress(owner);
         uint32 size;
+        // slither-disable-next-line assembly
         assembly {
             size := extcodesize(smartWalletAddress)
         }

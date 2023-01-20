@@ -26,28 +26,31 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         uint256 amount,
         uint256 listingId,
         address wallet
-    )
-        public
-        payable
-        override
-        withSubscription(mtx.req.from, listingId, wallet)
-    {
+    ) public payable override {
         address currencyToLend = listings[listingId].currency;
         uint256 _amount = msg.value > 0 ? msg.value : amount;
 
         if (_amount == 0) {
             revert ZeroAmountNotAllowed({currency: currencyToLend});
         }
-
         _onlyValidListingArgs(listingId, _amount);
+
+        emit Lend({
+            listingId: listingId,
+            lender: msg.sender,
+            currency: currencyToLend,
+            amount: msg.value
+        });
+
+        _removeLiquidityInternal(_amount, listingId);
+        _withSubscription(mtx.req.from, listingId, wallet);
+
         uint256 amountToLend = _validateAndGetAmountToLend(currencyToLend);
         address market = _getMarketForCurrency(
             currencyToLend,
             _comptroller,
             _crbtc
         );
-
-        _removeLiquidityInternal(amountToLend, listingId);
 
         if (currencyToLend != address(0)) {
             _transferAndApproveERC20ToMarket(
@@ -59,13 +62,6 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         }
 
         _mintTokensInMarket(mtx, currencyToLend, amountToLend, market);
-
-        emit Lend({
-            listingId: listingId,
-            lender: msg.sender,
-            currency: currencyToLend,
-            amount: msg.value
-        });
     }
 
     function withdraw(
@@ -94,11 +90,12 @@ contract TropykusLendingService is LendingService, TropykusCommon {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
+        // slither-disable-next-line low-level-calls
         (, bytes memory exchangeRateData) = address(market).staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
-
+        // slither-disable-next-line low-level-calls
         (, bytes memory balanceData) = address(market).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );

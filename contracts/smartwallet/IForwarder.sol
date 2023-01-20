@@ -50,7 +50,7 @@ interface IForwarder {
      *
      * the transaction is verified, and then executed.
      * the success and response (ret) of "call" are returned.
-     * This method would return only verification errors. target errors 
+     * This method would return only verification errors. target errors
      * so it doesn't revert when a error happens when on the callee
      * are reported using the returned "success" and ret string
      */

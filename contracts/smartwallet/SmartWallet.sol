@@ -90,7 +90,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     function _setOwner(address owner) private {
         bytes32 ownerCell = keccak256(abi.encodePacked(owner));
 
-        //slither-disable-next-line assembly
+        // slither-disable-next-line assembly
         assembly {
             sstore(
                 0xa7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a,
@@ -117,7 +117,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
      * @return owner the address of the owner of the SmartWallet
      */
     function _getOwner() private view returns (bytes32 owner) {
-        //slither-disable-next-line assembly
+        // slither-disable-next-line assembly
         assembly {
             owner := sload(
                 0xa7b53796fd2d99cb1f5ae019b54f9e024446c3d12b483f733ccc62ed04eb126a
@@ -140,12 +140,14 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         _verifyNonce(mtx.req);
         _verifySig(mtx.suffixData, mtx.req, mtx.sig);
 
+        // slither-disable missing-zero-check low-level-calls
         (success, ret) = to.call{value: msg.value}(data);
 
         //If any balance has been added then transfer it to the owner EOA
         uint256 currentBalance = address(this).balance;
         if (currentBalance > 0) {
             //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
+            // slither-disable-next-line unchecked-lowlevel
             payable(mtx.req.from).call{value: currentBalance}("");
         }
 

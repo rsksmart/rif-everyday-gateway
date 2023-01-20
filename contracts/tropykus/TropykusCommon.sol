@@ -44,7 +44,7 @@ abstract contract TropykusCommon {
     error MintTokensInMarketError(address market, address currency);
     error ReedemOperationFailed(bytes response);
 
-    SmartWalletFactory internal _smartWalletFactory;
+    SmartWalletFactory internal immutable _smartWalletFactory;
 
     constructor(SmartWalletFactory smartWalletFactory) {
         _smartWalletFactory = smartWalletFactory;
@@ -146,6 +146,7 @@ abstract contract TropykusCommon {
         }
     }
 
+    // slither-disable-next-line reentrancy-events
     function _withdraw(
         IForwarder.MetaTransaction calldata mtx,
         uint256 listingId,
@@ -155,7 +156,7 @@ abstract contract TropykusCommon {
         SmartWallet smartWallet = SmartWallet(
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
-
+        // slither-disable-next-line low-level-calls
         (, bytes memory balanceData) = market.call(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
@@ -163,7 +164,7 @@ abstract contract TropykusCommon {
         if (tokens == 0) {
             revert("no tokens to withdraw");
         }
-
+        // slither-disable-next-line low-level-calls
         (bool success, bytes memory res) = smartWallet.execute(
             mtx,
             abi.encodeWithSignature("redeem(uint256)", tokens),
@@ -174,7 +175,7 @@ abstract contract TropykusCommon {
         if (!success) {
             revert ReedemOperationFailed(res);
         }
-
+        // slither-disable-next-line low-level-calls
         (, bytes memory data) = market.call(
             abi.encodeWithSignature("exchangeRateStored()")
         );

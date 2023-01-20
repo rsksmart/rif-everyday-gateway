@@ -117,6 +117,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
                 _allServices[lowerIndex] = _allServices[
                     _allServices.length - 1
                 ];
+                // slither-disable-next-line costly-loop
                 _allServices.pop();
                 _uniqueServices[address(service)] = false;
                 break;
@@ -125,6 +126,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
                 _allServices[upperIndex] = _allServices[
                     _allServices.length - 1
                 ];
+                // slither-disable-next-line costly-loop
                 _allServices.pop();
                 _uniqueServices[address(service)] = false;
                 break;

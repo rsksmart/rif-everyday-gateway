@@ -11,7 +11,7 @@ import "../feeManager/FeeManager.sol";
  */
 abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
-    IFeeManager public feeManager;
+    IFeeManager public immutable feeManager;
 
     constructor() {
         feeManager = new FeeManager(msg.sender);
@@ -26,10 +26,9 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
         uint256 listingId,
         address wallet
     ) public virtual {
+        emit NewSubscription(subscriber, service);
         subscriptions[subscriber].push(Subscription(service, listingId));
         feeManager.chargeFee(service, wallet);
-
-        emit NewSubscription(subscriber, service);
     }
 
     /**

@@ -48,16 +48,8 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         uint256 listingId,
         uint256 duration,
         address wallet
-    )
-        public
-        payable
-        override
-        withSubscription(mtx.req.from, listingId, wallet)
-    {
+    ) public payable override {
         ServiceListing memory listing = listings[listingId];
-        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
-            msg.sender
-        );
         uint256 _amountToLend = listing.collateralCurrency == address(0)
             ? msg.value
             : amount;
@@ -70,16 +62,29 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         }
 
         _onlyValidListingArgs(listingId, amount);
+        _removeLiquidityInternal(amount, listingId);
 
+        emit Borrow({
+            listingId: listing.id,
+            borrower: msg.sender,
+            currency: listing.currency,
+            amount: amount,
+            duration: duration
+        });
+
+        _withSubscription(mtx.req.from, listingId, wallet);
         uint256 collateralPayment = _validateAndCalculateRequiredCollateral(
             listing,
             amount
         );
 
-        _removeLiquidityInternal(amount, listingId);
+        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
+            msg.sender
+        );
+
         _sendCollateralToProtocol(smartWallet, mtx, listing, collateralPayment);
         _enterMarkets(smartWallet, mtx, listing);
-        _borrow(mtx, listing, amount, duration);
+        _borrow(mtx, listing, amount);
     }
 
     function _validateAndCalculateRequiredCollateral(
@@ -160,6 +165,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             ? abi.encodeWithSignature("mint()")
             : abi.encodeWithSignature("mint(uint256)", collateral);
 
+        // slither-disable-next-line arbitrary-send-eth
         (success, ) = smartWallet.execute{
             value: isCollateralInRBTC ? msg.value : 0
         }(mtx, mintSignature, collateralCurrencyMarket, address(0));
@@ -193,19 +199,22 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             _crbtc
         );
 
-        smartWallet.execute(
+        (bool success, bytes memory resp) = smartWallet.execute(
             mtx,
             abi.encodeWithSignature("enterMarkets(address[])", markets),
             address(_comptroller),
             address(0)
         );
+
+        if (!success) {
+            revert FailedOperation(resp);
+        }
     }
 
     function _borrow(
         IForwarder.MetaTransaction calldata mtx,
         ServiceListing memory listing,
-        uint256 amount,
-        uint256 duration
+        uint256 amount
     ) internal {
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
@@ -220,14 +229,6 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         if (!success) {
             revert FailedOperation(resp);
         }
-
-        emit Borrow({
-            listingId: listing.id,
-            borrower: msg.sender,
-            currency: listing.currency,
-            amount: amount,
-            duration: duration
-        });
     }
 
     function pay(
@@ -246,6 +247,13 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             revert InsufficientCollateral(listing.collateralCurrency);
         }
 
+        emit Pay({
+            listingId: listingId,
+            borrower: msg.sender,
+            currency: listing.currency,
+            amount: amount
+        });
+
         _transferAndApproveERC20ToMarket(mtx, market, listing.currency, amount);
 
         SmartWallet smartWallet = SmartWallet(
@@ -259,6 +267,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
                 type(uint256).max
             );
 
+        // slither-disable-next-line arbitrary-send-eth
         (bool success, bytes memory resp) = smartWallet.execute{
             value: msg.value
         }(mtx, repayBorrowSignature, market, listing.currency);
@@ -266,13 +275,6 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         if (!success) {
             revert FailedOperation(resp);
         }
-
-        emit Pay({
-            listingId: listingId,
-            borrower: msg.sender,
-            currency: listing.currency,
-            amount: amount
-        });
     }
 
     function getCollateralBalance(uint256 listingId)
@@ -290,11 +292,12 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             _crbtc
         );
 
+        // slither-disable-next-line low-level-calls
         (, bytes memory exchangeRatedata) = collateralCurrencyMarket.staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(exchangeRatedata, (uint256));
-
+        // slither-disable-next-line low-level-calls
         (, bytes memory balanceData) = collateralCurrencyMarket.staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
@@ -308,17 +311,11 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         uint256 listingId
     ) public override {
         ServiceListing memory listing = listings[listingId];
-        SmartWallet smartWallet = SmartWallet(
-            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
-        );
 
         address market = _getMarketForCurrency(
             listing.collateralCurrency,
             _comptroller,
             _crbtc
-        );
-        (, bytes memory balanceData) = market.call(
-            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );
 
         _withdraw(mtx, listingId, listing.collateralCurrency, market);
@@ -334,6 +331,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
+        // slither-disable low-level-calls missing-zero-check
         (, bytes memory data) = _getMarketForCurrency(
             currency,
             _comptroller,
