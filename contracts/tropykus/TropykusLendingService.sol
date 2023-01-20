@@ -26,7 +26,12 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         uint256 amount,
         uint256 listingId,
         address wallet
-    ) public payable override {
+    )
+        public
+        payable
+        override
+        withSubscription(mtx.req.from, listingId, wallet)
+    {
         address currencyToLend = listings[listingId].currency;
         uint256 _amount = msg.value > 0 ? msg.value : amount;
 
@@ -43,7 +48,6 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         });
 
         _removeLiquidityInternal(_amount, listingId);
-        _withSubscription(mtx.req.from, listingId, wallet);
 
         uint256 amountToLend = _validateAndGetAmountToLend(currencyToLend);
         address market = _getMarketForCurrency(

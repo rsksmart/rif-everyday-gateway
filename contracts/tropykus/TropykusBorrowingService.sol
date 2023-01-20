@@ -48,7 +48,12 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         uint256 listingId,
         uint256 duration,
         address wallet
-    ) public payable override {
+    )
+        public
+        payable
+        override
+        withSubscription(mtx.req.from, listingId, wallet)
+    {
         ServiceListing memory listing = listings[listingId];
         uint256 _amountToLend = listing.collateralCurrency == address(0)
             ? msg.value
@@ -72,7 +77,6 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             duration: duration
         });
 
-        _withSubscription(mtx.req.from, listingId, wallet);
         uint256 collateralPayment = _validateAndCalculateRequiredCollateral(
             listing,
             amount
