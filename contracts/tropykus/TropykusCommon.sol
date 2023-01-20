@@ -5,7 +5,6 @@ import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITr
 import {ServiceListing} from "../services/ServiceData.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/IForwarder.sol";
-import "hardhat/console.sol";
 
 abstract contract TropykusCommon {
     uint256 internal constant _UNIT_DECIMAL_PRECISION = 1e18;

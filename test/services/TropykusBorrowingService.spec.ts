@@ -282,7 +282,7 @@ describe('Tropykus Borrowing Service', () => {
             ethers.constants.AddressZero,
             {
               value: ethers.utils.parseEther(amountToLend.toFixed(18)),
-              gasLimit: 5000000,
+              gasLimit: 9000000,
             }
           );
         await tx.wait();
@@ -335,7 +335,7 @@ describe('Tropykus Borrowing Service', () => {
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
           .pay(mtxForPayment, approvedValue, 0, {
-            gasLimit: 5000000,
+            gasLimit: 9000000,
           });
         await payTx.wait();
 
@@ -388,7 +388,7 @@ describe('Tropykus Borrowing Service', () => {
             ethers.constants.AddressZero,
             {
               value: ethers.utils.parseEther(amountToLend.toFixed(18)),
-              gasLimit: 5000000,
+              gasLimit: 9000000,
             }
           );
         await tx.wait();
@@ -431,7 +431,7 @@ describe('Tropykus Borrowing Service', () => {
         const approveTx = await doc
           .connect(externalWallet)
           .approve(smartWalletAddress, approvedValue, {
-            gasLimit: 300000,
+            gasLimit: 9000000,
           });
         await approveTx.wait();
 
@@ -445,7 +445,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0, { gasLimit: 5000000 });
+          .pay(mtxForPayment, approvedValue, 0, { gasLimit: 9000000 });
         await payTx.wait();
 
         const borrowBalanceAfter = await tropykusBorrowingService
@@ -492,7 +492,7 @@ describe('Tropykus Borrowing Service', () => {
         const withdrawTx = await tropykusBorrowingService
           .connect(externalWallet)
           .withdraw(mtxForWithdrawal, ethers.constants.AddressZero, {
-            gasLimit: 3000000,
+            gasLimit: 9000000,
           });
         await withdrawTx.wait();
 
@@ -560,7 +560,10 @@ describe('Tropykus Borrowing Service', () => {
             ethers.utils.parseEther(amountToBorrow.toString()),
             0, // listingId
             0, // Not in use for now
-            ethers.constants.AddressZero
+            ethers.constants.AddressZero,
+            {
+              gasLimit: 9000000,
+            }
           );
         const borrowTxReceipt = await tx.wait();
         const borrowTxCost = toSmallNumber(
@@ -643,7 +646,10 @@ describe('Tropykus Borrowing Service', () => {
             ethers.utils.parseEther(amountToBorrow.toString()),
             0, // listingId
             0, // Not in use for now
-            ethers.constants.AddressZero
+            ethers.constants.AddressZero,
+            {
+              gasLimit: 9000000,
+            }
           );
         const borrowTxReceipt = await tx.wait();
         const borrowTxCost = calculateTxGasInRBTC(borrowTxReceipt);
@@ -702,7 +708,7 @@ describe('Tropykus Borrowing Service', () => {
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
           .pay(mtxForPayment, approvedValue, 0, {
-            gasLimit: 5000000,
+            gasLimit: 9000000,
             value: approvedValue,
           });
 
@@ -760,7 +766,10 @@ describe('Tropykus Borrowing Service', () => {
             ethers.utils.parseEther(amountToBorrow.toString()),
             0, // listingId
             0, // Not in use for now
-            ethers.constants.AddressZero
+            ethers.constants.AddressZero,
+            {
+              gasLimit: 9000000,
+            }
           );
         const borrowTxReceipt = await tx.wait();
         const borrowTxCost = calculateTxGasInRBTC(borrowTxReceipt);
@@ -808,7 +817,7 @@ describe('Tropykus Borrowing Service', () => {
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
           .pay(mtxForPayment, approvedValue, 0, {
-            gasLimit: 5000000,
+            gasLimit: 9000000,
             value: approvedValue,
           });
 
@@ -825,7 +834,7 @@ describe('Tropykus Borrowing Service', () => {
         const withdrawTx = await tropykusBorrowingService
           .connect(externalWallet)
           .withdraw(mtxForWithdrawal, 0, {
-            gasLimit: 3000000,
+            gasLimit: 9000000,
           });
         await withdrawTx.wait();
 
