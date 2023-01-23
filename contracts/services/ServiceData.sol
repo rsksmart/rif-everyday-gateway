@@ -15,7 +15,7 @@ struct ServiceListing {
     uint256 minDuration;
     uint256 maxDuration;
     uint256 interestRate;
-    address loanToValueCurrency;
+    address collateralCurrency;
     address currency;
     PayBackOption payBackOption;
     bool enabled;

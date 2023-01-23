@@ -39,13 +39,33 @@ abstract contract Service is Ownable, IService {
         uint256 listingId,
         address wallet
     ) {
+        _;
         ISubscriptionReporter(_rifGateway).subscribe(
             subscriber,
             address(this),
             listingId,
             wallet
         );
-        _;
+    }
+
+    function _onlyValidListingArgs(uint256 listingId, uint256 amount)
+        internal
+        view
+    {
+        ServiceListing memory listing = listings[listingId];
+
+        if (listing.maxAmount < amount || listing.minAmount > amount) {
+            revert AmountOutOfBounds({
+                currency: listing.currency,
+                amount: amount,
+                min: listing.minAmount,
+                max: listing.maxAmount
+            });
+        }
+
+        if (!listing.enabled) {
+            revert ListingDisabled(listingId);
+        }
     }
 
     /**

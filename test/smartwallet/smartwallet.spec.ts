@@ -96,7 +96,7 @@ describe('RIF Gateway SmartWallet', async () => {
     });
 
     it('should revert if nonce is too high', async () => {
-      const { req, suffixData, sig } = await signTransactionForExecutor(
+      const mtx = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         externalWallet.address,
@@ -107,9 +107,7 @@ describe('RIF Gateway SmartWallet', async () => {
 
       await expect(
         smartWallet!.execute(
-          suffixData,
-          req,
-          sig,
+          mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
@@ -124,7 +122,7 @@ describe('RIF Gateway SmartWallet', async () => {
     });
 
     it('should revert if nonce used twice', async () => {
-      const { req, suffixData, sig } = await signTransactionForExecutor(
+      const mtx = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         externalWallet.address,
@@ -133,9 +131,7 @@ describe('RIF Gateway SmartWallet', async () => {
 
       await expect(
         smartWallet!.execute(
-          suffixData,
-          req,
-          sig,
+          mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
@@ -147,9 +143,7 @@ describe('RIF Gateway SmartWallet', async () => {
 
       await expect(
         smartWallet!.execute(
-          suffixData,
-          req,
-          sig,
+          mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,

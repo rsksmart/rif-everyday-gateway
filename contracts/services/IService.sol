@@ -18,28 +18,25 @@ interface IService is IERC165 {
     event ListingCreated(address indexed currency, uint256 indexed listingId);
 
     /**
-     * @notice Emitted when funds get withdrawn from the service
-     * @param listingId The id of the listing
-     * @param withdrawer The address of the withdrawer
-     * @param currency The currency of the listing
-     * @param amount The amount of funds withdrawn
+     * @notice Reverts when the amount is zero
+     * @param currency requested currency in which the listing operates
      */
-    event Withdraw(
-        uint256 indexed listingId,
-        address indexed withdrawer,
-        address indexed currency,
-        uint256 amount
-    );
+    error ZeroAmountNotAllowed(address currency);
 
     /**
-     * @notice Throws when the amount sent is invalid
-     * @param amount The amount sent
+     * @notice Reverts when the amount is not between limits
+     * @param currency requested currency in which the listing operates
+     * @param amount amount requested
+     * @param min min amount of the listing
+     * @param max max amount of the listing
      */
-    error InvalidAmount(uint256 amount);
-    /**
-     * @notice Throws when execution fails
-     * @param data The detail of the failure
-     */
+    error AmountOutOfBounds(
+        address currency,
+        uint256 amount,
+        uint256 min,
+        uint256 max
+    );
+
     error FailedOperation(bytes data);
     /**
      * @notice Throws when the listing is not enabled

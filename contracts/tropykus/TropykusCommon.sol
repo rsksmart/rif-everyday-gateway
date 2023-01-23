@@ -2,10 +2,13 @@
 pragma solidity ^0.8.16;
 
 import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITropykus.sol";
+import {ServiceListing} from "../services/ServiceData.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/IForwarder.sol";
 
 abstract contract TropykusCommon {
+    uint256 internal constant _UNIT_DECIMAL_PRECISION = 1e18;
+
     struct TropykusContracts {
         address comptroller;
         address oracle;
@@ -13,66 +16,176 @@ abstract contract TropykusCommon {
         address cdoc;
     }
 
-    function _mintMarketTokens(
+    /**
+     * @notice Emitted when funds get withdrawn from the service
+     * @param listingId The id of the listing
+     * @param withdrawer The address of the withdrawer
+     * @param currency The currency of the listing
+     * @param amount The amount of funds withdrawn
+     */
+    event Withdraw(
+        uint256 indexed listingId,
+        address indexed withdrawer,
+        address indexed currency,
+        uint256 amount
+    );
+
+    error ERC20TransferFromFailed(
+        address currency,
+        address from,
+        address to,
+        uint256 amount
+    );
+    error ERC20ApproveFailed(address currency, address spender, uint256 amount);
+    error InsufficientLendingAmount(address currency);
+    error InvalidLendingCurrency(address expectedCurrency);
+    error UnexpectedRBTC();
+    error MintTokensInMarketError(address market, address currency);
+    error ReedemOperationFailed(bytes response);
+
+    SmartWalletFactory internal immutable _smartWalletFactory;
+
+    constructor(SmartWalletFactory smartWalletFactory) {
+        _smartWalletFactory = smartWalletFactory;
+    }
+
+    function _validateAndGetAmountToLend(address currency)
+        internal
+        returns (uint256 amountToLend)
+    {
+        IForwarder smartWallet = IForwarder(
+            _smartWalletFactory.getSmartWallet(msg.sender)
+        );
+
+        if (currency != address(0) && msg.value > 0) {
+            revert UnexpectedRBTC();
+        }
+
+        amountToLend = msg.value > 0
+            ? msg.value
+            : IERC20(currency).allowance(msg.sender, address(smartWallet));
+
+        if (amountToLend == 0) {
+            revert InsufficientLendingAmount(currency);
+        }
+    }
+
+    function _mintTokensInMarket(
         IForwarder.MetaTransaction calldata mtx,
-        SmartWalletFactory _smartWalletFactory,
         address currency,
         uint256 amount,
         address market
-    ) internal returns (bool success, bytes memory ret) {
-        SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
-            msg.sender
+    ) internal {
+        IForwarder smartWallet = IForwarder(
+            _smartWalletFactory.getSmartWalletAddress(msg.sender)
         );
 
-        if (currency != address(0)) {
-            smartWallet.execute(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
-                abi.encodeWithSignature(
-                    "transferFrom(address,address,uint256)",
-                    mtx.req.from,
-                    address(smartWallet),
-                    amount
-                ),
-                currency,
-                address(0)
-            );
+        // mint tokens to market depending on the token RBTC/ERC20
+        bool transferHasRBTC = msg.value > 0;
+        bytes memory mintSignature = transferHasRBTC
+            ? abi.encodeWithSignature("mint()")
+            : abi.encodeWithSignature("mint(uint256)", amount);
 
-            smartWallet.execute(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
-                abi.encodeWithSignature(
-                    "approve(address,uint256)",
-                    market,
-                    amount
-                ), // max uint to repay whole debt
-                currency,
-                address(0)
-            );
+        //slither-disable-next-line arbitrary-send-eth
+        (bool success, ) = smartWallet.execute{
+            value: transferHasRBTC ? msg.value : 0
+        }(mtx, mintSignature, market, address(0));
 
-            (success, ret) = smartWallet.execute(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
-                abi.encodeWithSignature("mint(uint256)", amount),
-                address(market),
-                address(0)
-            );
-        } else {
-            // Suppressed: The success bool is validated outside of this function
-            // and the market will always be a CToken
-            //slither-disable-next-line arbitrary-send-eth
-            (success, ret) = smartWallet.execute{value: amount}(
-                mtx.suffixData,
-                mtx.req,
-                mtx.sig,
-                abi.encodeWithSignature("mint()"),
-                address(market),
-                address(0)
-            );
+        if (!success) {
+            revert MintTokensInMarketError(market, currency);
         }
+    }
+
+    function _transferAndApproveERC20ToMarket(
+        IForwarder.MetaTransaction calldata mtx,
+        address market,
+        address erc20Token,
+        uint256 amount
+    ) internal {
+        IForwarder smartWallet = IForwarder(
+            _smartWalletFactory.getSmartWalletAddress(msg.sender)
+        );
+
+        bool transferFromTxSuccess;
+        bool approveTxSuccess;
+        (transferFromTxSuccess, ) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature(
+                "transferFrom(address,address,uint256)",
+                mtx.req.from,
+                address(smartWallet),
+                amount
+            ),
+            erc20Token,
+            address(0)
+        );
+
+        if (!transferFromTxSuccess) {
+            revert ERC20TransferFromFailed({
+                currency: erc20Token,
+                from: mtx.req.from,
+                to: address(smartWallet),
+                amount: amount
+            });
+        }
+
+        (approveTxSuccess, ) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature("approve(address,uint256)", market, amount),
+            erc20Token,
+            address(0)
+        );
+
+        if (!approveTxSuccess) {
+            revert ERC20ApproveFailed({
+                currency: erc20Token,
+                spender: market,
+                amount: amount
+            });
+        }
+    }
+
+    // slither-disable-next-line reentrancy-events
+    function _withdraw(
+        IForwarder.MetaTransaction calldata mtx,
+        uint256 listingId,
+        address currencyLent,
+        address market
+    ) internal {
+        SmartWallet smartWallet = SmartWallet(
+            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
+        );
+        // slither-disable-next-line low-level-calls
+        (, bytes memory balanceData) = market.call(
+            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
+        );
+        uint256 tokens = abi.decode(balanceData, (uint256));
+        if (tokens == 0) {
+            revert("no tokens to withdraw");
+        }
+        // slither-disable-next-line low-level-calls
+        (bool success, bytes memory res) = smartWallet.execute(
+            mtx,
+            abi.encodeWithSignature("redeem(uint256)", tokens),
+            market,
+            currencyLent
+        );
+
+        if (!success) {
+            revert ReedemOperationFailed(res);
+        }
+        // slither-disable-next-line low-level-calls
+        (, bytes memory data) = market.call(
+            abi.encodeWithSignature("exchangeRateStored()")
+        );
+
+        uint256 exchangeRate = abi.decode(data, (uint256));
+        emit Withdraw({
+            listingId: listingId,
+            withdrawer: msg.sender,
+            currency: currencyLent,
+            amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
+        });
     }
 
     function _getMarketForCurrency(

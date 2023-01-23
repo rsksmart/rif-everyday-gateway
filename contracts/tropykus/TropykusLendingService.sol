@@ -6,11 +6,9 @@ import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/SmartWallet.sol";
 import "../smartwallet/IForwarder.sol";
 import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITropykus.sol";
-import "./TropykusCommon.sol";
+import {TropykusCommon} from "./TropykusCommon.sol";
 
 contract TropykusLendingService is LendingService, TropykusCommon {
-    SmartWalletFactory private _smartWalletFactory;
-    uint256 private constant _UNIT_DECIMAL_PRECISION = 1e18;
     address private _comptroller;
     address private _crbtc;
 
@@ -18,8 +16,7 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         address gateway,
         SmartWalletFactory smartWalletFactory,
         TropykusContracts memory contracts
-    ) LendingService(gateway, "Tropykus") {
-        _smartWalletFactory = smartWalletFactory;
+    ) LendingService(gateway, "Tropykus") TropykusCommon(smartWalletFactory) {
         _comptroller = contracts.comptroller;
         _crbtc = contracts.crbtc;
     }
@@ -35,60 +32,46 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         override
         withSubscription(mtx.req.from, listingId, wallet)
     {
-        uint256 amountToLend;
-        ServiceListing memory listing = listings[listingId];
+        address currencyToLend = listings[listingId].currency;
+        uint256 _amount = msg.value > 0 ? msg.value : amount;
 
-        {
-            if (!listing.enabled) {
-                revert ListingDisabled(listingId);
-            }
-
-            amountToLend = amount;
-            if (listing.currency == address(0)) amountToLend = msg.value;
-            if (amountToLend == 0) {
-                revert InvalidAmount(amountToLend);
-            }
-
-            if (
-                listing.maxAmount < amountToLend ||
-                listing.minAmount > amountToLend
-            ) {
-                revert InvalidAmount(amountToLend);
-            }
+        if (_amount == 0) {
+            revert ZeroAmountNotAllowed({currency: currencyToLend});
         }
+        _onlyValidListingArgs(listingId, _amount);
 
+        emit Lend({
+            listingId: listingId,
+            lender: msg.sender,
+            currency: currencyToLend,
+            amount: msg.value
+        });
+
+        _removeLiquidityInternal(_amount, listingId);
+
+        uint256 amountToLend = _validateAndGetAmountToLend(currencyToLend);
         address market = _getMarketForCurrency(
-            listing.currency,
+            currencyToLend,
             _comptroller,
             _crbtc
         );
 
-        _removeLiquidityInternal(amountToLend, listingId);
-
-        (bool success, bytes memory ret) = _mintMarketTokens(
-            mtx,
-            _smartWalletFactory,
-            listing.currency,
-            amount,
-            market
-        );
-
-        if (success) {
-            emit Lend({
-                listingId: listingId,
-                lender: msg.sender,
-                currency: listing.currency,
-                amount: msg.value
-            });
-        } else {
-            revert FailedOperation(ret);
+        if (currencyToLend != address(0)) {
+            _transferAndApproveERC20ToMarket(
+                mtx,
+                market,
+                currencyToLend,
+                amountToLend
+            );
         }
+
+        _mintTokensInMarket(mtx, currencyToLend, amountToLend, market);
     }
 
     function withdraw(
         IForwarder.MetaTransaction calldata mtx,
         uint256 listingId
-    ) public payable override {
+    ) public override {
         ServiceListing memory listing = listings[listingId];
         address market = _getMarketForCurrency(
             listing.currency,
@@ -96,41 +79,7 @@ contract TropykusLendingService is LendingService, TropykusCommon {
             _crbtc
         );
 
-        SmartWallet smartWallet = SmartWallet(
-            payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
-        );
-
-        (, bytes memory balanceData) = address(market).staticcall(
-            abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
-        );
-        uint256 tokens = abi.decode(balanceData, (uint256));
-
-        (bool success, bytes memory ret) = smartWallet.execute{
-            value: msg.value
-        }(
-            mtx.suffixData,
-            mtx.req,
-            mtx.sig,
-            abi.encodeWithSignature("redeem(uint256)", tokens),
-            market,
-            listing.currency
-        );
-
-        if (success) {
-            (, bytes memory exchangeRateData) = address(market).staticcall(
-                abi.encodeWithSignature("exchangeRateStored()")
-            );
-            uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
-
-            emit Withdraw({
-                listingId: listingId,
-                withdrawer: msg.sender,
-                currency: listing.currency,
-                amount: (tokens * exchangeRate) / _UNIT_DECIMAL_PRECISION
-            });
-        } else {
-            revert FailedOperation(ret);
-        }
+        _withdraw(mtx, listingId, listing.currency, market);
     }
 
     function getBalance(address currency)
@@ -145,11 +94,12 @@ contract TropykusLendingService is LendingService, TropykusCommon {
             payable(_smartWalletFactory.getSmartWalletAddress(msg.sender))
         );
 
+        // slither-disable-next-line low-level-calls
         (, bytes memory exchangeRateData) = address(market).staticcall(
             abi.encodeWithSignature("exchangeRateStored()")
         );
         uint256 exchangeRate = abi.decode(exchangeRateData, (uint256));
-
+        // slither-disable-next-line low-level-calls
         (, bytes memory balanceData) = address(market).staticcall(
             abi.encodeWithSignature("balanceOf(address)", address(smartWallet))
         );

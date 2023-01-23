@@ -121,20 +121,21 @@ contract FeeManager is IFeeManager, Ownable {
     /**
      * @inheritdoc IFeeManager
      */
+    // slither-disable-next-line reentrancy-events
     function withdraw(uint256 amount) external override {
         if (amount > _funds[msg.sender]) {
             revert InsufficientFunds();
         }
 
+        emit Withdraw(msg.sender, amount);
+
         _funds[msg.sender] -= amount;
+        // slither-disable-next-line low-level-calls
         (bool success, ) = msg.sender.call{value: amount}("");
 
         if (!success) {
             revert RBTCTransferFailed();
         }
-
-        // TODO: add support for ERC20 tokens
-        emit Withdraw(msg.sender, amount);
     }
 
     /**

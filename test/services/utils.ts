@@ -1,9 +1,10 @@
+import { BigNumber } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   BORROW_SERVICE_INTERFACEID,
   LENDING_SERVICE_INTERFACEID,
 } from 'test/utils/interfaceIDs';
-import { IFeeManager, RIFGateway, ServiceTypeManager } from 'typechain-types';
+import { RIFGateway, ServiceTypeManager } from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 
 export const deployRIFGateway = async (registerInterfaceId = true) => {
@@ -38,3 +39,7 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
 
   return { RIFGateway, feeManager, serviceTypeManager };
 };
+
+export function toSmallNumber(bn: BigNumber, divisor = 1e18) {
+  return +bn / divisor;
+}

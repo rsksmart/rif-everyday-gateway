@@ -582,7 +582,6 @@ export const deployTropykusContracts = async () => {
   await (await crbtcCompanion.setMarketCapThreshold(parseEther('0.8'))).wait();
   await (await cSAT.setCompanion(crbtcCompanion.address)).wait();
 
-  // Supply DOC to the cDOC contract
   await (
     await docToken.functions['approve(address,uint256)'](
       cDOC.address,

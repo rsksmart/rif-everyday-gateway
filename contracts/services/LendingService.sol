@@ -44,5 +44,5 @@ abstract contract LendingService is Service, ILendingService {
     function withdraw(
         IForwarder.MetaTransaction calldata mtx,
         uint256 listingId
-    ) public payable virtual;
+    ) public virtual;
 }

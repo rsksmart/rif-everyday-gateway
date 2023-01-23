@@ -42,19 +42,15 @@ abstract contract BorrowService is Service, IBorrowService {
     /**
      * @inheritdoc IBorrowService
      */
-    function withdraw(IForwarder.MetaTransaction calldata mtx, address currency)
-        public
-        payable
-        virtual;
+    function withdraw(
+        IForwarder.MetaTransaction calldata mtx,
+        uint256 listingId
+    ) public virtual;
 
-    /**
-     * @inheritdoc IBorrowService
-     */
-    function calculateRequiredCollateral(uint256 amount, address currency)
-        external
-        view
-        virtual
-        returns (uint256);
+    function calculateRequiredCollateral(
+        uint256 listingId,
+        uint256 amountToBorrow
+    ) external view virtual returns (uint256 amountToLend);
 
     /**
      * @inheritdoc IERC165
