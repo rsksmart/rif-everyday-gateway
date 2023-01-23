@@ -11,6 +11,13 @@ import { HardhatUserConfig } from 'hardhat/config';
 import 'tsconfig-paths/register';
 import 'solidity-coverage';
 
+const CONTRACTS_DEFAULT_ETH_BALANCE =
+  '100000000000000000000000000000000000000000000';
+const accountConfig = {
+  mnemonic:
+    'maximum curtain toward fox digital hair put warrior obey travel friend insect',
+};
+
 export default <HardhatUserConfig>{
   solidity: {
     compilers: [
@@ -36,17 +43,21 @@ export default <HardhatUserConfig>{
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
       accounts: {
-        mnemonic:
-          'maximum curtain toward fox digital hair put warrior obey travel friend insect',
+        ...accountConfig,
       },
     },
     testnet: {
       url: 'https://public-node.testnet.rsk.co',
       accounts: {
-        mnemonic:
-          'maximum curtain toward fox digital hair put warrior obey travel friend insect',
+        ...accountConfig,
       },
       chainId: 31,
+    },
+    hardhat: {
+      accounts: {
+        ...accountConfig,
+        accountsBalance: CONTRACTS_DEFAULT_ETH_BALANCE,
+      },
     },
   },
   typechain: {

@@ -3,6 +3,8 @@ import hre, { ethers } from 'hardhat';
 import { ISmartWalletFactory, SmartWallet } from 'typechain-types';
 import { deployContract, Factory } from 'utils/deployment.utils';
 
+const ETH_BALANCE_FOR_TROPYKUS_TEST = '1000000';
+
 export const smartwalletFactoryFixture = async () => {
   const { contract: smartWalletFactory, signers } =
     await deployContract<ISmartWalletFactory>(
@@ -33,7 +35,7 @@ export const externalSmartwalletFixture = async (
 
     await signer.sendTransaction({
       to: externalWallet.address,
-      value: ethers.utils.parseEther('1'),
+      value: ethers.utils.parseEther(ETH_BALANCE_FOR_TROPYKUS_TEST),
     });
   }
   let smartWallet;
