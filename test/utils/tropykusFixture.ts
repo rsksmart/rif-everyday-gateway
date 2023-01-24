@@ -14,6 +14,7 @@ import CRBTCJSON from './tropykusCompiledContracts/CRBTC.json';
 import CRBTCCompanionJSON from './tropykusCompiledContracts/CRBTCCompanion.json';
 import CRDOCJSON from './tropykusCompiledContracts/CRDOC.json';
 import TropykusLensJSON from './tropykusCompiledContracts/TropykusLens.json';
+import { Contract } from 'ethers';
 
 export const tropykusFixture = async () => {
   const chainId = hre.network.config.chainId;
@@ -582,16 +583,13 @@ export const deployTropykusContracts = async () => {
   await (await crbtcCompanion.setMarketCapThreshold(parseEther('0.8'))).wait();
   await (await cSAT.setCompanion(crbtcCompanion.address)).wait();
 
-  await (
-    await docToken.functions['approve(address,uint256)'](
-      cDOC.address,
-      parseEther('1000')
-    )
-  ).wait();
+  // mint DOC in cDOC market
+  await mintTokensInMarket(docToken, cDOC);
 
-  await (await cDOC.functions['mint(uint256)'](parseEther('1000'))).wait();
+  // mint RIF in cRIF market
+  await mintTokensInMarket(rifToken, cRIF);
 
-  // Supply rBTC to the cRBTC contract
+  // mint RBTC in cRBTC market
   await (
     await cRBTC.functions['mint()']({
       value: ethers.utils.parseEther('1'),
@@ -605,6 +603,18 @@ export const deployTropykusContracts = async () => {
     cdoc: cDOCdeployed.address,
     doc: docToken.address,
   };
+};
+
+const mintTokensInMarket = async (
+  token: Contract,
+  cToken: Contract,
+  amount = ethers.utils.parseEther('1000')
+) => {
+  await (
+    await token.functions['approve(address,uint256)'](cToken.address, amount)
+  ).wait();
+
+  await (await cToken.functions['mint(uint256)'](amount)).wait();
 };
 
 const getChainId = (chainName: string) => {

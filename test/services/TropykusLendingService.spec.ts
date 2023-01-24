@@ -31,14 +31,14 @@ describe('Tropykus Lending Service', () => {
   let docAddr: string;
   let feeManager: IFeeManager;
   let RIFGateway: IRIFGateway;
-
-  let cdoc: string;
+  const listingId0 = 0;
+  const listingId1 = 1;
 
   before(async () => {
     [owner] = await ethers.getSigners();
 
     ({ smartWalletFactory } = await smartwalletFactoryFixture());
-    ({ crbtc, comptroller, doc: docAddr, cdoc } = await tropykusFixture());
+    ({ crbtc, comptroller, doc: docAddr } = await tropykusFixture());
   });
 
   beforeEach(async () => {
@@ -83,7 +83,7 @@ describe('Tropykus Lending Service', () => {
     beforeEach(async () => {
       await (
         await tropykusLendingService.addListing({
-          id: 0,
+          id: listingId0,
           minAmount: ethers.utils.parseEther('0.0001'),
           maxAmount: ethers.utils.parseEther('0.5'),
           minDuration: 0,
@@ -100,7 +100,7 @@ describe('Tropykus Lending Service', () => {
 
       await (
         await tropykusLendingService.addListing({
-          id: 1,
+          id: listingId1,
           minAmount: ethers.utils.parseUnits('1', 18),
           maxAmount: ethers.utils.parseUnits('10', 18),
           minDuration: 0,
@@ -128,11 +128,11 @@ describe('Tropykus Lending Service', () => {
 
       const beforeLiquidity = await tropykusLendingService
         .connect(externalWallet)
-        .currentLiquidity(0);
+        .currentLiquidity(listingId0);
 
       const tx1 = await tropykusLendingService
         .connect(externalWallet)
-        .lend(mtx, 0, 0, ethers.constants.AddressZero, {
+        .lend(mtx, 0, listingId0, ethers.constants.AddressZero, {
           value: ethers.utils.parseEther(amountToLend.toString()),
           gasLimit: 5000000,
         });
@@ -140,7 +140,7 @@ describe('Tropykus Lending Service', () => {
 
       const afterLiquidity = await tropykusLendingService
         .connect(externalWallet)
-        .currentLiquidity(0);
+        .currentLiquidity(listingId0);
 
       const expectedAmountLent =
         toSmallNumber(beforeLiquidity) - toSmallNumber(afterLiquidity);
@@ -171,7 +171,7 @@ describe('Tropykus Lending Service', () => {
 
       const beforeLiquidity = await tropykusLendingService
         .connect(externalWallet)
-        .currentLiquidity(1);
+        .currentLiquidity(listingId1);
 
       await (
         await doc
@@ -190,7 +190,7 @@ describe('Tropykus Lending Service', () => {
         .lend(
           mtx,
           ethers.utils.parseEther(amountToLend.toString()),
-          1,
+          listingId1,
           ethers.constants.AddressZero,
           {
             gasLimit: 5000000,
@@ -200,7 +200,7 @@ describe('Tropykus Lending Service', () => {
 
       const afterLiquidity = await tropykusLendingService
         .connect(externalWallet)
-        .currentLiquidity(1);
+        .currentLiquidity(listingId1);
 
       const expectedAmountLent =
         toSmallNumber(beforeLiquidity) - toSmallNumber(afterLiquidity);
@@ -227,7 +227,7 @@ describe('Tropykus Lending Service', () => {
 
       const lendTx = await tropykusLendingService
         .connect(externalWallet)
-        .lend(mtxForLending, 0, 0, ethers.constants.AddressZero, {
+        .lend(mtxForLending, 0, listingId0, ethers.constants.AddressZero, {
           value: ethers.utils.parseEther('0.0001'),
           gasLimit: 5000000,
         });
@@ -250,7 +250,7 @@ describe('Tropykus Lending Service', () => {
 
       const withdrawTx = await tropykusLendingService
         .connect(externalWallet)
-        .withdraw(mtxForWithdrawal, 0, {
+        .withdraw(mtxForWithdrawal, listingId0, {
           gasLimit: 3000000,
         });
 
@@ -297,7 +297,7 @@ describe('Tropykus Lending Service', () => {
         .lend(
           mtx,
           ethers.utils.parseEther(amountToLend.toString()),
-          1,
+          listingId1,
           ethers.constants.AddressZero,
           {
             gasLimit: 5000000,
@@ -323,7 +323,7 @@ describe('Tropykus Lending Service', () => {
 
       const withdrawTx = await tropykusLendingService
         .connect(externalWallet)
-        .withdraw(mtxForWithdrawal, 1, {
+        .withdraw(mtxForWithdrawal, listingId1, {
           gasLimit: 3000000,
         });
 
