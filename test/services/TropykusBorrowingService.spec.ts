@@ -1,7 +1,6 @@
 import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
-  TropykusBorrowingService,
   IERC20,
   IFeeManager,
   IRIFGateway,
@@ -33,6 +32,10 @@ describe('Tropykus Borrowing Service', () => {
   let tropykusContractsDeployed: any;
   let feeManager: IFeeManager;
   let RIFGateway: IRIFGateway;
+  const listingId = 0;
+
+  // duration is not considered for these tests
+  const duration = 0;
 
   before(async () => {
     [owner] = await ethers.getSigners();
@@ -96,7 +99,7 @@ describe('Tropykus Borrowing Service', () => {
     const calculateAmountToLend = await tropykusBorrowingService
       .connect(externalWallet)
       .calculateRequiredCollateral(
-        0,
+        listingId,
         ethers.utils.parseEther(amountToBorrow.toString())
       );
 
@@ -111,16 +114,18 @@ describe('Tropykus Borrowing Service', () => {
     );
 
     await expect(
-      tropykusBorrowingService.connect(externalWallet).borrow(
-        mtx,
-        ethers.utils.parseEther(amountToBorrow.toString()),
-        0, // Not in use for now
-        0, // Not in use for now
-        ethers.constants.AddressZero,
-        {
-          value: ethers.utils.parseEther(amountToLend.toString()),
-        }
-      )
+      tropykusBorrowingService
+        .connect(externalWallet)
+        .borrow(
+          mtx,
+          ethers.utils.parseEther(amountToBorrow.toString()),
+          listingId,
+          duration,
+          ethers.constants.AddressZero,
+          {
+            value: ethers.utils.parseEther(amountToLend.toString()),
+          }
+        )
     ).to.be.rejected;
   });
 
@@ -130,7 +135,7 @@ describe('Tropykus Borrowing Service', () => {
   ) => {
     await (
       await tropykusBorrowingService.connect(owner).addListing({
-        id: 0,
+        id: listingId,
         minAmount: ethers.utils.parseEther('1'),
         maxAmount: ethers.utils.parseEther('100'),
         minDuration: 0,
@@ -190,12 +195,12 @@ describe('Tropykus Borrowing Service', () => {
 
         const beforeLiquidity = await tropykusBorrowingService
           .connect(externalWallet)
-          .currentLiquidity(0);
+          .currentLiquidity(listingId);
 
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
 
@@ -217,8 +222,8 @@ describe('Tropykus Borrowing Service', () => {
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero,
             {
               value: ethers.utils.parseEther(amountToLend.toString()),
@@ -228,7 +233,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const afterLiquidity = await tropykusBorrowingService
           .connect(externalWallet)
-          .currentLiquidity(0);
+          .currentLiquidity(listingId);
 
         const expectedAmountToBorrow =
           toSmallNumber(beforeLiquidity) - toSmallNumber(afterLiquidity);
@@ -236,7 +241,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const balanceTropAfter = await tropykusBorrowingService
           .connect(externalWallet)
-          .getCollateralBalance(0);
+          .getCollateralBalance(listingId);
 
         expect(toSmallNumber(balanceTropAfter)).to.equal(amountToLend);
 
@@ -261,7 +266,7 @@ describe('Tropykus Borrowing Service', () => {
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
 
@@ -282,8 +287,8 @@ describe('Tropykus Borrowing Service', () => {
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // Not in use for now
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero,
             {
               value: ethers.utils.parseEther(amountToLend.toFixed(18)),
@@ -338,7 +343,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0, {});
+          .pay(mtxForPayment, approvedValue, listingId, {});
         await payTx.wait();
 
         const borrowBalanceAfter = await tropykusBorrowingService
@@ -365,7 +370,7 @@ describe('Tropykus Borrowing Service', () => {
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
 
@@ -385,8 +390,8 @@ describe('Tropykus Borrowing Service', () => {
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // Not in use for now
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero,
             {
               value: ethers.utils.parseEther(amountToLend.toFixed(18)),
@@ -444,7 +449,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0);
+          .pay(mtxForPayment, approvedValue, listingId);
         await payTx.wait();
 
         const borrowBalanceAfter = await tropykusBorrowingService
@@ -473,7 +478,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const balanceTropBefore = await tropykusBorrowingService
           .connect(externalWallet)
-          .getCollateralBalance(0);
+          .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(balanceTropBefore),
@@ -495,7 +500,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const balanceTropAfter = await tropykusBorrowingService
           .connect(externalWallet)
-          .getCollateralBalance(0);
+          .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(balanceTropAfter),
@@ -523,12 +528,12 @@ describe('Tropykus Borrowing Service', () => {
 
         const userLiquidityBeforeBorrow = await tropykusBorrowingService
           .connect(externalWallet)
-          .currentLiquidity(0);
+          .currentLiquidity(listingId);
 
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
 
@@ -555,8 +560,8 @@ describe('Tropykus Borrowing Service', () => {
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero
           );
         const borrowTxReceipt = await tx.wait();
@@ -566,7 +571,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const userLiquidityAfterBorrow = await tropykusBorrowingService
           .connect(externalWallet)
-          .currentLiquidity(0);
+          .currentLiquidity(listingId);
 
         const expectedAmountToBorrow =
           toSmallNumber(userLiquidityBeforeBorrow) -
@@ -576,7 +581,7 @@ describe('Tropykus Borrowing Service', () => {
         const actualUserCollateralBalanceInProtocol =
           await tropykusBorrowingService
             .connect(externalWallet)
-            .getCollateralBalance(0);
+            .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(actualUserCollateralBalanceInProtocol)
@@ -638,8 +643,8 @@ describe('Tropykus Borrowing Service', () => {
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero
           );
         const borrowTxReceipt = await tx.wait();
@@ -698,7 +703,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0, {
+          .pay(mtxForPayment, approvedValue, listingId, {
             value: approvedValue,
           });
 
@@ -731,7 +736,7 @@ describe('Tropykus Borrowing Service', () => {
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
         const amountToLend = +calculateAmountToLend / 1e18;
@@ -754,8 +759,8 @@ describe('Tropykus Borrowing Service', () => {
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero
           );
         const borrowTxReceipt = await tx.wait();
@@ -786,7 +791,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const balanceTropBefore = await tropykusBorrowingService
           .connect(externalWallet)
-          .getCollateralBalance(0);
+          .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(balanceTropBefore),
@@ -803,7 +808,7 @@ describe('Tropykus Borrowing Service', () => {
 
         const payTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0, {
+          .pay(mtxForPayment, approvedValue, listingId, {
             value: approvedValue,
           });
 
@@ -819,13 +824,13 @@ describe('Tropykus Borrowing Service', () => {
 
         const withdrawTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .withdraw(mtxForWithdrawal, 0);
+          .withdraw(mtxForWithdrawal, listingId);
         await withdrawTx.wait();
 
         const userCollateralBalanceInProtocolAfterWithdraw =
           await tropykusBorrowingService
             .connect(externalWallet)
-            .getCollateralBalance(0);
+            .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(userCollateralBalanceInProtocolAfterWithdraw),
@@ -840,37 +845,33 @@ describe('Tropykus Borrowing Service', () => {
     });
 
     describe('With both ERC20 as collateral and borrow', () => {
-      function calculateTxGasInRBTC(receipt: ContractReceipt) {
-        return receipt.gasUsed.mul(receipt.effectiveGasPrice);
-      }
-
       beforeEach(async () => {
-        await createListing(doc.address, ethers.constants.AddressZero);
+        await createListing(doc.address, rif.address);
       });
 
-      it('should borrow RBTC after lending ERC20 on tropykus', async () => {
-        console.log(await externalWallet.getBalance());
-
+      it('should borrow DOC after lending RIF on tropykus', async () => {
         const amountToBorrow = 1;
 
         const userLiquidityBeforeBorrow = await tropykusBorrowingService
           .connect(externalWallet)
-          .currentLiquidity(0);
+          .currentLiquidity(listingId);
 
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
 
-        const amountToLend = +calculateAmountToLend / 1e18;
-        expect(amountToLend).to.be.closeTo(120000, 1);
+        const amountToLend = toSmallNumber(calculateAmountToLend);
+        expect(amountToLend).to.be.closeTo(7.5, 0.00001);
 
-        const rbtcBalanceUserBeforeBorrow = await externalWallet.getBalance();
+        const docBalanceUserBeforeBorrow = await doc.balanceOf(
+          externalWallet.address
+        );
 
-        await doc.transfer(externalWallet.address, calculateAmountToLend);
-        await doc
+        await rif.transfer(externalWallet.address, calculateAmountToLend);
+        await rif
           .connect(externalWallet)
           .approve(smartWalletAddress, calculateAmountToLend);
 
@@ -882,23 +883,19 @@ describe('Tropykus Borrowing Service', () => {
           hre.network.config.chainId
         );
 
-        const tx = await tropykusBorrowingService
+        await tropykusBorrowingService
           .connect(externalWallet)
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero
           );
-        const borrowTxReceipt = await tx.wait();
-        const borrowTxCost = toSmallNumber(
-          calculateTxGasInRBTC(borrowTxReceipt)
-        );
 
         const userLiquidityAfterBorrow = await tropykusBorrowingService
           .connect(externalWallet)
-          .currentLiquidity(0);
+          .currentLiquidity(listingId);
 
         const expectedAmountToBorrow =
           toSmallNumber(userLiquidityBeforeBorrow) -
@@ -908,52 +905,52 @@ describe('Tropykus Borrowing Service', () => {
         const actualUserCollateralBalanceInProtocol =
           await tropykusBorrowingService
             .connect(externalWallet)
-            .getCollateralBalance(0);
+            .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(actualUserCollateralBalanceInProtocol)
-        ).to.be.closeTo(amountToLend, 1000);
+        ).to.be.closeTo(amountToLend, 1);
 
         expect(toSmallNumber(actualUserCollateralBalanceInProtocol)).to.equal(
           amountToLend
         );
 
-        const actualSmartWalletRBTCBalance = await ethers.provider.getBalance(
+        const actualSmartWalletRBTCBalance = await doc.balanceOf(
           smartWalletAddress
         );
         expect(toSmallNumber(actualSmartWalletRBTCBalance)).to.equal(0);
 
-        const balanceUserAfterBorrow = toSmallNumber(
-          await externalWallet.getBalance()
+        const actualDocBalanceUserAfterBorrow = toSmallNumber(
+          await doc.balanceOf(externalWallet.address)
         );
-        const expectedRBTCBalanceAfterBorrow =
-          toSmallNumber(rbtcBalanceUserBeforeBorrow) +
-          amountToBorrow -
-          borrowTxCost;
-        expect(balanceUserAfterBorrow).to.be.closeTo(
-          expectedRBTCBalanceAfterBorrow,
+        const expectedDocBalanceAfterBorrow =
+          toSmallNumber(docBalanceUserBeforeBorrow) + amountToBorrow;
+
+        expect(actualDocBalanceUserAfterBorrow).to.be.closeTo(
+          expectedDocBalanceAfterBorrow,
           0.001
         );
       });
 
-      it('should repay RBTC borrow debt', async () => {
+      it('should repay DOC borrow debt', async () => {
         const amountToBorrow = 1;
 
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
 
         const amountToLend = toSmallNumber(calculateAmountToLend);
+        expect(amountToLend).to.be.closeTo(7.5, 0.00001);
 
-        expect(amountToLend).to.be.closeTo(120000, 1);
+        const userDocBalanceBeforeBorrow = await doc.balanceOf(
+          externalWallet.address
+        );
 
-        const userRBTCBalanceBeforeBorrow = await externalWallet.getBalance();
-
-        await doc.transfer(externalWallet.address, calculateAmountToLend);
-        await doc
+        await rif.transfer(externalWallet.address, calculateAmountToLend);
+        await rif
           .connect(externalWallet)
           .approve(smartWalletAddress, calculateAmountToLend);
 
@@ -965,60 +962,51 @@ describe('Tropykus Borrowing Service', () => {
           hre.network.config.chainId
         );
 
-        const tx = await tropykusBorrowingService
+        await tropykusBorrowingService
           .connect(externalWallet)
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            0,
             ethers.constants.AddressZero
           );
-        const borrowTxReceipt = await tx.wait();
-        const borrowTxCost = calculateTxGasInRBTC(borrowTxReceipt);
 
-        const actualUserRBTCBalanceAfterBorrow =
-          await externalWallet.getBalance();
-
-        const expectedUserRBTCBalanceAfterBorrow = userRBTCBalanceBeforeBorrow
-          .add(ethers.utils.parseEther(amountToBorrow.toString()))
-          .sub(borrowTxCost);
-
-        expect(toSmallNumber(actualUserRBTCBalanceAfterBorrow)).to.be.closeTo(
-          toSmallNumber(expectedUserRBTCBalanceAfterBorrow),
-          0.0011
+        const userDocBalanceAfterBorrow = await doc.balanceOf(
+          externalWallet.address
         );
 
-        const forInterest = ethers.utils.parseEther('0.05');
-        // Extra balance to pay interest $0.5
-        await owner.sendTransaction({
-          to: externalWallet.address,
-          value: forInterest,
-        });
+        const forInterest = ethers.utils.parseEther('0.02');
+        // Extra balance to pay interest $0.02
+        await doc.transfer(externalWallet.address, forInterest);
 
-        const actualUserRBTCBalanceWithInterest =
-          await externalWallet.getBalance();
-        const expectedUserRBTCBalanceWithInterest = toSmallNumber(
-          forInterest.add(actualUserRBTCBalanceAfterBorrow).sub(borrowTxCost)
+        const actualUserDocBalanceWithInterest = await doc.balanceOf(
+          externalWallet.address
         );
-        expect(toSmallNumber(actualUserRBTCBalanceWithInterest)).to.be.closeTo(
-          expectedUserRBTCBalanceWithInterest,
+        const expectedUserDocBalanceWithInterest = toSmallNumber(
+          forInterest.add(userDocBalanceAfterBorrow)
+        );
+
+        expect(toSmallNumber(actualUserDocBalanceWithInterest)).to.be.closeTo(
+          expectedUserDocBalanceWithInterest,
           0.003
         );
 
         const borrowBalance = await tropykusBorrowingService
           .connect(externalWallet)
-          .getBalance(ethers.constants.AddressZero);
+          .getBalance(doc.address);
 
-        const borrowRBTCBalancePlusCent = borrowBalance
-          .add(forInterest)
-          .sub(borrowTxCost);
+        const borrowDocBalancePlusCent = borrowBalance.add(forInterest);
 
-        const approvedValue = borrowRBTCBalancePlusCent.lt(
-          actualUserRBTCBalanceWithInterest
+        const approvedValue = borrowDocBalancePlusCent.lt(
+          actualUserDocBalanceWithInterest
         )
-          ? borrowRBTCBalancePlusCent
-          : actualUserRBTCBalanceWithInterest;
+          ? borrowDocBalancePlusCent
+          : actualUserDocBalanceWithInterest;
+
+        await doc
+          .connect(externalWallet)
+          .approve(smartWalletAddress, approvedValue);
 
         const mtxForPayment = await signTransactionForExecutor(
           externalWallet.address,
@@ -1028,31 +1016,22 @@ describe('Tropykus Borrowing Service', () => {
           hre.network.config.chainId
         );
 
-        const payTx = await tropykusBorrowingService
+        await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0, {
-            value: approvedValue,
-          });
+          .pay(mtxForPayment, approvedValue, listingId);
 
-        const payTxReceipt = await payTx.wait();
-        const payTxCost = calculateTxGasInRBTC(payTxReceipt);
-
-        const borrowBalanceAfter = await tropykusBorrowingService
+        const userDocBalanceAfterPayingDebt = await tropykusBorrowingService
           .connect(externalWallet)
           .getBalance(doc.address);
-        expect(toSmallNumber(borrowBalanceAfter)).to.eq(0);
 
-        const userRBTCBalanceAfterPayingDebt = (
-          await externalWallet.getBalance()
-        )
-          .add(borrowTxCost)
-          .add(payTxCost);
+        expect(toSmallNumber(userDocBalanceAfterPayingDebt)).to.eq(0);
 
-        const expectedUserRBTCBalanceAfterPayingDebt =
-          toSmallNumber(actualUserRBTCBalanceWithInterest) -
-          toSmallNumber(borrowRBTCBalancePlusCent);
-        expect(toSmallNumber(userRBTCBalanceAfterPayingDebt)).to.be.closeTo(
-          expectedUserRBTCBalanceAfterPayingDebt,
+        const expectedUserDocBalanceAfterPayingDebt =
+          toSmallNumber(actualUserDocBalanceWithInterest) -
+          toSmallNumber(borrowDocBalancePlusCent);
+
+        expect(toSmallNumber(userDocBalanceBeforeBorrow)).to.be.closeTo(
+          expectedUserDocBalanceAfterPayingDebt,
           toSmallNumber(forInterest)
         );
       });
@@ -1063,13 +1042,12 @@ describe('Tropykus Borrowing Service', () => {
         const calculateAmountToLend = await tropykusBorrowingService
           .connect(externalWallet)
           .calculateRequiredCollateral(
-            0,
+            listingId,
             ethers.utils.parseEther(amountToBorrow.toString())
           );
-        const amountToLend = +calculateAmountToLend / 1e18;
 
-        await doc.transfer(externalWallet.address, calculateAmountToLend);
-        await doc
+        await rif.transfer(externalWallet.address, calculateAmountToLend);
+        await rif
           .connect(externalWallet)
           .approve(smartWalletAddress, calculateAmountToLend);
 
@@ -1081,49 +1059,39 @@ describe('Tropykus Borrowing Service', () => {
           hre.network.config.chainId
         );
 
-        const tx = await tropykusBorrowingService
+        await tropykusBorrowingService
           .connect(externalWallet)
           .borrow(
             mtx,
             ethers.utils.parseEther(amountToBorrow.toString()),
-            0, // listingId
-            0, // Not in use for now
+            listingId,
+            duration,
             ethers.constants.AddressZero
           );
-        const borrowTxReceipt = await tx.wait();
-        const borrowTxCost = calculateTxGasInRBTC(borrowTxReceipt);
 
-        const forInterest = ethers.utils.parseEther('0.05');
-        // Extra balance to pay interest $0.5
-        await owner.sendTransaction({
-          to: externalWallet.address,
-          value: forInterest,
-        });
+        const forInterest = ethers.utils.parseEther('0.02');
+        // Extra balance to pay interest $0.02
+        await doc.transfer(externalWallet.address, forInterest);
 
-        const userRBTCBalanceWithInterest = await externalWallet.getBalance();
+        const actualUserDocBalanceWithInterest = await doc.balanceOf(
+          externalWallet.address
+        );
 
         const borrowBalance = await tropykusBorrowingService
           .connect(externalWallet)
-          .getBalance(ethers.constants.AddressZero);
+          .getBalance(doc.address);
 
-        const borrowRBTCBalancePlusCent = borrowBalance
-          .add(forInterest)
-          .sub(borrowTxCost);
+        const borrowDocBalancePlusCent = borrowBalance.add(forInterest);
 
-        const approvedValue = borrowRBTCBalancePlusCent.lt(
-          userRBTCBalanceWithInterest
+        const approvedValue = borrowDocBalancePlusCent.lt(
+          actualUserDocBalanceWithInterest
         )
-          ? borrowRBTCBalancePlusCent
-          : userRBTCBalanceWithInterest;
+          ? borrowDocBalancePlusCent
+          : actualUserDocBalanceWithInterest;
 
-        const balanceTropBefore = await tropykusBorrowingService
+        await doc
           .connect(externalWallet)
-          .getCollateralBalance(0);
-
-        expect(
-          toSmallNumber(balanceTropBefore),
-          'Balance tropykus collateral after payment must be equals amount to lend'
-        ).to.be.equals(amountToLend);
+          .approve(smartWalletAddress, approvedValue);
 
         const mtxForPayment = await signTransactionForExecutor(
           externalWallet.address,
@@ -1133,13 +1101,13 @@ describe('Tropykus Borrowing Service', () => {
           hre.network.config.chainId
         );
 
-        const payTx = await tropykusBorrowingService
+        await tropykusBorrowingService
           .connect(externalWallet)
-          .pay(mtxForPayment, approvedValue, 0, {
-            value: approvedValue,
-          });
+          .pay(mtxForPayment, approvedValue, listingId);
 
-        await payTx.wait();
+        const userRifBalanceBeforeWithdraw = await rif.balanceOf(
+          externalWallet.address
+        );
 
         const mtxForWithdrawal = await signTransactionForExecutor(
           externalWallet.address,
@@ -1151,13 +1119,25 @@ describe('Tropykus Borrowing Service', () => {
 
         const withdrawTx = await tropykusBorrowingService
           .connect(externalWallet)
-          .withdraw(mtxForWithdrawal, 0);
+          .withdraw(mtxForWithdrawal, listingId);
         await withdrawTx.wait();
+
+        const actualUserRifBalanceAfterWithdraw = await rif.balanceOf(
+          externalWallet.address
+        );
+        const expectedUserRIFBalanceAfterWithdraw =
+          toSmallNumber(userRifBalanceBeforeWithdraw) +
+          toSmallNumber(calculateAmountToLend);
+
+        expect(
+          toSmallNumber(actualUserRifBalanceAfterWithdraw),
+          'RIF user balance after withdraw should be back in the user wallet'
+        ).to.closeTo(expectedUserRIFBalanceAfterWithdraw, 0.0000001);
 
         const userCollateralBalanceInProtocolAfterWithdraw =
           await tropykusBorrowingService
             .connect(externalWallet)
-            .getCollateralBalance(0);
+            .getCollateralBalance(listingId);
 
         expect(
           toSmallNumber(userCollateralBalanceInProtocolAfterWithdraw),
