@@ -49,6 +49,11 @@ abstract contract TropykusCommon {
         _smartWalletFactory = smartWalletFactory;
     }
 
+    /**
+     * @notice Validates that the amount is available and greater than zero
+     * @param currency The address of the currency of the lending
+     * @return amountToLend The amount to lend
+     */
     function _validateAndGetAmountToLend(address currency)
         internal
         returns (uint256 amountToLend)
@@ -70,6 +75,14 @@ abstract contract TropykusCommon {
         }
     }
 
+    /**
+     * @notice Call tropykus mint function to get the kTokens
+     * and start accruing interest over the lending
+     * @param mtx The meta transaction
+     * @param currency The currency of the lending
+     * @param amount The amount to lend into tropykus protocol
+     * @param market The address of the tropykus market that uses the currency
+     */
     function _mintTokensInMarket(
         IForwarder.MetaTransaction calldata mtx,
         address currency,
@@ -96,6 +109,16 @@ abstract contract TropykusCommon {
         }
     }
 
+    /*
+     * @notice for ERC20 token transfer funds from the msg.sender
+     * to the smart wallet and approve the smart wallet to spend
+     * the funds
+     * @param mtx The meta transaction
+     * @param market The address of the tropykus market that uses
+     * the currency of the listing
+     * @param erc20Token The address of the ERC20 token
+     * @param amount The amount of funds to transfer
+     */
     function _transferAndApproveERC20ToMarket(
         IForwarder.MetaTransaction calldata mtx,
         address market,
@@ -145,6 +168,14 @@ abstract contract TropykusCommon {
         }
     }
 
+    /**
+     * @notice Redeem the kTokens and get the underlying currency
+     * @param mtx The meta transaction
+     * @param listingId The id of the listing
+     * @param currencyLent The currency of the listing
+     * @param market The address of the tropykus market that uses
+     * the currency of the listing
+     */
     // slither-disable-next-line reentrancy-events
     function _withdraw(
         IForwarder.MetaTransaction calldata mtx,
@@ -188,6 +219,13 @@ abstract contract TropykusCommon {
         });
     }
 
+    /**
+     * @notice Get the address of the market that uses the currency
+     * @param currency The currency of the listing
+     * @param comptroller The address of the tropykus comptroller
+     * @param crbtc The address of the market of tropykus crbtc
+     * @return The address of the market
+     */
     function _getMarketForCurrency(
         address currency,
         address comptroller,
@@ -209,6 +247,12 @@ abstract contract TropykusCommon {
         return address(0);
     }
 
+    /**
+     * @notice Compare two strings
+     * @param a The first string
+     * @param b The second string
+     * @return true if the strings are equal
+     */
     function _compareStrings(string memory a, string memory b)
         internal
         pure
