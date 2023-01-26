@@ -110,7 +110,6 @@ describe('RIF Gateway SmartWallet', async () => {
           mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero,
           {
             gasLimit: 3000000,
           }
@@ -134,7 +133,6 @@ describe('RIF Gateway SmartWallet', async () => {
           mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero,
           {
             gasLimit: 3000000,
           }
@@ -144,7 +142,6 @@ describe('RIF Gateway SmartWallet', async () => {
       await expect(
         smartWallet!.execute(
           mtx,
-          ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
           {

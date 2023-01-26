@@ -46,7 +46,6 @@ interface IForwarder {
      * @param mtx signed meta tx to be executed.
      * @param data - function call data
      * @param to - target contract to call
-     * @param currency - currency exchanged in this tx
      *
      * the transaction is verified, and then executed.
      * the success and response (ret) of "call" are returned.
@@ -55,6 +54,27 @@ interface IForwarder {
      * are reported using the returned "success" and ret string
      */
     function execute(
+        IForwarder.MetaTransaction calldata mtx,
+        bytes calldata data,
+        address to
+    ) external payable returns (bool success, bytes memory ret);
+
+    /**
+     * @notice Executes a transaction on behalf of the owner of the SmartWallet
+     *         and forwards all ERC20 tokens through `currency` contract to owner
+     *         of the Smart Wallet. (EOA, which is basically the signer `mtx.req.from`)
+     * @param mtx signed meta tx to be executed.
+     * @param data - function call data
+     * @param to - target contract to call
+     * @param currency - currency exchanged in this tx
+     *
+     * the transaction is verified, and then executed.
+     * the success and response (ret) of "call" are returned.
+     * This method would return only verification errors. target errors
+     * so it doesn't revert when a error happens when on the callee
+     * are reported using the returned "success" and ret string
+     */
+    function executeAndForwardTokens(
         IForwarder.MetaTransaction calldata mtx,
         bytes calldata data,
         address to,
