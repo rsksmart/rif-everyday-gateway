@@ -12,6 +12,11 @@ import {TropykusCommon} from "./TropykusCommon.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
+/**
+ * @title Borrow Service Implementation
+ * @dev Implementation of the Borrow Service for Tropykus
+ * @author RIF protocols team
+ */
 contract TropykusBorrowingService is BorrowService, TropykusCommon {
     error InvalidCollateralAmount(uint256 amount, uint256 expectedAmount);
     error MissingIdentity(address user);
@@ -42,6 +47,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         _cdoc = contracts.cdoc;
     }
 
+    /*
+     * @inheritdoc BorrowService
+     */
     function borrow(
         IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
@@ -112,7 +120,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         }
     }
 
-    // Only using RBTC as collateral after will be defining by the listing collateralCurrency
+    /*
+     * @inheritdoc BorrowService
+     */
     function calculateRequiredCollateral(
         uint256 listingId,
         uint256 amountToBorrow
@@ -235,6 +245,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         }
     }
 
+    /*
+     * @inheritdoc BorrowService
+     */
     function pay(
         IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
@@ -281,6 +294,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         }
     }
 
+    /*
+     * @inheritdoc BorrowService
+     */
     function getCollateralBalance(uint256 listingId)
         public
         view
@@ -310,6 +326,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         return (exchangeRate * tokens) / _UNIT_DECIMAL_PRECISION;
     }
 
+    /*
+     * @inheritdoc BorrowService
+     */
     function withdraw(
         IForwarder.MetaTransaction calldata mtx,
         uint256 listingId
@@ -325,6 +344,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         _withdraw(mtx, listingId, listing.collateralCurrency, market);
     }
 
+    /*
+     * @inheritdoc IService
+     */
     function getBalance(address currency)
         public
         view
@@ -350,6 +372,9 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         balanceBorrowed = abi.decode(data, (uint256));
     }
 
+    /*
+     * @inheritdoc Service
+     */
     function getListing(uint256 listingId)
         public
         view

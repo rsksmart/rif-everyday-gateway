@@ -8,6 +8,11 @@ import "../smartwallet/IForwarder.sol";
 import {IPriceOracleProxy, IComptrollerG6, IcErc20} from "contracts/tropykus/ITropykus.sol";
 import {TropykusCommon} from "./TropykusCommon.sol";
 
+/**
+ * @title Lending Service Implementation
+ * @dev Implementation of the Lending Service for Tropykus
+ * @author RIF protocols team
+ */
 contract TropykusLendingService is LendingService, TropykusCommon {
     address private _comptroller;
     address private _crbtc;
@@ -21,6 +26,9 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         _crbtc = contracts.crbtc;
     }
 
+    /**
+     * @inheritdoc LendingService
+     */
     function lend(
         IForwarder.MetaTransaction calldata mtx,
         uint256 amount,
@@ -68,6 +76,9 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         _mintTokensInMarket(mtx, currencyToLend, amountToLend, market);
     }
 
+    /**
+     * @inheritdoc LendingService
+     */
     function withdraw(
         IForwarder.MetaTransaction calldata mtx,
         uint256 listingId
@@ -82,6 +93,9 @@ contract TropykusLendingService is LendingService, TropykusCommon {
         _withdraw(mtx, listingId, listing.currency, market);
     }
 
+    /**
+     * @inheritdoc IService
+     */
     function getBalance(address currency)
         public
         view
