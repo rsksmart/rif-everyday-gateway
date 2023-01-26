@@ -133,7 +133,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         bytes calldata data,
         address targetContract
     ) external payable override returns (bool success, bytes memory ret) {
-       (success, ret) =  _execute(mtx, data, targetContract);
+        (success, ret) = _execute(mtx, data, targetContract);
     }
 
     /**
@@ -145,7 +145,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         address targetContract,
         address currency
     ) external payable override returns (bool success, bytes memory ret) {
-        (success, ret) =  _execute(mtx, data, targetContract);
+        (success, ret) = _execute(mtx, data, targetContract);
         _forwardTokensIfAny(mtx.req.from, currency);
     }
 
