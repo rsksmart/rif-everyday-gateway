@@ -239,7 +239,7 @@ contract ACME is Ownable {
      * @notice Allows the payer to repay the debt of the loaner plus interest
      * @param currency The currency of the loan
      * @param amount The amount of currency to repay
-     * @param payer The address that will pay the debt of the loaner the currency
+     * @param payer The address that will pay the debt of the loaner
      * @param loaner The address of the debt creditor
      */
     function _repay(
