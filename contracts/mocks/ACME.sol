@@ -6,7 +6,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
  * @title ACME
- * @dev ACME is a mock o f a service provider of lending
+ * @dev ACME is a mocked service provider for lending
  * and borrowing services for testing purposes.
  * Inspired on Compound protocol
  * @author RIF protocols team
