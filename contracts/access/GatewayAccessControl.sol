@@ -14,7 +14,7 @@ bytes32 constant FINANCIAL_OPERATOR = keccak256("FINANCIAL_OPERATOR");
  * @title GatewayAccessControl
  * @author RIF Protocols Team
  * @dev The main contract that that handles the role and their access within the gateway.
- * This roles had been defined by the Security team.
+ * This roles had been defined by the Security team and each address should from a multisig wallet.
  */
 contract GatewayAccessControl is AccessControl, Ownable {
     /**
@@ -48,10 +48,18 @@ contract GatewayAccessControl is AccessControl, Ownable {
         return hasRole(OWNER, owner);
     }
 
+    /**
+     * @notice Grants LOW_LEVEL_OPERATOR role to the given address.
+     * @param lowOperator address to be grant LOW_LEVEL_OPERATOR role.
+     */
     function addLowLevelOperator(address lowOperator) public onlyRole(OWNER) {
         grantRole(LOW_LEVEL_OPERATOR, lowOperator);
     }
 
+    /**
+     * @notice Revokes LOW_LEVEL_OPERATOR role to the given address.
+     * @param lowOperator address to be revoke LOW_LEVEL_OPERATOR role.
+     */
     function removeLowLevelOperator(address lowOperator)
         public
         onlyRole(OWNER)
@@ -59,6 +67,11 @@ contract GatewayAccessControl is AccessControl, Ownable {
         revokeRole(LOW_LEVEL_OPERATOR, lowOperator);
     }
 
+    /**
+     * @notice Checks if the given address has LOW_LEVEL_OPERATOR role.
+     * @param lowOperator address to check.
+     * @return bool true if the given address has LOW_LEVEL_OPERATOR role.
+     */
     function isLowLevelOperator(address lowOperator)
         public
         view
@@ -67,10 +80,18 @@ contract GatewayAccessControl is AccessControl, Ownable {
         return hasRole(LOW_LEVEL_OPERATOR, lowOperator);
     }
 
+    /**
+     * @notice Grants HIGH_LEVEL_OPERATOR role to the given address.
+     * @param highOperator address to be grant HIGH_LEVEL_OPERATOR role.
+     */
     function addHighLevelOperator(address highOperator) public onlyRole(OWNER) {
         grantRole(HIGH_LEVEL_OPERATOR, highOperator);
     }
 
+    /**
+     * @notice Revokes HIGH_LEVEL_OPERATOR role to the given address.
+     * @param highOperator address to be revoke HIGH_LEVEL_OPERATOR role.
+     */
     function removeHighLevelOperator(address highOperator)
         public
         onlyRole(OWNER)
@@ -78,6 +99,11 @@ contract GatewayAccessControl is AccessControl, Ownable {
         revokeRole(HIGH_LEVEL_OPERATOR, highOperator);
     }
 
+    /**
+     * @notice Checks if the given address has HIGH_LEVEL_OPERATOR role.
+     * @param highOperator address to check.
+     * @return bool true if the given address has HIGH_LEVEL_OPERATOR role.
+     */
     function isHighLevelOperator(address highOperator)
         public
         view
@@ -86,10 +112,18 @@ contract GatewayAccessControl is AccessControl, Ownable {
         return hasRole(HIGH_LEVEL_OPERATOR, highOperator);
     }
 
+    /**
+     * @notice Grants FINANCIAL_OWNER role to the given address.
+     * @param financialOwner address to be grant FINANCIAL_OWNER role.
+     */
     function addFinancialOwner(address financialOwner) public onlyRole(OWNER) {
         grantRole(FINANCIAL_OWNER, financialOwner);
     }
 
+    /**
+     * @notice Revokes FINANCIAL_OWNER role to the given address.
+     * @param financialOwner address to be revoke FINANCIAL_OWNER role.
+     */
     function removeFinancialOwner(address financialOwner)
         public
         onlyRole(OWNER)
@@ -97,6 +131,11 @@ contract GatewayAccessControl is AccessControl, Ownable {
         revokeRole(FINANCIAL_OWNER, financialOwner);
     }
 
+    /**
+     * @notice Checks if the given address has FINANCIAL_OWNER role.
+     * @param financialOwner address to check.
+     * @return bool true if the given address has FINANCIAL_OWNER role.
+     */
     function isFinancialOwner(address financialOwner)
         public
         view
@@ -105,6 +144,10 @@ contract GatewayAccessControl is AccessControl, Ownable {
         return hasRole(FINANCIAL_OWNER, financialOwner);
     }
 
+    /**
+     * @notice Grants FINANCIAL_OPERATOR role to the given address.
+     * @param financialOperator address to be grant FINANCIAL_OPERATOR role.
+     */
     function addFinancialOperator(address financialOperator)
         public
         onlyRole(OWNER)
@@ -112,6 +155,10 @@ contract GatewayAccessControl is AccessControl, Ownable {
         grantRole(FINANCIAL_OPERATOR, financialOperator);
     }
 
+    /**
+     * @notice Revokes FINANCIAL_OPERATOR role to the given address.
+     * @param financialOperator address to be revoke FINANCIAL_OPERATOR role.
+     */
     function removeFinancialOperator(address financialOperator)
         public
         onlyRole(OWNER)
@@ -119,6 +166,11 @@ contract GatewayAccessControl is AccessControl, Ownable {
         revokeRole(FINANCIAL_OPERATOR, financialOperator);
     }
 
+    /**
+     * @notice Checks if the given address has FINANCIAL_OPERATOR role.
+     * @param financialOperator address to check.
+     * @return bool true if the given address has FINANCIAL_OPERATOR role.
+     */
     function isFinancialOperator(address financialOperator)
         public
         view
