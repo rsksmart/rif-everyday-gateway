@@ -26,6 +26,11 @@ contract GatewayAccessControl is AccessControl, Ownable {
      */
     constructor() {
         _setRoleAdmin(OWNER, OWNER);
+        _setRoleAdmin(LOW_LEVEL_OPERATOR, OWNER);
+        _setRoleAdmin(HIGH_LEVEL_OPERATOR, OWNER);
+        _setRoleAdmin(FINANCIAL_OWNER, OWNER);
+        _setRoleAdmin(FINANCIAL_OPERATOR, OWNER);
+
         _setupRole(OWNER, msg.sender);
     }
 
