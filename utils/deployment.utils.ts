@@ -1,6 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { Contract, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
+import { RIFGateway, UUPSUpgradeable } from 'typechain-types';
 
 export interface Factory<C extends Contract> extends ContractFactory {
   deploy: (...args: Array<unknown>) => Promise<C>;
@@ -23,8 +24,55 @@ export const deployContract = async <C extends Contract, A = {}>(
   await contract.deployed();
 
   return {
-    contract,
+    contract: contract,
     signers: await ethers.getSigners(),
     contractFactory,
+  };
+};
+
+// Deploys a UUPS compliant proxy contract with its logic.
+export const deployProxyContract = async <
+  L extends Contract,
+  I extends Contract,
+  A = {}
+>(
+  contractName: string,
+  logicContractName: string,
+  initializeData: string
+): Promise<{
+  contract: I;
+  signers: SignerWithAddress[];
+}> => {
+  // Deploy contracts logic
+  const logicContractFactory = (await ethers.getContractFactory(
+    logicContractName
+  )) as Factory<L>;
+
+  const logicContract = await logicContractFactory.deploy();
+  await logicContract.deployed();
+
+  // Deploy main upgradeable contract
+  const mainContractFactory = (await ethers.getContractFactory(
+    contractName
+  )) as Factory<RIFGateway>;
+
+  const mainProxyContract = await mainContractFactory.deploy(
+    logicContract.address,
+    initializeData,
+    {
+      gasLimit: 3000000,
+    }
+  );
+  await mainProxyContract.deployed();
+
+  const contractAsInterface = (await ethers.getContractAt(
+    logicContractName,
+    mainProxyContract.address,
+    mainProxyContract.signer
+  )) as I;
+
+  return {
+    contract: contractAsInterface,
+    signers: await ethers.getSigners(),
   };
 };

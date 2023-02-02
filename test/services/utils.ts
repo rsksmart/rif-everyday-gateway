@@ -1,23 +1,23 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   BORROW_SERVICE_INTERFACEID,
   LENDING_SERVICE_INTERFACEID,
 } from 'test/utils/interfaceIDs';
 import {
+  IRIFGateway,
   RIFGateway,
   ServiceTypeManager,
-  GatewayAccessControl,
-  FeeManager,
+  SubscriptionReporter,
 } from 'typechain-types';
-import { deployContract } from 'utils/deployment.utils';
+import { deployContract, deployProxyContract } from 'utils/deployment.utils';
 
 export const deployRIFGateway = async (registerInterfaceId = true) => {
   const { contract: serviceTypeManager } =
     await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
 
   const { contract: gatewayAccessControl } =
-    await deployContract<GatewayAccessControl>('GatewayAccessControl', {});
+    await deployContract<IGatewayAccessControl>('GatewayAccessControl', {});
 
   if (registerInterfaceId) {
     // allow lending service interface id
@@ -33,20 +33,20 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
     await tBx.wait();
   }
 
-  const { contract: RIFGateway } = await deployContract<RIFGateway>(
-    'RIFGateway',
-    {
-      ServiceTypeManager: serviceTypeManager.address,
-      GatewayAccessControl: gatewayAccessControl.address,
-    }
-  );
+  const iface = new ethers.utils.Interface([
+    'function initialize(address serviceTypeManagerAddr,address gatewayAccessControlAddr, address feeManagerAddr)',
+  ]);
+  const msgData = iface.encodeFunctionData('initialize', [
+    serviceTypeManager.address,
+    gatewayAccessControl.address,
+  ]);
 
-  const feeManager = await ethers.getContractAt(
-    'FeeManager',
-    await RIFGateway.feeManager()
-  );
+  const { contract: rifGateway } = await deployProxyContract<
+    RIFGateway,
+    IRIFGateway
+  >('RIFGateway', 'RIFGatewayLogicV1', msgData);
 
-  return { RIFGateway, feeManager, serviceTypeManager, gatewayAccessControl };
+  return { RIFGateway: rifGateway, feeManager, serviceTypeManager };
 };
 
 export function toSmallNumber(bn: BigNumber, divisor = 1e18) {

@@ -11,11 +11,7 @@ import "../feeManager/FeeManager.sol";
  */
 abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
-    IFeeManager public immutable feeManager;
-
-    constructor() {
-        feeManager = new FeeManager();
-    }
+    IFeeManager public feeManager;
 
     /**
      * @inheritdoc ISubscriptionReporter

@@ -81,5 +81,5 @@ interface IRIFGateway {
      * @notice Returns the address of the access control contract
      * @return The address of the access control contract
      */
-    function getAccessControl() external view returns (GatewayAccessControl);
+    function getAccessControl() external view returns (IGatewayAccessControl);
 }
