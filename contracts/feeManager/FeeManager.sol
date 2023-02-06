@@ -29,16 +29,13 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
 
     constructor(address feesOwner) {
         _feesOwner = feesOwner;
+        addFinancialOwner(_feesOwner);
     }
 
     /**
      * @inheritdoc IFeeManager
      */
-    function chargeFee(address debtor, address beneficiary)
-        public
-        override
-        onlyRole(FINANCIAL_OWNER)
-    {
+    function chargeFee(address debtor, address beneficiary) public override {
         if (beneficiary != address(0)) {
             bytes32 amountKey = keccak256(
                 abi.encodePacked(debtor, beneficiary)

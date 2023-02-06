@@ -29,7 +29,6 @@ describe('FeeManager', () => {
   let signers: SignerWithAddress[];
   let beneficiary: SignerWithAddress;
   let serviceProvider: SignerWithAddress;
-  let financialOwner: SignerWithAddress;
   let financialOperator: SignerWithAddress;
   let owner: SignerWithAddress;
   let beneficiaryAddr: string;
@@ -38,8 +37,7 @@ describe('FeeManager', () => {
 
   beforeEach(async () => {
     ({ feeManager, signers } = await loadFixture(feeManagerSetUp));
-    [owner, beneficiary, serviceProvider, financialOwner, financialOperator] =
-      signers;
+    [owner, beneficiary, serviceProvider, financialOperator] = signers;
     beneficiaryAddr = beneficiary.address;
     serviceProviderAddr = serviceProvider.address;
     ownerAddr = owner.address;
@@ -55,23 +53,11 @@ describe('FeeManager', () => {
   });
 
   describe('fundBeneficiary', () => {
-    beforeEach(async () => {
-      await (
-        await feeManager
-          .connect(owner)
-          .addFinancialOwner(financialOwner.address)
-      ).wait();
-    });
-
     it('it should add the given fees to the given beneficiary', async () => {
       const expectedFee = ONE_GWEI;
 
       // Unit under test
-      await expect(
-        feeManager
-          .connect(financialOwner)
-          .chargeFee(serviceProviderAddr, beneficiaryAddr)
-      )
+      await expect(feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr))
         .to.emit(feeManager, FeeManagerEvents.ServiceConsumptionFee)
         .withArgs(
           serviceProviderAddr,
@@ -92,9 +78,7 @@ describe('FeeManager', () => {
 
     it('should emit `FeePayment` event', async () => {
       const expectedFee = ONE_GWEI;
-      await feeManager
-        .connect(financialOwner)
-        .chargeFee(serviceProviderAddr, beneficiaryAddr);
+      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
       // Verify results
       await expect(
         feeManager
@@ -124,11 +108,6 @@ describe('FeeManager', () => {
       feeManagerAsBeneficiary = feeManager.connect(beneficiary);
       feeManagerAsServiceProvider = feeManager.connect(serviceProvider);
       await (
-        await feeManager
-          .connect(owner)
-          .addFinancialOwner(financialOwner.address)
-      ).wait();
-      await (
         await feeManager.connect(owner).addFinancialOperator(owner.address)
       ).wait();
     });
@@ -138,9 +117,7 @@ describe('FeeManager', () => {
       const initialBalance = ONE_GWEI;
       const amountToWithdraw = ONE_GWEI / 2;
       const expectedLeftBalance = initialBalance - amountToWithdraw;
-      await feeManager
-        .connect(financialOwner)
-        .chargeFee(serviceProviderAddr, beneficiaryAddr);
+      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
       await feeManagerAsServiceProvider.pay({ value: ONE_GWEI });
       // Unit under test
       await feeManagerAsBeneficiary.withdraw(amountToWithdraw);
@@ -155,9 +132,7 @@ describe('FeeManager', () => {
       const initialBalance = ONE_GWEI;
       const amountToWithdraw = ONE_GWEI / 2;
       const expectedLeftBalance = initialBalance - amountToWithdraw;
-      await feeManager
-        .connect(financialOwner)
-        .chargeFee(serviceProviderAddr, beneficiaryAddr);
+      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
       await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 });
       // Unit under test owner is a FINANCIAL_OPERATOR
       // TODO transfer fund to address of FINANCIAL_OPERATOR
@@ -170,9 +145,7 @@ describe('FeeManager', () => {
 
     it('should emit `Withdraw` event', async () => {
       const amountToWithdraw = ONE_GWEI;
-      await feeManager
-        .connect(financialOwner)
-        .chargeFee(serviceProviderAddr, beneficiaryAddr);
+      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
       await feeManagerAsServiceProvider.pay({ value: ONE_GWEI });
       // Verify results
       await expect(feeManagerAsBeneficiary.withdraw(amountToWithdraw))

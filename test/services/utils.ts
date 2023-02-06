@@ -33,7 +33,7 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
   );
 
   const feeManager = await ethers.getContractAt(
-    'IFeeManager',
+    'FeeManager',
     await RIFGateway.feeManager()
   );
 
