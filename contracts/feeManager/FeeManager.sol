@@ -29,7 +29,6 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
 
     constructor(address feesOwner) {
         _feesOwner = feesOwner;
-        addFinancialOwner(_feesOwner);
     }
 
     /**
