@@ -7,7 +7,7 @@ import {
   TropykusLendingService,
   TropykusBorrowingService__factory,
   TropykusBorrowingService,
-  IRIFGateway,
+  RIFGateway,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployRIFGateway } from './utils';
@@ -17,17 +17,18 @@ import {
 } from 'test/utils/interfaceIDs';
 
 describe('RIF Gateway', () => {
-  let rifGateway: IRIFGateway;
+  let rifGateway: RIFGateway;
   let serviceTypeManager: ServiceTypeManager;
   let signer: SignerWithAddress;
-  let otherSigner: SignerWithAddress;
+  let signers: SignerWithAddress[];
+  let highLevelOperator: SignerWithAddress;
+  let notOwner: SignerWithAddress;
   let tropykusLendingService: TropykusLendingService;
   let tropykusBorrowingService: TropykusBorrowingService;
 
   const initialFixture = async () => {
     const signers = await ethers.getSigners();
     const signer = signers[0];
-    const otherSigner = signers[2];
 
     ({ RIFGateway: rifGateway, serviceTypeManager: serviceTypeManager } =
       await deployRIFGateway(false));
@@ -67,7 +68,7 @@ describe('RIF Gateway', () => {
       serviceTypeManager,
       tropykusLendingService,
       signer,
-      otherSigner,
+      signers,
     };
   };
 
@@ -77,8 +78,10 @@ describe('RIF Gateway', () => {
       serviceTypeManager,
       tropykusLendingService,
       signer,
-      otherSigner,
+      signers,
     } = await loadFixture(initialFixture));
+    notOwner = signers[1];
+    highLevelOperator = signers[2];
   });
 
   it('Should not add a new service if the service type is not supported', async () => {
@@ -170,10 +173,20 @@ describe('RIF Gateway', () => {
       });
     });
     describe('validateProvider', () => {
+      beforeEach(async () => {
+        await (
+          await rifGateway
+            .connect(signer)
+            .addHighLevelOperator(highLevelOperator.address)
+        ).wait();
+      });
       it('should validate a provider when no services have been added by the provider', async () => {
         await (await rifGateway.requestValidation(signer.address)).wait();
-        await (await rifGateway.validateProvider(signer.address)).wait();
-
+        await (
+          await rifGateway
+            .connect(highLevelOperator)
+            .validateProvider(signer.address)
+        ).wait();
         const [, afterProviders] = await rifGateway.getServicesAndProviders();
         expect(afterProviders[0].validated).equals(true);
       });
@@ -192,14 +205,22 @@ describe('RIF Gateway', () => {
         expect(providers[0].provider).equals(signer.address);
         expect(providers[0].validated).equals(false);
 
-        await (await rifGateway.validateProvider(signer.address)).wait();
+        await (
+          await rifGateway
+            .connect(highLevelOperator)
+            .validateProvider(signer.address)
+        ).wait();
 
         const [, afterProviders] = await rifGateway.getServicesAndProviders();
         expect(afterProviders[0].validated).equals(true);
       });
 
       it('should revert if validation was not requested before', async () => {
-        await expect(rifGateway.validateProvider(ethers.constants.AddressZero))
+        await expect(
+          rifGateway
+            .connect(highLevelOperator)
+            .validateProvider(ethers.constants.AddressZero)
+        )
           .to.revertedWith('ValidationNotRequested')
           .withArgs(ethers.constants.AddressZero);
       });
@@ -247,11 +268,11 @@ describe('RIF Gateway', () => {
 
         await expect(
           rifGateway
-            .connect(otherSigner)
+            .connect(notOwner)
             .removeService(tropykusLendingService.address)
         )
           .to.revertedWith('InvalidProviderAddress')
-          .withArgs(otherSigner.address);
+          .withArgs(notOwner.address);
       });
 
       it('should revert if trying to delete a service that does not exist', async () => {

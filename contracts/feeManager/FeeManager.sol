@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IFeeManager} from "./IFeeManager.sol";
+import "../access/GatewayAccessControl.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
@@ -10,7 +11,7 @@ import {IFeeManager} from "./IFeeManager.sol";
  * @title Fee Manager
  * @author RIF protocols team
  */
-contract FeeManager is IFeeManager, Ownable {
+contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
 
@@ -36,7 +37,7 @@ contract FeeManager is IFeeManager, Ownable {
     function chargeFee(address debtor, address beneficiary)
         public
         override
-        onlyOwner
+        onlyRole(FINANCIAL_OWNER)
     {
         if (beneficiary != address(0)) {
             bytes32 amountKey = keccak256(
@@ -123,6 +124,7 @@ contract FeeManager is IFeeManager, Ownable {
      */
     // slither-disable-next-line reentrancy-events
     function withdraw(uint256 amount) external override {
+        if (msg.sender == _feesOwner) isFinancialOperator(msg.sender);
         if (amount > _funds[msg.sender]) {
             revert InsufficientFunds();
         }

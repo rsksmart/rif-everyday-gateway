@@ -17,7 +17,7 @@ const FINANCIAL_OPERATOR = ethers.utils.keccak256(
   ethers.utils.toUtf8Bytes('FINANCIAL_OPERATOR')
 );
 
-describe.only('Gateway Access Control', () => {
+describe('Gateway Access Control', () => {
   let gatewayAccessControl: GatewayAccessControl;
   let signers: SignerWithAddress[];
   let owner: SignerWithAddress;
