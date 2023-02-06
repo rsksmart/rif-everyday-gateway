@@ -162,20 +162,57 @@ describe('FeeManager', () => {
 
     it('should let FINANCIAL_OPERATOR withdraw feeOwner funds', async () => {
       // SetUp
-      const initialBalance = ONE_GWEI;
-      const amountToWithdraw = ONE_GWEI / 2;
-      const expectedLeftBalance = initialBalance - amountToWithdraw;
-      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
-      await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 });
-      // Unit under test owner is a FINANCIAL_OPERATOR
-      // TODO transfer fund to address of FINANCIAL_OPERATOR
+      const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
+      // 1 GWEI = 0.000000001 ETH = 1000000000
+      const amountToWithdrawAsEthers = ONE_GWEI;
+      const feeManagerInitialBalance = await ethers.provider.getBalance(
+        feeManager.address
+      );
+      expect(feeManagerInitialBalance).to.equal(0);
+      await (
+        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
+      ).wait();
+      // 2 GWEI = 0.000000002 ETH = 2000000000
+      await (
+        await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 })
+      ).wait();
+      const feeOwnerBalanceBefore = await feeManager.getBalance(ownerAddr);
+      expect(feeOwnerBalanceBefore).to.equal(ONE_GWEI);
+      const feeManagerAfterBalance = await ethers.provider.getBalance(
+        feeManager.address
+      );
+      expect(feeManagerAfterBalance).to.equal(ONE_GWEI * 2);
+      const gasEstimated = await feeManager
+        .connect(financialOperator)
+        .estimateGas.withdraw(amountToWithdrawAsEthers, gatewayFeesOwner);
+      const gasPrice = await ethers.provider.getGasPrice();
+      const gasCost = gasEstimated.mul(gasPrice);
+      const financialOperatorBalanceBefore = await ethers.provider.getBalance(
+        financialOperator.address
+      );
+      expect(financialOperatorBalanceBefore).to.equal(
+        ethers.utils.parseEther('100000000000000000000000000') // hardhat initial account balance
+      );
+
+      // Unit under test
       await feeManager
         .connect(financialOperator)
-        .withdraw(amountToWithdraw, ownerAddr);
+        .withdraw(amountToWithdrawAsEthers, gatewayFeesOwner);
       // Verify results
-      await expect(feeManager.getBalance(ownerAddr)).to.eventually.equal(
-        expectedLeftBalance
+      expect(await feeManager.getBalance(ownerAddr)).to.equal(0);
+      expect(await ethers.provider.getBalance(feeManager.address)).to.equal(
+        ONE_GWEI
       );
+      const financialOperatorBalanceAfter = await ethers.provider.getBalance(
+        financialOperator.address
+      );
+
+      const result = financialOperatorBalanceBefore
+        .sub(gasCost)
+        .add(amountToWithdrawAsEthers);
+
+      expect(financialOperatorBalanceAfter).to.gte(result);
+      expect(await feeManager.getDebtBalance(serviceProviderAddr)).to.equal(0);
     });
 
     it('should emit `Withdraw` event', async () => {
