@@ -217,12 +217,6 @@ describe('Tropykus Borrowing Service', () => {
           hre.network.config.chainId
         );
 
-        console.log(
-          'tropykusBorrowingService',
-          tropykusBorrowingService.address
-        );
-        console.log('externalWallet', externalWallet.address);
-
         const tx = await tropykusBorrowingService
           .connect(externalWallet)
           .borrow(

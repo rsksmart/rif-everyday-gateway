@@ -41,6 +41,7 @@ interface IFeeManager {
     error NoPendingFees();
     error InsufficientFunds();
     error RBTCTransferFailed();
+    error InvalidBeneficiary();
 
     /**
      * @notice Returns the beneficiary fees amount
@@ -70,8 +71,9 @@ interface IFeeManager {
     /**
      * @notice Allow beneficiaries to withdraw their funds
      * @param amount fees to be withdrawn
+     * @param beneficiary the address of the beneficiary where fees will be withdrawn
      */
-    function withdraw(uint256 amount) external;
+    function withdraw(uint256 amount, address beneficiary) external;
 
     /**
      * @notice Charges a fixed amount to a debtor

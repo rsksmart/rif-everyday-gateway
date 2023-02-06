@@ -23,6 +23,7 @@ describe('RIF Gateway', () => {
   let signers: SignerWithAddress[];
   let highLevelOperator: SignerWithAddress;
   let notOwner: SignerWithAddress;
+  let newOwner: SignerWithAddress;
   let tropykusLendingService: TropykusLendingService;
   let tropykusBorrowingService: TropykusBorrowingService;
 
@@ -82,6 +83,27 @@ describe('RIF Gateway', () => {
     } = await loadFixture(initialFixture));
     notOwner = signers[1];
     highLevelOperator = signers[2];
+    newOwner = signers[3];
+  });
+
+  describe('Roles', () => {
+    it('should set deployer as OWNER', async () => {
+      expect(await rifGateway.owner()).to.equal(signer.address);
+      expect(await rifGateway.isOwner(signer.address)).to.be.true;
+    });
+
+    it('should transfer OWNER and ownership to the given address', async () => {
+      expect(await rifGateway.owner()).to.equal(signer.address);
+      expect(await rifGateway.isOwner(signer.address)).to.be.true;
+
+      await (
+        await rifGateway.connect(signer).changeOwner(newOwner.address)
+      ).wait();
+
+      expect(await rifGateway.owner()).to.equal(newOwner.address);
+      expect(await rifGateway.isOwner(newOwner.address)).to.be.true;
+      expect(await rifGateway.isOwner(signer.address)).to.be.false;
+    });
   });
 
   it('Should not add a new service if the service type is not supported', async () => {

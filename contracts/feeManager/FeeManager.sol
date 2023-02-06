@@ -29,6 +29,7 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
 
     constructor(address feesOwner) {
         _feesOwner = feesOwner;
+        super.addFinancialOwner(feesOwner);
     }
 
     /**
@@ -119,15 +120,19 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
      * @inheritdoc IFeeManager
      */
     // slither-disable-next-line reentrancy-events
-    function withdraw(uint256 amount) external override {
-        if (msg.sender == _feesOwner) isFinancialOperator(msg.sender);
-        if (amount > _funds[msg.sender]) {
+    function withdraw(uint256 amount, address beneficiary) external override {
+        if (beneficiary == _feesOwner) {
+            isFinancialOperator(msg.sender);
+        } else {
+            if (beneficiary != msg.sender) revert InvalidBeneficiary();
+        }
+        if (amount > _funds[beneficiary]) {
             revert InsufficientFunds();
         }
 
-        emit Withdraw(msg.sender, amount);
+        emit Withdraw(beneficiary, amount);
 
-        _funds[msg.sender] -= amount;
+        _funds[beneficiary] -= amount;
         // slither-disable-next-line low-level-calls
         (bool success, ) = msg.sender.call{value: amount}("");
 
@@ -226,5 +231,25 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
         emit FeePayment(debtor, _feesOwner, ownerPayment);
 
         return funds;
+    }
+
+    /**
+     * @notice Overrides the transferOwnership function of Ownable
+     * to remove FINANCIAL_OWNER role from previous _feesOwner
+     * @param newOwner The address of the new owner
+     */
+    function transferOwnership(address newOwner) public override {
+        removeFinancialOwner(_feesOwner);
+        _feesOwner = newOwner;
+        super.transferOwnership(newOwner);
+        addFinancialOwner(newOwner);
+    }
+
+    /**
+     * @notice Returns the address of the gateway fees owner
+     * @return The address of the gateway fees owner
+     */
+    function getGatewayFeesOwner() external view returns (address) {
+        return _feesOwner;
     }
 }
