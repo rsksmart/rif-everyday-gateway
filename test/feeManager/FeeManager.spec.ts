@@ -53,6 +53,7 @@ describe('FeeManager', () => {
       expect(await feeManager.isFinancialOwner(owner.address)).to.be.true;
     });
     it('should transfer ownership to the given address', async () => {
+      const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
       expect(await feeManager.owner()).to.equal(owner.address);
       expect(await feeManager.isOwner(owner.address)).to.be.true;
       expect(await feeManager.isFinancialOwner(owner.address)).to.be.true;
@@ -68,14 +69,9 @@ describe('FeeManager', () => {
       expect(await feeManager.isFinancialOwner(financialOwner.address)).to.be
         .true;
       expect(await feeManager.isFinancialOwner(owner.address)).to.be.false;
+      expect(await feeManager.getGatewayFeesOwner()).to.equal(gatewayFeesOwner);
     });
     it('should revert if trying to transfer ownership to address zero', async () => {
-      await (
-        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
-      ).wait();
-      await (
-        await feeManager.connect(serviceProvider).pay({ value: ONE_GWEI * 2 })
-      ).wait();
       await expect(
         feeManager
           .connect(owner)
@@ -83,12 +79,6 @@ describe('FeeManager', () => {
       ).to.eventually.be.rejectedWith('Ownable: new owner is the zero address');
     });
     it('should revert if trying to transfer ownership to old owner', async () => {
-      await (
-        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
-      ).wait();
-      await (
-        await feeManager.connect(serviceProvider).pay({ value: ONE_GWEI * 2 })
-      ).wait();
       await expect(
         feeManager.connect(owner).transferOwnership(owner.address)
       ).to.eventually.be.rejectedWith('NewOwnerIsCurrentOwner()');
