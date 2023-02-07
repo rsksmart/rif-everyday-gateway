@@ -17,11 +17,10 @@ import "../access/IGatewayAccessControl.sol";
  * @author RIF protocols team
  */
 contract RIFGatewayLogicV1 is
-    Ownable,
-    RIFGatewayStorageV1,
-    SubscriptionReporter,
     IRIFGateway,
-    UUPSUpgradeable
+    UUPSUpgradeable,
+    SubscriptionReporter,
+    RIFGatewayStorageV1
 {
     function _authorizeUpgrade(address newImplementation) internal override {}
 
@@ -102,7 +101,7 @@ contract RIFGatewayLogicV1 is
     /**
      * @inheritdoc IRIFGateway
      */
-    function validateProvider(address provider) external override onlyOwner {
+    function validateProvider(address provider) external override {
         if (_providerIndexes[provider] == 0)
             revert ValidationNotRequested(provider);
         _checkIfProviderIsAlreadyValidated(provider);
