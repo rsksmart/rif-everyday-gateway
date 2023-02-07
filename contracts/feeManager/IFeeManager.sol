@@ -42,6 +42,7 @@ interface IFeeManager {
     error InsufficientFunds();
     error RBTCTransferFailed();
     error InvalidBeneficiary();
+    error NewOwnerIsCurrentOwner();
 
     /**
      * @notice Returns the beneficiary fees amount

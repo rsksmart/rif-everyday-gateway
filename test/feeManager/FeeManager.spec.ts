@@ -69,6 +69,30 @@ describe('FeeManager', () => {
         .true;
       expect(await feeManager.isFinancialOwner(owner.address)).to.be.false;
     });
+    it('should revert if trying to transfer ownership to address zero', async () => {
+      await (
+        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
+      ).wait();
+      await (
+        await feeManager.connect(serviceProvider).pay({ value: ONE_GWEI * 2 })
+      ).wait();
+      await expect(
+        feeManager
+          .connect(owner)
+          .transferOwnership(ethers.constants.AddressZero)
+      ).to.eventually.be.rejectedWith('Ownable: new owner is the zero address');
+    });
+    it('should revert if trying to transfer ownership to old owner', async () => {
+      await (
+        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
+      ).wait();
+      await (
+        await feeManager.connect(serviceProvider).pay({ value: ONE_GWEI * 2 })
+      ).wait();
+      await expect(
+        feeManager.connect(owner).transferOwnership(owner.address)
+      ).to.eventually.be.rejectedWith('NewOwnerIsCurrentOwner()');
+    });
   });
 
   describe('getBeneficiaryFunds', () => {

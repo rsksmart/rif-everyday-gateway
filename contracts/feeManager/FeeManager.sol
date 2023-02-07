@@ -241,10 +241,9 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
      * to remove FINANCIAL_OWNER role from previous _feesOwner
      * @param newOwner The address of the new owner
      */
-    // slither-disable-next-line missing-zero-check
     function transferOwnership(address newOwner) public override {
-        removeFinancialOwner(_feesOwner);
-        _feesOwner = newOwner;
+        if (newOwner == owner()) revert NewOwnerIsCurrentOwner();
+        removeFinancialOwner(owner());
         super.transferOwnership(newOwner);
         addFinancialOwner(newOwner);
     }
