@@ -122,7 +122,7 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
     // slither-disable-next-line reentrancy-events
     function withdraw(uint256 amount, address beneficiary) external override {
         if (beneficiary == _feesOwner) {
-            isFinancialOperator(msg.sender);
+            require(isFinancialOperator(msg.sender), "Caller is not a financial operator");
         } else {
             if (beneficiary != msg.sender) revert InvalidBeneficiary();
         }

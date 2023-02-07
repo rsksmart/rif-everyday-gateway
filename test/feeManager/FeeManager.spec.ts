@@ -160,6 +160,19 @@ describe('FeeManager', () => {
       );
     });
 
+    it('should revert if for feeOwner msg.sender is not FINANCIAL_OPERATOR', async () => {
+      const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
+      await (
+        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
+      ).wait();
+      await (
+        await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 })
+      ).wait();
+      await expect(
+        feeManager.connect(beneficiary).withdraw(ONE_GWEI, gatewayFeesOwner)
+      ).to.eventually.be.rejectedWith('Caller is not a financial operator');
+    });
+
     it('should let FINANCIAL_OPERATOR withdraw feeOwner funds', async () => {
       // SetUp
       const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
