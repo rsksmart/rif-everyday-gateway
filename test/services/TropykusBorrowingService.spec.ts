@@ -2,8 +2,8 @@ import hre, { ethers } from 'hardhat';
 import { expect } from 'chairc';
 import {
   IERC20,
-  IFeeManager,
-  IRIFGateway,
+  FeeManager,
+  RIFGateway,
   SmartWalletFactory,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
@@ -30,8 +30,8 @@ describe('Tropykus Borrowing Service', () => {
   let rif: IERC20;
   let cRBTC: IERC20;
   let tropykusContractsDeployed: any;
-  let feeManager: IFeeManager;
-  let RIFGateway: IRIFGateway;
+  let feeManager: FeeManager;
+  let RIFGateway: RIFGateway;
   const listingId = 0;
 
   // duration is not considered for these tests

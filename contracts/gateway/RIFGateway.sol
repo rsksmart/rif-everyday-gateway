@@ -7,13 +7,19 @@ import "./SubscriptionReporter.sol";
 import {Provider} from "../services/ServiceData.sol";
 import "../services/Service.sol";
 import "../services/ServiceTypeManager.sol";
+import "../access/GatewayAccessControl.sol";
 
 /**
  * @title RIF Gateway
  * @dev Contract for the RIF Gateway contract
  * @author RIF protocols team
  */
-contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
+contract RIFGateway is
+    Ownable,
+    SubscriptionReporter,
+    IRIFGateway,
+    GatewayAccessControl
+{
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager private _serviceTypeManager;
@@ -90,7 +96,11 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     /**
      * @inheritdoc IRIFGateway
      */
-    function validateProvider(address provider) external override onlyOwner {
+    function validateProvider(address provider)
+        external
+        override
+        onlyRole(HIGH_LEVEL_OPERATOR)
+    {
         if (_providerIndexes[provider] == 0)
             revert ValidationNotRequested(provider);
         _checkIfProviderIsAlreadyValidated(provider);

@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IFeeManager} from "./IFeeManager.sol";
+import "../access/GatewayAccessControl.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
@@ -10,7 +11,7 @@ import {IFeeManager} from "./IFeeManager.sol";
  * @title Fee Manager
  * @author RIF protocols team
  */
-contract FeeManager is IFeeManager, Ownable {
+contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
 
@@ -28,16 +29,13 @@ contract FeeManager is IFeeManager, Ownable {
 
     constructor(address feesOwner) {
         _feesOwner = feesOwner;
+        super.addFinancialOwner(feesOwner);
     }
 
     /**
      * @inheritdoc IFeeManager
      */
-    function chargeFee(address debtor, address beneficiary)
-        public
-        override
-        onlyOwner
-    {
+    function chargeFee(address debtor, address beneficiary) public override {
         if (beneficiary != address(0)) {
             bytes32 amountKey = keccak256(
                 abi.encodePacked(debtor, beneficiary)
@@ -122,14 +120,22 @@ contract FeeManager is IFeeManager, Ownable {
      * @inheritdoc IFeeManager
      */
     // slither-disable-next-line reentrancy-events
-    function withdraw(uint256 amount) external override {
-        if (amount > _funds[msg.sender]) {
+    function withdraw(uint256 amount, address beneficiary) external override {
+        if (beneficiary == _feesOwner) {
+            require(
+                isFinancialOperator(msg.sender),
+                "Caller is not a financial operator"
+            );
+        } else {
+            if (beneficiary != msg.sender) revert InvalidBeneficiary();
+        }
+        if (amount > _funds[beneficiary]) {
             revert InsufficientFunds();
         }
 
-        emit Withdraw(msg.sender, amount);
+        emit Withdraw(beneficiary, amount);
 
-        _funds[msg.sender] -= amount;
+        _funds[beneficiary] -= amount;
         // slither-disable-next-line low-level-calls
         (bool success, ) = msg.sender.call{value: amount}("");
 
@@ -228,5 +234,25 @@ contract FeeManager is IFeeManager, Ownable {
         emit FeePayment(debtor, _feesOwner, ownerPayment);
 
         return funds;
+    }
+
+    /**
+     * @notice Overrides the transferOwnership function of Ownable
+     * to remove FINANCIAL_OWNER role from previous _feesOwner
+     * @param newOwner The address of the new owner
+     */
+    function transferOwnership(address newOwner) public override {
+        if (newOwner == owner()) revert NewOwnerIsCurrentOwner();
+        removeFinancialOwner(owner());
+        super.transferOwnership(newOwner);
+        addFinancialOwner(newOwner);
+    }
+
+    /**
+     * @notice Returns the address of the gateway fees owner
+     * @return The address of the gateway fees owner
+     */
+    function getGatewayFeesOwner() external view returns (address) {
+        return _feesOwner;
     }
 }

@@ -2,15 +2,15 @@ import { expect } from 'chairc';
 import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import { deployContract, Factory } from 'utils/deployment.utils';
-import { IFeeManager } from 'typechain-types';
+import { FeeManager } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 async function feeManagerSetUp() {
   const [feesOwner] = await ethers.getSigners();
-  const { contract: feeManager, signers } = await deployContract<IFeeManager>(
+  const { contract: feeManager, signers } = await deployContract<FeeManager>(
     'FeeManager',
     { feesOwner: feesOwner.address },
-    (await ethers.getContractFactory('FeeManager', {})) as Factory<IFeeManager>
+    (await ethers.getContractFactory('FeeManager', {})) as Factory<FeeManager>
   );
 
   return { feeManager, signers };
@@ -25,10 +25,12 @@ enum FeeManagerEvents {
 const ONE_GWEI = 1000000000;
 
 describe('FeeManager', () => {
-  let feeManager: IFeeManager;
+  let feeManager: FeeManager;
   let signers: SignerWithAddress[];
   let beneficiary: SignerWithAddress;
   let serviceProvider: SignerWithAddress;
+  let financialOperator: SignerWithAddress;
+  let financialOwner: SignerWithAddress;
   let owner: SignerWithAddress;
   let beneficiaryAddr: string;
   let serviceProviderAddr: string;
@@ -36,14 +38,55 @@ describe('FeeManager', () => {
 
   beforeEach(async () => {
     ({ feeManager, signers } = await loadFixture(feeManagerSetUp));
-    [owner, beneficiary, serviceProvider] = signers;
+    [owner, beneficiary, serviceProvider, financialOperator, financialOwner] =
+      signers;
     beneficiaryAddr = beneficiary.address;
     serviceProviderAddr = serviceProvider.address;
     ownerAddr = owner.address;
   });
 
+  describe('Roles', () => {
+    it('should set deployer as OWNER', async () => {
+      expect(await feeManager.isOwner(owner.address)).to.be.true;
+    });
+    it('should set deployer as FINANCIAL_OWNER', async () => {
+      expect(await feeManager.isFinancialOwner(owner.address)).to.be.true;
+    });
+    it('should transfer ownership to the given address', async () => {
+      const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
+      expect(await feeManager.owner()).to.equal(owner.address);
+      expect(await feeManager.isOwner(owner.address)).to.be.true;
+      expect(await feeManager.isFinancialOwner(owner.address)).to.be.true;
+
+      await (
+        await feeManager
+          .connect(owner)
+          .transferOwnership(financialOwner.address)
+      ).wait();
+
+      expect(await feeManager.owner()).to.equal(financialOwner.address);
+      expect(await feeManager.isOwner(owner.address)).to.be.true;
+      expect(await feeManager.isFinancialOwner(financialOwner.address)).to.be
+        .true;
+      expect(await feeManager.isFinancialOwner(owner.address)).to.be.false;
+      expect(await feeManager.getGatewayFeesOwner()).to.equal(gatewayFeesOwner);
+    });
+    it('should revert if trying to transfer ownership to address zero', async () => {
+      await expect(
+        feeManager
+          .connect(owner)
+          .transferOwnership(ethers.constants.AddressZero)
+      ).to.eventually.be.rejectedWith('Ownable: new owner is the zero address');
+    });
+    it('should revert if trying to transfer ownership to old owner', async () => {
+      await expect(
+        feeManager.connect(owner).transferOwnership(owner.address)
+      ).to.eventually.be.rejectedWith('NewOwnerIsCurrentOwner()');
+    });
+  });
+
   describe('getBeneficiaryFunds', () => {
-    it('it should get return the fees for the given beneficiary', async () => {
+    it('should get return the fees for the given beneficiary', async () => {
       const expectedFee = 0;
       await expect(feeManager.getBalance(beneficiaryAddr)).to.eventually.equal(
         expectedFee
@@ -52,7 +95,7 @@ describe('FeeManager', () => {
   });
 
   describe('fundBeneficiary', () => {
-    it('it should add the given fees to the given beneficiary', async () => {
+    it('should add the given fees to the given beneficiary', async () => {
       const expectedFee = ONE_GWEI;
 
       // Unit under test
@@ -100,12 +143,17 @@ describe('FeeManager', () => {
   });
 
   describe('withdraw', () => {
-    let feeManagerAsBeneficiary: IFeeManager;
-    let feeManagerAsServiceProvider: IFeeManager;
+    let feeManagerAsBeneficiary: FeeManager;
+    let feeManagerAsServiceProvider: FeeManager;
 
-    beforeEach(() => {
+    beforeEach(async () => {
       feeManagerAsBeneficiary = feeManager.connect(beneficiary);
       feeManagerAsServiceProvider = feeManager.connect(serviceProvider);
+      await (
+        await feeManager
+          .connect(owner)
+          .addFinancialOperator(financialOperator.address)
+      ).wait();
     });
 
     it('should let caller withdraw their funds', async () => {
@@ -116,26 +164,82 @@ describe('FeeManager', () => {
       await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
       await feeManagerAsServiceProvider.pay({ value: ONE_GWEI });
       // Unit under test
-      await feeManagerAsBeneficiary.withdraw(amountToWithdraw);
+      await feeManagerAsBeneficiary.withdraw(
+        amountToWithdraw,
+        beneficiary.address
+      );
       // Verify results
       await expect(feeManager.getBalance(beneficiaryAddr)).to.eventually.equal(
         expectedLeftBalance
       );
     });
 
-    it('should let fees owner withdraw its funds', async () => {
+    it('should revert if for feeOwner msg.sender is not FINANCIAL_OPERATOR', async () => {
+      const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
+      await (
+        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
+      ).wait();
+      await (
+        await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 })
+      ).wait();
+      await expect(
+        feeManager.connect(beneficiary).withdraw(ONE_GWEI, gatewayFeesOwner)
+      ).to.eventually.be.rejectedWith('Caller is not a financial operator');
+    });
+
+    it('should let FINANCIAL_OPERATOR withdraw feeOwner funds', async () => {
       // SetUp
-      const initialBalance = ONE_GWEI;
-      const amountToWithdraw = ONE_GWEI / 2;
-      const expectedLeftBalance = initialBalance - amountToWithdraw;
-      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
-      await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 });
-      // Unit under test
-      await feeManager.withdraw(amountToWithdraw);
-      // Verify results
-      await expect(feeManager.getBalance(ownerAddr)).to.eventually.equal(
-        expectedLeftBalance
+      const gatewayFeesOwner = await feeManager.getGatewayFeesOwner();
+      // 1 GWEI = 0.000000001 ETH = 1000000000
+      const amountToWithdrawAsEthers = ONE_GWEI;
+      const feeManagerInitialBalance = await ethers.provider.getBalance(
+        feeManager.address
       );
+      expect(feeManagerInitialBalance).to.equal(0);
+      await (
+        await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr)
+      ).wait();
+      // 2 GWEI = 0.000000002 ETH = 2000000000
+      await (
+        await feeManagerAsServiceProvider.pay({ value: ONE_GWEI * 2 })
+      ).wait();
+      const feeOwnerBalanceBefore = await feeManager.getBalance(ownerAddr);
+      expect(feeOwnerBalanceBefore).to.equal(ONE_GWEI);
+      const feeManagerAfterBalance = await ethers.provider.getBalance(
+        feeManager.address
+      );
+      expect(feeManagerAfterBalance).to.equal(ONE_GWEI * 2);
+      const gasEstimated = await feeManager
+        .connect(financialOperator)
+        .estimateGas.withdraw(amountToWithdrawAsEthers, gatewayFeesOwner);
+      const gasPrice = await ethers.provider.getGasPrice();
+      const gasCost = gasEstimated.mul(gasPrice);
+      const financialOperatorBalanceBefore = await ethers.provider.getBalance(
+        financialOperator.address
+      );
+      expect(financialOperatorBalanceBefore).to.equal(
+        ethers.utils.parseEther('100000000000000000000000000') // hardhat initial account balance
+      );
+
+      // Unit under test
+      await feeManager
+        .connect(financialOperator)
+        .withdraw(amountToWithdrawAsEthers, gatewayFeesOwner);
+      // Verify results
+      expect(await feeManager.getBalance(ownerAddr)).to.equal(0);
+      expect(await ethers.provider.getBalance(feeManager.address)).to.equal(
+        ONE_GWEI
+      );
+      const financialOperatorBalanceAfter = await ethers.provider.getBalance(
+        financialOperator.address
+      );
+
+      const result = financialOperatorBalanceBefore
+        .sub(gasCost)
+        .add(amountToWithdrawAsEthers);
+
+      expect(financialOperatorBalanceAfter).to.gte(result);
+      expect(await feeManager.getDebtBalance(serviceProviderAddr)).to.equal(0);
     });
 
     it('should emit `Withdraw` event', async () => {
@@ -143,7 +247,9 @@ describe('FeeManager', () => {
       await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
       await feeManagerAsServiceProvider.pay({ value: ONE_GWEI });
       // Verify results
-      await expect(feeManagerAsBeneficiary.withdraw(amountToWithdraw))
+      await expect(
+        feeManagerAsBeneficiary.withdraw(amountToWithdraw, beneficiary.address)
+      )
         .to.emit(feeManager, FeeManagerEvents.Withdraw)
         .withArgs(beneficiaryAddr, amountToWithdraw);
     });
@@ -152,7 +258,9 @@ describe('FeeManager', () => {
       const invalidAmountToWithdraw = 50;
       // Unit under test & Verify results
       await expect(
-        feeManager.connect(beneficiary).withdraw(invalidAmountToWithdraw)
+        feeManager
+          .connect(beneficiary)
+          .withdraw(invalidAmountToWithdraw, beneficiary.address)
       ).to.have.rejectedWith('InsufficientFunds');
     });
 
@@ -164,7 +272,9 @@ describe('FeeManager', () => {
       await feeManagerAsServiceProvider.pay({ value: ONE_GWEI });
       // Unit under test & Verify results
       await expect(
-        feeManager.connect(beneficiary).withdraw(amountToWithdraw)
+        feeManager
+          .connect(beneficiary)
+          .withdraw(amountToWithdraw, beneficiary.address)
       ).to.have.rejectedWith('RBTCTransferFailed');
     });
   });
