@@ -40,7 +40,7 @@ contract GatewayAccessControl is AccessControl, Ownable {
      */
     function changeOwner(address newOwner) public onlyRole(OWNER) {
         grantRole(OWNER, newOwner);
-        revokeRole(OWNER, this.owner());
+        revokeRole(OWNER, owner());
         transferOwnership(newOwner);
     }
 
