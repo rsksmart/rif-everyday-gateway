@@ -7,29 +7,29 @@ import "./SubscriptionReporter.sol";
 import {Provider} from "../services/ServiceData.sol";
 import "../services/Service.sol";
 import "../services/ServiceTypeManager.sol";
-import "../access/GatewayAccessControl.sol";
+import "../access/IGatewayAccessControl.sol";
 
 /**
  * @title RIF Gateway
  * @dev Contract for the RIF Gateway contract
  * @author RIF protocols team
  */
-contract RIFGateway is
-    Ownable,
-    SubscriptionReporter,
-    IRIFGateway,
-    GatewayAccessControl
-{
+contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager private _serviceTypeManager;
+    IGatewayAccessControl private _accessControl;
     Service[] private _allServices;
     mapping(address => bool) private _uniqueServices;
 
     bytes4 private constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
 
-    constructor(ServiceTypeManager stm) {
+    constructor(
+        ServiceTypeManager stm,
+        IGatewayAccessControl gatewayAccessControl
+    ) {
         _serviceTypeManager = stm;
+        _accessControl = gatewayAccessControl;
     }
 
     /**
@@ -96,11 +96,13 @@ contract RIFGateway is
     /**
      * @inheritdoc IRIFGateway
      */
-    function validateProvider(address provider)
-        external
-        override
-        onlyRole(HIGH_LEVEL_OPERATOR)
-    {
+    function validateProvider(address provider) external override {
+        require(
+            IGatewayAccessControl(_accessControl).isHighLevelOperator(
+                msg.sender
+            ),
+            "Caller is not a financial operator"
+        );
         if (_providerIndexes[provider] == 0)
             revert ValidationNotRequested(provider);
         _checkIfProviderIsAlreadyValidated(provider);
@@ -160,5 +162,12 @@ contract RIFGateway is
             revert InvalidService(Service(service));
 
         super.subscribe(subscriber, service, listingId, wallet);
+    }
+
+    /**
+     * @inheritdoc IRIFGateway
+     */
+    function getAccessControl() public view override returns (address) {
+        return _accessControl;
     }
 }

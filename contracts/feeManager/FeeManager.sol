@@ -3,7 +3,7 @@ pragma solidity ^0.8.16;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IFeeManager} from "./IFeeManager.sol";
-import "../access/GatewayAccessControl.sol";
+import "../access/IGatewayAccessControl.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
@@ -11,11 +11,11 @@ import "../access/GatewayAccessControl.sol";
  * @title Fee Manager
  * @author RIF protocols team
  */
-contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
+contract FeeManager is IFeeManager, Ownable {
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
 
-    address private _feesOwner;
+    address private immutable _rifGateway;
 
     // Applies to service providers
     // debtor => beneficiary address
@@ -27,9 +27,11 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
     // Funds for each account
     mapping(address => uint256) internal _funds;
 
-    constructor(address feesOwner) {
-        _feesOwner = feesOwner;
-        super.addFinancialOwner(feesOwner);
+    constructor(address rifGateway) {
+        _rifGateway = rifGateway;
+        IGatewayAccessControl(_rifGateway.getAccessControl()).addFinancialOwner(
+                rifGateway
+            );
     }
 
     /**
@@ -49,7 +51,7 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
         }
 
         _amounts[
-            keccak256(abi.encodePacked(debtor, _feesOwner))
+            keccak256(abi.encodePacked(debtor, _rifGateway))
         ] += _fixedOwnerFee;
 
         emit ServiceConsumptionFee(
@@ -75,7 +77,7 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
             ];
         }
 
-        balance += _amounts[keccak256(abi.encodePacked(debtor, _feesOwner))];
+        balance += _amounts[keccak256(abi.encodePacked(debtor, _rifGateway))];
     }
 
     /**
@@ -121,9 +123,10 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
      */
     // slither-disable-next-line reentrancy-events
     function withdraw(uint256 amount, address beneficiary) external override {
-        if (beneficiary == _feesOwner) {
+        if (beneficiary == _rifGateway) {
             require(
-                isFinancialOperator(msg.sender),
+                IGatewayAccessControl(_rifGateway.getAccessControl())
+                    .isFinancialOperator(msg.sender),
                 "Caller is not a financial operator"
             );
         } else {
@@ -157,7 +160,7 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
         }
 
         bytes32 ownerAmountKey = keccak256(
-            abi.encodePacked(debtor, _feesOwner)
+            abi.encodePacked(debtor, _rifGateway)
         );
 
         if (_creditors[debtor].length == 0 && _amounts[ownerAmountKey] == 0) {
@@ -222,16 +225,16 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
         internal
         returns (uint256)
     {
-        bytes32 amountsKey = keccak256(abi.encodePacked(debtor, _feesOwner));
+        bytes32 amountsKey = keccak256(abi.encodePacked(debtor, _rifGateway));
         uint256 ownerPayment = _amounts[amountsKey] < funds
             ? _amounts[amountsKey]
             : funds;
 
         funds -= ownerPayment;
         _amounts[amountsKey] -= ownerPayment;
-        _funds[_feesOwner] += ownerPayment;
+        _funds[_rifGateway] += ownerPayment;
 
-        emit FeePayment(debtor, _feesOwner, ownerPayment);
+        emit FeePayment(debtor, _rifGateway, ownerPayment);
 
         return funds;
     }
@@ -243,16 +246,21 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
      */
     function transferOwnership(address newOwner) public override {
         if (newOwner == owner()) revert NewOwnerIsCurrentOwner();
-        removeFinancialOwner(owner());
-        super.transferOwnership(newOwner);
-        addFinancialOwner(newOwner);
+        IGatewayAccessControl(_rifGateway.getAccessControl())
+            .removeFinancialOwner(owner());
+        IGatewayAccessControl(_rifGateway.getAccessControl()).transferOwnership(
+                newOwner
+            );
+        IGatewayAccessControl(_rifGateway.getAccessControl()).addFinancialOwner(
+                newOwner
+            );
     }
 
     /**
-     * @notice Returns the address of the gateway fees owner
+     * @notice Returns the address of the rif gateway
      * @return The address of the gateway fees owner
      */
-    function getGatewayFeesOwner() external view returns (address) {
-        return _feesOwner;
+    function getRIFGateway() external view returns (address) {
+        return _rifGateway;
     }
 }

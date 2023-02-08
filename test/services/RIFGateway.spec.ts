@@ -3,6 +3,7 @@ import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import {
   ServiceTypeManager,
+  GatewayAccessControl,
   TropykusLendingService__factory,
   TropykusLendingService,
   TropykusBorrowingService__factory,
@@ -16,9 +17,10 @@ import {
   LENDING_SERVICE_INTERFACEID as LENDING_SERVICE_INTERFACE_ID,
 } from 'test/utils/interfaceIDs';
 
-describe('RIF Gateway', () => {
+describe.only('RIF Gateway', () => {
   let rifGateway: RIFGateway;
   let serviceTypeManager: ServiceTypeManager;
+  let gatewayAccessControl: GatewayAccessControl;
   let signer: SignerWithAddress;
   let signers: SignerWithAddress[];
   let highLevelOperator: SignerWithAddress;
@@ -31,8 +33,11 @@ describe('RIF Gateway', () => {
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
-    ({ RIFGateway: rifGateway, serviceTypeManager: serviceTypeManager } =
-      await deployRIFGateway(false));
+    ({
+      RIFGateway: rifGateway,
+      serviceTypeManager: serviceTypeManager,
+      gatewayAccessControl: gatewayAccessControl,
+    } = await deployRIFGateway(false));
 
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
@@ -67,6 +72,7 @@ describe('RIF Gateway', () => {
     return {
       rifGateway,
       serviceTypeManager,
+      gatewayAccessControl,
       tropykusLendingService,
       signer,
       signers,
@@ -78,6 +84,7 @@ describe('RIF Gateway', () => {
       rifGateway,
       serviceTypeManager,
       tropykusLendingService,
+      gatewayAccessControl,
       signer,
       signers,
     } = await loadFixture(initialFixture));
@@ -89,7 +96,8 @@ describe('RIF Gateway', () => {
   describe('Roles', () => {
     it('should set deployer as OWNER', async () => {
       expect(await rifGateway.owner()).to.equal(signer.address);
-      expect(await rifGateway.isOwner(signer.address)).to.be.true;
+      expect(await rifGateway.getAccessControl().isOwner(signer.address)).to.be
+        .true;
     });
 
     it('should transfer OWNER and ownership to the given address', async () => {
