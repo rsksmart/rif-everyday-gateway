@@ -1,17 +1,18 @@
 import { expect } from 'chairc';
 import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import { deployContract, Factory } from 'utils/deployment.utils';
-import { FeeManager, GatewayAccessControl, RIFGateway } from 'typechain-types';
+import {
+  deployContract,
+  deployProxyContract,
+  Factory,
+} from 'utils/deployment.utils';
+import { IFeeManager } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { deployRIFGateway } from '../services/utils';
+import { deployFeeManager } from 'test/services/utils';
 
 async function feeManagerSetUp() {
-  const { contract: feeManager, signers } = await deployContract<FeeManager>(
-    'FeeManager',
-    {},
-    (await ethers.getContractFactory('FeeManager', {})) as Factory<FeeManager>
-  );
+  const signers = await ethers.getSigners();
+  const feeManager = await deployFeeManager();
 
   return { feeManager, signers };
 }
@@ -25,7 +26,7 @@ enum FeeManagerEvents {
 const ONE_GWEI = 1000000000;
 
 describe('FeeManager', () => {
-  let feeManager: FeeManager;
+  let feeManager: IFeeManager;
   let signers: SignerWithAddress[];
   let beneficiary: SignerWithAddress;
   let serviceProvider: SignerWithAddress;
@@ -35,8 +36,8 @@ describe('FeeManager', () => {
   let beneficiaryAddr: string;
   let serviceProviderAddr: string;
   let ownerAddr: string;
-  let gatewayAccessControl: GatewayAccessControl;
-  let rifGateway: RIFGateway;
+  let gatewayAccessControl: IGatewayAccessControl;
+  let rifGateway: IRIFGateway;
 
   beforeEach(async () => {
     ({ feeManager, signers } = await loadFixture(feeManagerSetUp));

@@ -5,6 +5,8 @@ import {
   LENDING_SERVICE_INTERFACEID,
 } from 'test/utils/interfaceIDs';
 import {
+  FeeManager,
+  IFeeManager,
   IRIFGateway,
   RIFGateway,
   ServiceTypeManager,
@@ -12,7 +14,8 @@ import {
 } from 'typechain-types';
 import { deployContract, deployProxyContract } from 'utils/deployment.utils';
 
-export const deployRIFGateway = async (registerInterfaceId = true) => {
+export async function deployRIFGateway(registerInterfaceId = true) {
+  // Deploy Service Type Manager
   const { contract: serviceTypeManager } =
     await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
 
@@ -40,14 +43,33 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
     serviceTypeManager.address,
     gatewayAccessControl.address,
   ]);
+  const RIFGatewayInitMsgData = rifGatewayIface.encodeFunctionData(
+    'initialize',
+    [serviceTypeManager.address, feeManager.address]
+  );
 
   const { contract: rifGateway } = await deployProxyContract<
     RIFGateway,
     IRIFGateway
-  >('RIFGateway', 'RIFGatewayLogicV1', msgData);
+  >('RIFGateway', 'RIFGatewayLogicV1', RIFGatewayInitMsgData);
 
   return { RIFGateway: rifGateway, feeManager, serviceTypeManager };
-};
+}
+
+export async function deployFeeManager() {
+  // Deploy Fee Manager
+  const feeManagerIface = new ethers.utils.Interface(['function initialize()']);
+  const feeManagerMsgData = feeManagerIface.encodeFunctionData(
+    'initialize',
+    []
+  );
+  const { contract: feeManager } = await deployProxyContract<
+    FeeManager,
+    IFeeManager
+  >('FeeManager', 'FeeManagerLogicV1', feeManagerMsgData);
+
+  return feeManager;
+}
 
 export function toSmallNumber(bn: BigNumber, divisor = 1e18) {
   return +bn / divisor;

@@ -1,7 +1,7 @@
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { Contract, ContractFactory } from 'ethers';
 import { ethers } from 'hardhat';
-import { RIFGateway, UUPSUpgradeable } from 'typechain-types';
+import { IRIFGateway, RIFGateway, UUPSUpgradeable } from 'typechain-types';
 
 export interface Factory<C extends Contract> extends ContractFactory {
   deploy: (...args: Array<unknown>) => Promise<C>;
@@ -33,8 +33,7 @@ export const deployContract = async <C extends Contract, A = {}>(
 // Deploys a UUPS compliant proxy contract with its logic.
 export const deployProxyContract = async <
   L extends Contract,
-  I extends Contract,
-  A = {}
+  I extends Contract
 >(
   contractName: string,
   logicContractName: string,
