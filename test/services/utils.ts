@@ -4,12 +4,20 @@ import {
   BORROW_SERVICE_INTERFACEID,
   LENDING_SERVICE_INTERFACEID,
 } from 'test/utils/interfaceIDs';
-import { RIFGateway, ServiceTypeManager } from 'typechain-types';
+import {
+  RIFGateway,
+  ServiceTypeManager,
+  GatewayAccessControl,
+  FeeManager,
+} from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 
 export const deployRIFGateway = async (registerInterfaceId = true) => {
   const { contract: serviceTypeManager } =
     await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
+
+  const { contract: gatewayAccessControl } =
+    await deployContract<GatewayAccessControl>('GatewayAccessControl', {});
 
   if (registerInterfaceId) {
     // allow lending service interface id
@@ -29,6 +37,7 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
     'RIFGateway',
     {
       ServiceTypeManager: serviceTypeManager.address,
+      GatewayAccessControl: gatewayAccessControl.address,
     }
   );
 
@@ -37,7 +46,7 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
     await RIFGateway.feeManager()
   );
 
-  return { RIFGateway, feeManager, serviceTypeManager };
+  return { RIFGateway, feeManager, serviceTypeManager, gatewayAccessControl };
 };
 
 export function toSmallNumber(bn: BigNumber, divisor = 1e18) {

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
+import "../gateway/IRIFGateway.sol";
+
 /**
  * @title Fee Manager Interface
  * @notice Handles all fee distribution across the RIF Gateway
@@ -93,4 +95,22 @@ interface IFeeManager {
      * @param debtor the address of debtor
      */
     function payInBehalfOf(address debtor) external payable;
+
+    /**
+     * @notice Returns the address of the rif gateway fees owner
+     * @return The address of the gateway fees owner
+     */
+    function getGatewayFeesOwner() external view returns (address);
+
+    /**
+     * @notice Sets the address of the rif gateway contract
+     * @param rifGateway The address of the rif gateway contract
+     */
+    function setRIFGateway(IRIFGateway rifGateway) external;
+
+    /**
+     * @notice Gets the address of the rif gateway contract
+     * @return The address of the rif gateway contract
+     */
+    function getRIFGateway() external view returns (IRIFGateway);
 }

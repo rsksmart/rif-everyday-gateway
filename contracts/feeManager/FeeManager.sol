@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import {IFeeManager} from "./IFeeManager.sol";
 import "../access/GatewayAccessControl.sol";
+import "../gateway/IRIFGateway.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
@@ -11,11 +12,11 @@ import "../access/GatewayAccessControl.sol";
  * @title Fee Manager
  * @author RIF protocols team
  */
-contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
+contract FeeManager is IFeeManager, Ownable {
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
-
-    address private _feesOwner;
+    address private immutable _feesOwner;
+    IRIFGateway private _rifGateway;
 
     // Applies to service providers
     // debtor => beneficiary address
@@ -27,15 +28,15 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
     // Funds for each account
     mapping(address => uint256) internal _funds;
 
-    constructor(address feesOwner) {
-        _feesOwner = feesOwner;
-        super.addFinancialOwner(feesOwner);
+    constructor() {
+        _feesOwner = address(this);
     }
 
     /**
      * @inheritdoc IFeeManager
      */
     function chargeFee(address debtor, address beneficiary) public override {
+        // TODO require(address(_rifGateway) == msg.sender, "OnlyRIFGateway");
         if (beneficiary != address(0)) {
             bytes32 amountKey = keccak256(
                 abi.encodePacked(debtor, beneficiary)
@@ -123,8 +124,10 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
     function withdraw(uint256 amount, address beneficiary) external override {
         if (beneficiary == _feesOwner) {
             require(
-                isFinancialOperator(msg.sender),
-                "Caller is not a financial operator"
+                GatewayAccessControl(
+                    IRIFGateway(_rifGateway).getAccessControl()
+                ).isFinancialOperator(msg.sender),
+                "Not FINANCIAL_OPERATOR role"
             );
         } else {
             if (beneficiary != msg.sender) revert InvalidBeneficiary();
@@ -238,21 +241,36 @@ contract FeeManager is IFeeManager, Ownable, GatewayAccessControl {
 
     /**
      * @notice Overrides the transferOwnership function of Ownable
-     * to remove FINANCIAL_OWNER role from previous _feesOwner
      * @param newOwner The address of the new owner
      */
     function transferOwnership(address newOwner) public override {
         if (newOwner == owner()) revert NewOwnerIsCurrentOwner();
-        removeFinancialOwner(owner());
         super.transferOwnership(newOwner);
-        addFinancialOwner(newOwner);
     }
 
     /**
-     * @notice Returns the address of the gateway fees owner
-     * @return The address of the gateway fees owner
+     * @inheritdoc IFeeManager
      */
-    function getGatewayFeesOwner() external view returns (address) {
+    function getGatewayFeesOwner() public view override returns (address) {
         return _feesOwner;
+    }
+
+    /**
+     * @inheritdoc IFeeManager
+     */
+    function setRIFGateway(IRIFGateway rifGateway) public override {
+        require(
+            GatewayAccessControl(IRIFGateway(rifGateway).getAccessControl())
+                .isFinancialOwner(msg.sender),
+            "Not FINANCIAL_OWNER role"
+        );
+        _rifGateway = rifGateway;
+    }
+
+    /**
+     * @inheritdoc IFeeManager
+     */
+    function getRIFGateway() public view override returns (IRIFGateway) {
+        return _rifGateway;
     }
 }

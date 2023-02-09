@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../services/Service.sol";
 import {Provider} from "../services/ServiceData.sol";
+import "../access/GatewayAccessControl.sol";
 
 /**
  * @title RIF Gateway interface
@@ -75,4 +76,10 @@ interface IRIFGateway {
      * @param service The address of the service to be removed
      */
     function removeService(Service service) external;
+
+    /**
+     * @notice Returns the address of the access control contract
+     * @return The address of the access control contract
+     */
+    function getAccessControl() external view returns (GatewayAccessControl);
 }

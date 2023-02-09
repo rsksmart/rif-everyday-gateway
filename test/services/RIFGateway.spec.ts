@@ -3,6 +3,7 @@ import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import {
   ServiceTypeManager,
+  GatewayAccessControl,
   TropykusLendingService__factory,
   TropykusLendingService,
   TropykusBorrowingService__factory,
@@ -19,6 +20,7 @@ import {
 describe('RIF Gateway', () => {
   let rifGateway: RIFGateway;
   let serviceTypeManager: ServiceTypeManager;
+  let gatewayAccessControl: GatewayAccessControl;
   let signer: SignerWithAddress;
   let signers: SignerWithAddress[];
   let highLevelOperator: SignerWithAddress;
@@ -31,8 +33,11 @@ describe('RIF Gateway', () => {
     const signers = await ethers.getSigners();
     const signer = signers[0];
 
-    ({ RIFGateway: rifGateway, serviceTypeManager: serviceTypeManager } =
-      await deployRIFGateway(false));
+    ({
+      RIFGateway: rifGateway,
+      serviceTypeManager: serviceTypeManager,
+      gatewayAccessControl: gatewayAccessControl,
+    } = await deployRIFGateway(false));
 
     const tropykusLendingServiceFactory = (await ethers.getContractFactory(
       'TropykusLendingService'
@@ -67,6 +72,7 @@ describe('RIF Gateway', () => {
     return {
       rifGateway,
       serviceTypeManager,
+      gatewayAccessControl,
       tropykusLendingService,
       signer,
       signers,
@@ -78,6 +84,7 @@ describe('RIF Gateway', () => {
       rifGateway,
       serviceTypeManager,
       tropykusLendingService,
+      gatewayAccessControl,
       signer,
       signers,
     } = await loadFixture(initialFixture));
@@ -86,23 +93,15 @@ describe('RIF Gateway', () => {
     newOwner = signers[3];
   });
 
-  describe('Roles', () => {
-    it('should set deployer as OWNER', async () => {
+  describe('Ownership', () => {
+    it('should transfer ownership to the given address', async () => {
       expect(await rifGateway.owner()).to.equal(signer.address);
-      expect(await rifGateway.isOwner(signer.address)).to.be.true;
-    });
-
-    it('should transfer OWNER and ownership to the given address', async () => {
-      expect(await rifGateway.owner()).to.equal(signer.address);
-      expect(await rifGateway.isOwner(signer.address)).to.be.true;
 
       await (
-        await rifGateway.connect(signer).changeOwner(newOwner.address)
+        await rifGateway.connect(signer).transferOwnership(newOwner.address)
       ).wait();
 
       expect(await rifGateway.owner()).to.equal(newOwner.address);
-      expect(await rifGateway.isOwner(newOwner.address)).to.be.true;
-      expect(await rifGateway.isOwner(signer.address)).to.be.false;
     });
   });
 
@@ -197,7 +196,7 @@ describe('RIF Gateway', () => {
     describe('validateProvider', () => {
       beforeEach(async () => {
         await (
-          await rifGateway
+          await gatewayAccessControl
             .connect(signer)
             .addHighLevelOperator(highLevelOperator.address)
         ).wait();
