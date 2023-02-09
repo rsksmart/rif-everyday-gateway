@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./FeeManagerStorageV1.sol";
 import {IFeeManager} from "./IFeeManager.sol";
 import "../gateway/IRIFGateway.sol";
-import "../upgrades/InitializableOwnable.sol";
+import "../access/InitializableOwnable.sol";
 
 contract FeeManagerLogicV1 is
     UUPSUpgradeable,
@@ -19,13 +19,14 @@ contract FeeManagerLogicV1 is
     /**
      *
      */
-    function intialize(address feesOwner) external {
-        _feesOwner = feesOwner;
+    function initialize() public override {
+        _feesOwner = address(this);
+
         InitializableOwnable.initialize();
     }
 
     function chargeFee(address debtor, address beneficiary) public override {
-        // TODO require(address(_rifGateway) == msg.sender, "OnlyRIFGateway");
+        require(address(_rifGateway) == msg.sender, "Unauthorized");
         if (beneficiary != address(0)) {
             bytes32 amountKey = keccak256(
                 abi.encodePacked(debtor, beneficiary)
@@ -232,7 +233,10 @@ contract FeeManagerLogicV1 is
      * @notice Overrides the transferOwnership function of Ownable
      * @param newOwner The address of the new owner
      */
-    function transferOwnership(address newOwner) public override {
+    function transferOwnership(address newOwner)
+        public
+        override(IOwnable, InitializableOwnable)
+    {
         if (newOwner == owner()) revert NewOwnerIsCurrentOwner();
         super.transferOwnership(newOwner);
     }

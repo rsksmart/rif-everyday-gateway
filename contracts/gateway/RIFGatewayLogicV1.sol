@@ -10,6 +10,7 @@ import {Provider} from "../services/ServiceData.sol";
 import "../services/Service.sol";
 import "../services/ServiceTypeManager.sol";
 import "../access/IGatewayAccessControl.sol";
+import "../access/InitializableOwnable.sol";
 
 /**
  * @title RIF Gateway Logic V1
@@ -19,6 +20,7 @@ import "../access/IGatewayAccessControl.sol";
 contract RIFGatewayLogicV1 is
     IRIFGateway,
     UUPSUpgradeable,
+    InitializableOwnable,
     SubscriptionReporter,
     RIFGatewayStorageV1
 {
@@ -35,6 +37,8 @@ contract RIFGatewayLogicV1 is
         _serviceTypeManager = ServiceTypeManager(serviceTypeManagerAddr);
         _accessControl = IGatewayAccessControl(gatewayAccessControlAddr);
         feeManager = IFeeManager(feeManagerAddr);
+
+        InitializableOwnable.initialize();
     }
 
     /**

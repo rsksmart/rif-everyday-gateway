@@ -7,6 +7,7 @@ import {
 import {
   FeeManager,
   IFeeManager,
+  IGatewayAccessControl,
   IRIFGateway,
   RIFGateway,
   ServiceTypeManager,
@@ -14,13 +15,13 @@ import {
 } from 'typechain-types';
 import { deployContract, deployProxyContract } from 'utils/deployment.utils';
 
-export async function deployRIFGateway(registerInterfaceId = true) {
+export async function deployRIFGateway(
+  registerInterfaceId = true,
+  registerOwner = true
+) {
   // Deploy Service Type Manager
   const { contract: serviceTypeManager } =
     await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
-
-  const { contract: gatewayAccessControl } =
-    await deployContract<IGatewayAccessControl>('GatewayAccessControl', {});
 
   if (registerInterfaceId) {
     // allow lending service interface id
@@ -36,16 +37,24 @@ export async function deployRIFGateway(registerInterfaceId = true) {
     await tBx.wait();
   }
 
-  const iface = new ethers.utils.Interface([
+  // Deploy access control
+  const { contract: gatewayAccessControl } =
+    await deployContract<IGatewayAccessControl>('GatewayAccessControl', {});
+
+  // Deploy FeeManager
+  const feeManager = await deployFeeManager();
+
+  const RIFGatewayIface = new ethers.utils.Interface([
     'function initialize(address serviceTypeManagerAddr,address gatewayAccessControlAddr, address feeManagerAddr)',
   ]);
-  const msgData = iface.encodeFunctionData('initialize', [
-    serviceTypeManager.address,
-    gatewayAccessControl.address,
-  ]);
-  const RIFGatewayInitMsgData = rifGatewayIface.encodeFunctionData(
+
+  const RIFGatewayInitMsgData = RIFGatewayIface.encodeFunctionData(
     'initialize',
-    [serviceTypeManager.address, feeManager.address]
+    [
+      serviceTypeManager.address,
+      gatewayAccessControl.address,
+      feeManager.address,
+    ]
   );
 
   const { contract: rifGateway } = await deployProxyContract<
@@ -53,7 +62,12 @@ export async function deployRIFGateway(registerInterfaceId = true) {
     IRIFGateway
   >('RIFGateway', 'RIFGatewayLogicV1', RIFGatewayInitMsgData);
 
-  return { RIFGateway: rifGateway, feeManager, serviceTypeManager };
+  return {
+    RIFGateway: rifGateway,
+    feeManager,
+    serviceTypeManager,
+    gatewayAccessControl,
+  };
 }
 
 export async function deployFeeManager() {

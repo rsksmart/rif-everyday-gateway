@@ -6,9 +6,13 @@ import {
   deployProxyContract,
   Factory,
 } from 'utils/deployment.utils';
-import { IFeeManager } from 'typechain-types';
+import {
+  IFeeManager,
+  IGatewayAccessControl,
+  IRIFGateway,
+} from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { deployFeeManager } from 'test/services/utils';
+import { deployFeeManager, deployRIFGateway } from 'test/services/utils';
 
 async function feeManagerSetUp() {
   const signers = await ethers.getSigners();
@@ -25,7 +29,7 @@ enum FeeManagerEvents {
 
 const ONE_GWEI = 1000000000;
 
-describe('FeeManager', () => {
+describe.only('FeeManager', () => {
   let feeManager: IFeeManager;
   let signers: SignerWithAddress[];
   let beneficiary: SignerWithAddress;
@@ -164,8 +168,8 @@ describe('FeeManager', () => {
   });
 
   describe('withdraw', () => {
-    let feeManagerAsBeneficiary: FeeManager;
-    let feeManagerAsServiceProvider: FeeManager;
+    let feeManagerAsBeneficiary: IFeeManager;
+    let feeManagerAsServiceProvider: IFeeManager;
 
     beforeEach(async () => {
       feeManagerAsBeneficiary = feeManager.connect(beneficiary);

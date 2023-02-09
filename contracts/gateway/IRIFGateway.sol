@@ -4,12 +4,13 @@ pragma solidity ^0.8.16;
 import "../services/Service.sol";
 import {Provider} from "../services/ServiceData.sol";
 import "../access/GatewayAccessControl.sol";
+import "../access/IOwnable.sol";
 
 /**
  * @title RIF Gateway interface
  * @author RIF protocols team
  */
-interface IRIFGateway {
+interface IRIFGateway is IOwnable {
     /**
      * @notice Emitted when a new service is registered
      * @param provider The address of the provider of the service

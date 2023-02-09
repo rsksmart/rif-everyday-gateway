@@ -3,12 +3,12 @@ import { ethers } from 'hardhat';
 import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
 import {
   ServiceTypeManager,
-  GatewayAccessControl,
+  IGatewayAccessControl,
   TropykusLendingService__factory,
   TropykusLendingService,
   TropykusBorrowingService__factory,
   TropykusBorrowingService,
-  RIFGateway,
+  IRIFGateway,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { deployRIFGateway } from './utils';
@@ -18,9 +18,9 @@ import {
 } from 'test/utils/interfaceIDs';
 
 describe('RIF Gateway', () => {
-  let rifGateway: RIFGateway;
+  let rifGateway: IRIFGateway;
   let serviceTypeManager: ServiceTypeManager;
-  let gatewayAccessControl: GatewayAccessControl;
+  let gatewayAccessControl: IGatewayAccessControl;
   let signer: SignerWithAddress;
   let signers: SignerWithAddress[];
   let highLevelOperator: SignerWithAddress;

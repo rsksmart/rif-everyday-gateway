@@ -2,6 +2,7 @@
 pragma solidity ^0.8.16;
 
 import "../gateway/IRIFGateway.sol";
+import "../access/IOwnable.sol";
 
 /**
  * @title Fee Manager Interface
@@ -9,7 +10,7 @@ import "../gateway/IRIFGateway.sol";
  * Beneficiaries may consult/withdraw their funds using this contract
  * @author RIF protocols team
  */
-interface IFeeManager {
+interface IFeeManager is IOwnable {
     /**
      * @notice Emitted when `payee` withdraws from the RIF Gateway
      * @param payee withdrawer
