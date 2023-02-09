@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import {IFeeManager} from "./IFeeManager.sol";
 import "../access/GatewayAccessControl.sol";
 import "../gateway/IRIFGateway.sol";
-import "hardhat/console.sol";
 
 /* solhint-disable avoid-low-level-calls */
 
