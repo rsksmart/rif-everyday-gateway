@@ -8,6 +8,7 @@ import {
   RIFGateway,
   ServiceTypeManager,
   GatewayAccessControl,
+  FeeManager,
 } from 'typechain-types';
 import { deployContract } from 'utils/deployment.utils';
 

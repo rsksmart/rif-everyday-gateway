@@ -17,7 +17,7 @@ import {
   LENDING_SERVICE_INTERFACEID as LENDING_SERVICE_INTERFACE_ID,
 } from 'test/utils/interfaceIDs';
 
-describe.only('RIF Gateway', () => {
+describe('RIF Gateway', () => {
   let rifGateway: RIFGateway;
   let serviceTypeManager: ServiceTypeManager;
   let gatewayAccessControl: GatewayAccessControl;
@@ -93,24 +93,15 @@ describe.only('RIF Gateway', () => {
     newOwner = signers[3];
   });
 
-  describe('Roles', () => {
-    it('should set deployer as OWNER', async () => {
+  describe('Ownership', () => {
+    it('should transfer ownership to the given address', async () => {
       expect(await rifGateway.owner()).to.equal(signer.address);
-      expect(await rifGateway.getAccessControl().isOwner(signer.address)).to.be
-        .true;
-    });
-
-    it('should transfer OWNER and ownership to the given address', async () => {
-      expect(await rifGateway.owner()).to.equal(signer.address);
-      expect(await rifGateway.isOwner(signer.address)).to.be.true;
 
       await (
-        await rifGateway.connect(signer).changeOwner(newOwner.address)
+        await rifGateway.connect(signer).transferOwnership(newOwner.address)
       ).wait();
 
       expect(await rifGateway.owner()).to.equal(newOwner.address);
-      expect(await rifGateway.isOwner(newOwner.address)).to.be.true;
-      expect(await rifGateway.isOwner(signer.address)).to.be.false;
     });
   });
 
@@ -205,7 +196,7 @@ describe.only('RIF Gateway', () => {
     describe('validateProvider', () => {
       beforeEach(async () => {
         await (
-          await rifGateway
+          await gatewayAccessControl
             .connect(signer)
             .addHighLevelOperator(highLevelOperator.address)
         ).wait();

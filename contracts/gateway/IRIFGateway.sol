@@ -3,6 +3,7 @@ pragma solidity ^0.8.16;
 
 import "../services/Service.sol";
 import {Provider} from "../services/ServiceData.sol";
+import "../access/GatewayAccessControl.sol";
 
 /**
  * @title RIF Gateway interface
@@ -80,5 +81,5 @@ interface IRIFGateway {
      * @notice Returns the address of the access control contract
      * @return The address of the access control contract
      */
-    function getAccessControl() external view returns (address);
+    function getAccessControl() external view returns (GatewayAccessControl);
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./IGatewayAccessControl.sol";
+import "./Roles.sol";
 
 /**
  * @title GatewayAccessControl

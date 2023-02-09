@@ -14,7 +14,7 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
     IFeeManager public immutable feeManager;
 
     constructor() {
-        feeManager = new FeeManager(msg.sender);
+        feeManager = new FeeManager();
     }
 
     /**

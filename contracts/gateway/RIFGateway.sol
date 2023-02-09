@@ -7,6 +7,7 @@ import "./SubscriptionReporter.sol";
 import {Provider} from "../services/ServiceData.sol";
 import "../services/Service.sol";
 import "../services/ServiceTypeManager.sol";
+import "../access/GatewayAccessControl.sol";
 import "../access/IGatewayAccessControl.sol";
 
 /**
@@ -18,7 +19,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     Provider[] private _providers;
     mapping(address => uint256) private _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager private _serviceTypeManager;
-    IGatewayAccessControl private _accessControl;
+    GatewayAccessControl private _accessControl;
     Service[] private _allServices;
     mapping(address => bool) private _uniqueServices;
 
@@ -26,7 +27,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
 
     constructor(
         ServiceTypeManager stm,
-        IGatewayAccessControl gatewayAccessControl
+        GatewayAccessControl gatewayAccessControl
     ) {
         _serviceTypeManager = stm;
         _accessControl = gatewayAccessControl;
@@ -101,7 +102,7 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
             IGatewayAccessControl(_accessControl).isHighLevelOperator(
                 msg.sender
             ),
-            "Caller is not a financial operator"
+            "Not HIGH_LEVEL_OPERATOR role"
         );
         if (_providerIndexes[provider] == 0)
             revert ValidationNotRequested(provider);
@@ -167,7 +168,12 @@ contract RIFGateway is Ownable, SubscriptionReporter, IRIFGateway {
     /**
      * @inheritdoc IRIFGateway
      */
-    function getAccessControl() public view override returns (address) {
+    function getAccessControl()
+        public
+        view
+        override
+        returns (GatewayAccessControl)
+    {
         return _accessControl;
     }
 }
