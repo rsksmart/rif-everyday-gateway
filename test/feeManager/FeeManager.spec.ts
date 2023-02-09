@@ -1,24 +1,91 @@
 import { expect } from 'chairc';
-import { ethers } from 'hardhat';
-import { loadFixture } from '@nomicfoundation/hardhat-network-helpers';
-import {
-  deployContract,
-  deployProxyContract,
-  Factory,
-} from 'utils/deployment.utils';
+import hre, { ethers } from 'hardhat';
+import { deployContract } from 'utils/deployment.utils';
 import {
   IFeeManager,
   IGatewayAccessControl,
   IRIFGateway,
+  LendingService,
 } from 'typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
-import { deployFeeManager, deployRIFGateway } from 'test/services/utils';
+import { deployRIFGateway } from 'test/services/utils';
+import {
+  externalSmartwalletFixture,
+  smartwalletFactoryFixture,
+} from '../smartwallet/fixtures';
+import { tropykusFixture } from '../utils/tropykusFixture';
+import { PaybackOption } from '../constants/service';
+import { signTransactionForExecutor } from '../smartwallet/utils';
 
-async function feeManagerSetUp() {
-  const signers = await ethers.getSigners();
-  const feeManager = await deployFeeManager();
+async function serviceSetUp(rifGateway: IRIFGateway, consume = true) {
+  const [owner] = await ethers.getSigners();
+  const { smartWalletFactory } = await smartwalletFactoryFixture();
+  const { privateKey, externalWallet } = await externalSmartwalletFixture(
+    smartWalletFactory,
+    owner
+  );
 
-  return { feeManager, signers };
+  const { crbtc, comptroller } = await tropykusFixture();
+
+  const { contract: tropykusLendingService } =
+    await deployContract<LendingService>('TropykusLendingService', {
+      gateway: rifGateway.address,
+      smartWalletFactory: smartWalletFactory.address,
+      contracts: {
+        comptroller,
+        crbtc,
+        oracle: ethers.constants.AddressZero,
+        cdoc: ethers.constants.AddressZero,
+      },
+    });
+
+  await (await rifGateway.addService(tropykusLendingService.address)).wait();
+
+  const listingId0 = 0;
+
+  await (
+    await tropykusLendingService.addListing({
+      id: listingId0,
+      minAmount: ethers.utils.parseEther('0.0001'),
+      maxAmount: ethers.utils.parseEther('0.5'),
+      minDuration: 0,
+      maxDuration: 0,
+      interestRate: ethers.utils.parseEther('0.05'), // 5%
+      collateralCurrency: ethers.constants.AddressZero,
+      currency: ethers.constants.AddressZero,
+      payBackOption: PaybackOption.Day,
+      enabled: true,
+      name: 'Tropykus Lending Service',
+      owner: owner.address,
+    })
+  ).wait();
+
+  if (consume) {
+    const mtxForLending = await signTransactionForExecutor(
+      externalWallet.address,
+      privateKey,
+      tropykusLendingService.address,
+      smartWalletFactory,
+      hre.network.config.chainId
+    );
+
+    await (
+      await tropykusLendingService
+        .connect(externalWallet)
+        .lend(mtxForLending, 0, listingId0, ethers.constants.AddressZero, {
+          value: ethers.utils.parseEther('0.0001'),
+          gasLimit: 5000000,
+        })
+    ).wait();
+  }
+
+  return {
+    externalWallet,
+    privateKey,
+    tropykusLendingService,
+    smartWalletFactory,
+    listingId0,
+  };
 }
 
 enum FeeManagerEvents {
@@ -31,7 +98,6 @@ const ONE_GWEI = 1000000000;
 
 describe.only('FeeManager', () => {
   let feeManager: IFeeManager;
-  let signers: SignerWithAddress[];
   let beneficiary: SignerWithAddress;
   let serviceProvider: SignerWithAddress;
   let financialOperator: SignerWithAddress;
@@ -44,11 +110,13 @@ describe.only('FeeManager', () => {
   let rifGateway: IRIFGateway;
 
   beforeEach(async () => {
-    ({ feeManager, signers } = await loadFixture(feeManagerSetUp));
-    ({ RIFGateway: rifGateway, gatewayAccessControl: gatewayAccessControl } =
-      await deployRIFGateway(false));
+    ({
+      RIFGateway: rifGateway,
+      gatewayAccessControl: gatewayAccessControl,
+      feeManager,
+    } = await deployRIFGateway(true));
     [owner, beneficiary, serviceProvider, financialOperator, financialOwner] =
-      signers;
+      await ethers.getSigners();
     beneficiaryAddr = beneficiary.address;
     serviceProviderAddr = serviceProvider.address;
     ownerAddr = owner.address;
@@ -101,7 +169,7 @@ describe.only('FeeManager', () => {
         feeManager
           .connect(owner)
           .transferOwnership(ethers.constants.AddressZero)
-      ).to.eventually.be.rejectedWith('Ownable: new owner is the zero address');
+      ).to.eventually.be.rejectedWith('Ownable: new owner is address zero');
     });
     it('should revert if trying to transfer ownership to old owner', async () => {
       await expect(
@@ -120,40 +188,79 @@ describe.only('FeeManager', () => {
   });
 
   describe('fundBeneficiary', () => {
+    beforeEach(async () => {
+      await (
+        await feeManager
+          .connect(financialOwner)
+          .setRIFGateway(rifGateway.address)
+      ).wait();
+    });
+
     it('should add the given fees to the given beneficiary', async () => {
+      const {
+        externalWallet,
+        privateKey,
+        tropykusLendingService,
+        smartWalletFactory,
+        listingId0,
+      } = await serviceSetUp(rifGateway, false);
+
+      const mtxForLending = await signTransactionForExecutor(
+        externalWallet.address,
+        privateKey,
+        tropykusLendingService.address,
+        smartWalletFactory,
+        hre.network.config.chainId
+      );
       const expectedFee = ONE_GWEI;
 
       // Unit under test
-      await expect(feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr))
+      await expect(
+        await tropykusLendingService
+          .connect(externalWallet)
+          .lend(mtxForLending, 0, listingId0, externalWallet.address, {
+            value: ethers.utils.parseEther('0.0001'),
+            gasLimit: 5000000,
+          })
+      )
         .to.emit(feeManager, FeeManagerEvents.ServiceConsumptionFee)
         .withArgs(
-          serviceProviderAddr,
+          tropykusLendingService.address,
           expectedFee,
-          beneficiaryAddr,
+          externalWallet.address,
           expectedFee
         );
 
       // Verify results
       await expect(
-        feeManager.getDebtBalanceFor(serviceProviderAddr, beneficiaryAddr)
+        feeManager.getDebtBalanceFor(
+          tropykusLendingService.address,
+          externalWallet.address
+        )
       ).to.eventually.equal(expectedFee);
 
       await expect(
-        feeManager.getDebtBalance(serviceProviderAddr)
+        feeManager.getDebtBalance(tropykusLendingService.address)
       ).to.eventually.equal(expectedFee * 2);
     });
 
     it('should emit `FeePayment` event', async () => {
       const expectedFee = ONE_GWEI;
-      await feeManager.chargeFee(serviceProviderAddr, beneficiaryAddr);
+      const { tropykusLendingService, externalWallet } = await serviceSetUp(
+        rifGateway
+      );
+
+      const feesOwner = await feeManager.getGatewayFeesOwner();
+
       // Verify results
       await expect(
-        feeManager
-          .connect(serviceProvider)
-          .pay({ value: expectedFee, gasLimit: 30000000 })
+        feeManager.payInBehalfOf(tropykusLendingService.address, {
+          value: expectedFee,
+          gasLimit: 30000000,
+        })
       )
         .to.emit(feeManager, FeeManagerEvents.FeePayment)
-        .withArgs(serviceProviderAddr, beneficiaryAddr, expectedFee);
+        .withArgs(tropykusLendingService.address, feesOwner, expectedFee);
     });
 
     it('should revert when the caller sends an invalid value', async () => {

@@ -44,5 +44,9 @@ interface ISubscriptionReporter {
         view
         returns (Subscription[] memory);
 
+    /**
+     * @notice Returns FeeManager address for charging fees
+     * @return feeManager address set
+     */
     function feeManager() external view returns (IFeeManager);
 }
