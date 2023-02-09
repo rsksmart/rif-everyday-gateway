@@ -260,12 +260,12 @@ contract FeeManager is IFeeManager, Ownable {
      * @inheritdoc IFeeManager
      */
     function setRIFGateway(IRIFGateway rifGateway) public override {
-        _rifGateway = rifGateway;
         require(
-            GatewayAccessControl(IRIFGateway(_rifGateway).getAccessControl())
+            GatewayAccessControl(IRIFGateway(rifGateway).getAccessControl())
                 .isFinancialOwner(msg.sender),
             "Not FINANCIAL_OWNER role"
         );
+        _rifGateway = rifGateway;
     }
 
     /**
