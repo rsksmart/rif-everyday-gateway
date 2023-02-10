@@ -12,6 +12,7 @@ import "../access/IGatewayAccessControl.sol";
  * @author RIF protocols team
  */
 contract RIFGatewayStorageV1 {
+    // slither-disable-start naming-convention
     Provider[] internal _providers;
     mapping(address => uint256) internal _providerIndexes; // indexes from 1, 0 used to verify not duplication
     ServiceTypeManager internal _serviceTypeManager;
@@ -20,4 +21,5 @@ contract RIFGatewayStorageV1 {
     mapping(address => bool) internal _uniqueServices;
 
     bytes4 internal constant _INTERFACE_ID_ERC165 = 0x01ffc9a7;
+    // slither-disable-end naming-convention
 }

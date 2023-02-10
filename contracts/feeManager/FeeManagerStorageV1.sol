@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import "../gateway/IRIFGateway.sol";
 
 contract FeeManagerStorageV1 {
+    // slither-disable-start naming-convention
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
     address internal _feesOwner;
@@ -18,4 +19,5 @@ contract FeeManagerStorageV1 {
 
     // Funds for each account
     mapping(address => uint256) internal _funds;
+    // slither-disable-end naming-convention
 }
