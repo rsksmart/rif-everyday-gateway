@@ -8,13 +8,22 @@ import {IFeeManager} from "./IFeeManager.sol";
 import "../gateway/IRIFGateway.sol";
 import "../access/InitializableOwnable.sol";
 
+/* solhint-disable no-empty-blocks, avoid-low-level-calls */
+
+/**
+ * @title Fee Manager Logic V1
+ * @notice This contract implements the logic of the Fee Manager.
+ * @dev This contract is upgradeable.
+ */
 contract FeeManagerLogicV1 is
     UUPSUpgradeable,
     InitializableOwnable,
     IFeeManager,
     FeeManagerStorageV1
 {
-    /* solhint-disable no-empty-blocks */
+    /**
+     * @inheritdoc UUPSUpgradeable
+     */
     function _authorizeUpgrade(address newImplementation)
         internal
         override
@@ -29,6 +38,9 @@ contract FeeManagerLogicV1 is
         _feesOwner = address(this);
     }
 
+    /**
+     * @inheritdoc IFeeManager
+     */
     function chargeFee(address debtor, address beneficiary) public override {
         require(address(_rifGateway) == msg.sender, "Unauthorized");
         if (beneficiary != address(0)) {
@@ -134,7 +146,6 @@ contract FeeManagerLogicV1 is
 
         _funds[beneficiary] -= amount;
         // slither-disable-next-line low-level-calls
-        /* solhint-disable avoid-low-level-calls */
         (bool success, ) = msg.sender.call{value: amount}("");
 
         if (!success) {

@@ -12,6 +12,8 @@ import "../services/ServiceTypeManager.sol";
 import "../access/IGatewayAccessControl.sol";
 import "../access/InitializableOwnable.sol";
 
+/* solhint-disable no-empty-blocks, avoid-low-level-calls */
+
 /**
  * @title RIF Gateway Logic V1
  * @dev Contract for the RIF Gateway contract's logic
@@ -24,7 +26,9 @@ contract RIFGatewayLogicV1 is
     SubscriptionReporter,
     RIFGatewayStorageV1
 {
-    /* solhint-disable no-empty-blocks */
+    /**
+     * @inheritdoc UUPSUpgradeable
+     */
     function _authorizeUpgrade(address newImplementation)
         internal
         override
@@ -32,7 +36,11 @@ contract RIFGatewayLogicV1 is
     {}
 
     /**
-     *
+     * @notice Initializes the contract and sets the initial values
+     * for Gateway Access Control, Service Type Manager and Fee Manager.
+     * @param serviceTypeManagerAddr Address of the Service Type Manager
+     * @param gatewayAccessControlAddr Address of the Gateway Access Control
+     * @param feeManagerAddr Address of the Fee Manager
      */
     function initialize(
         address serviceTypeManagerAddr,
@@ -81,6 +89,10 @@ contract RIFGatewayLogicV1 is
         return (_allServices, _providers);
     }
 
+    /**
+     * @notice Adds a provider if it does not exist
+     * @param provider Address of the provider
+     */
     function _addProviderIfNotExists(address provider) internal {
         if (_providerIndexes[provider] == 0) {
             _providers.push(Provider({provider: provider, validated: false}));
@@ -88,6 +100,11 @@ contract RIFGatewayLogicV1 is
         }
     }
 
+    /**
+     * @notice Checks if the provider is already validated
+     * @param provider Address of the provider
+     * @dev Reverts if the provider is already validated
+     */
     function _checkIfProviderIsAlreadyValidated(address provider)
         internal
         view
