@@ -5,6 +5,7 @@ import "../gateway/IRIFGateway.sol";
 
 contract FeeManagerStorageV1 {
     // slither-disable-start naming-convention
+    // slither-disable-start constable-states
     uint256 internal immutable _fixedOwnerFee = 1 gwei;
     uint256 internal immutable _fixedBeneficiaryFee = 1 gwei;
     address internal _feesOwner;
@@ -19,5 +20,6 @@ contract FeeManagerStorageV1 {
 
     // Funds for each account
     mapping(address => uint256) internal _funds;
+    // slither-disable-end constable-states
     // slither-disable-end naming-convention
 }
