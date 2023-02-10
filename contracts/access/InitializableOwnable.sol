@@ -4,6 +4,7 @@ pragma solidity ^0.8.16;
 import "./IOwnable.sol";
 
 abstract contract InitializableOwnable is IOwnable {
+    bool private _initialized;
     address private _owner;
 
     event OwnershipTransferred(
@@ -11,18 +12,15 @@ abstract contract InitializableOwnable is IOwnable {
         address indexed newOwner
     );
 
-    constructor() {
-        _owner = address(this);
-    }
-
     modifier onlyOwner() {
         _checkOwner();
         _;
     }
 
     function initialize() public virtual {
-        require(_owner != address(this), "Ownable: already initialized");
+        require(!_initialized, "Ownable: already initialized");
 
+        _initialized = true;
         _owner = msg.sender;
     }
 

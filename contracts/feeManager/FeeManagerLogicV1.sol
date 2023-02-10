@@ -14,15 +14,19 @@ contract FeeManagerLogicV1 is
     IFeeManager,
     FeeManagerStorageV1
 {
-    function _authorizeUpgrade(address newImplementation) internal override {}
+    /* solhint-disable no-empty-blocks */
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyOwner
+    {}
 
     /**
      *
      */
     function initialize() public override {
-        _feesOwner = address(this);
-
         InitializableOwnable.initialize();
+        _feesOwner = address(this);
     }
 
     function chargeFee(address debtor, address beneficiary) public override {

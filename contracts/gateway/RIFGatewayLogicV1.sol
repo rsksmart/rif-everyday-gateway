@@ -24,7 +24,12 @@ contract RIFGatewayLogicV1 is
     SubscriptionReporter,
     RIFGatewayStorageV1
 {
-    function _authorizeUpgrade(address newImplementation) internal override {}
+    /* solhint-disable no-empty-blocks */
+    function _authorizeUpgrade(address newImplementation)
+        internal
+        override
+        onlyOwner
+    {}
 
     /**
      *
@@ -34,11 +39,11 @@ contract RIFGatewayLogicV1 is
         address gatewayAccessControlAddr,
         address feeManagerAddr
     ) public {
+        InitializableOwnable.initialize();
+
         _serviceTypeManager = ServiceTypeManager(serviceTypeManagerAddr);
         _accessControl = IGatewayAccessControl(gatewayAccessControlAddr);
         feeManager = IFeeManager(feeManagerAddr);
-
-        InitializableOwnable.initialize();
     }
 
     /**
