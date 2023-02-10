@@ -13,6 +13,11 @@ abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
     IFeeManager public feeManager;
 
+    function initialize(address _feeManager) public {
+        require(address(feeManager) == address(0), "Already initialized");
+        feeManager = IFeeManager(_feeManager);
+    }
+
     /**
      * @inheritdoc ISubscriptionReporter
      */

@@ -38,7 +38,7 @@ abstract contract InitializableOwnable is IOwnable {
         override
         onlyOwner
     {
-        require(newOwner != address(0), "Ownable: new owner is address zero");
+        require(newOwner != address(0), "Ownable: new owner not set");
 
         address oldOwner = _owner;
         _owner = newOwner;

@@ -40,10 +40,10 @@ contract RIFGatewayLogicV1 is
         address feeManagerAddr
     ) public {
         InitializableOwnable.initialize();
+        SubscriptionReporter.initialize(feeManagerAddr);
 
         _serviceTypeManager = ServiceTypeManager(serviceTypeManagerAddr);
         _accessControl = IGatewayAccessControl(gatewayAccessControlAddr);
-        feeManager = IFeeManager(feeManagerAddr);
     }
 
     /**

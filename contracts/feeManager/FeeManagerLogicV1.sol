@@ -134,6 +134,7 @@ contract FeeManagerLogicV1 is
 
         _funds[beneficiary] -= amount;
         // slither-disable-next-line low-level-calls
+        /* solhint-disable avoid-low-level-calls */
         (bool success, ) = msg.sender.call{value: amount}("");
 
         if (!success) {

@@ -166,7 +166,7 @@ describe('FeeManager', () => {
         feeManager
           .connect(owner)
           .transferOwnership(ethers.constants.AddressZero)
-      ).to.eventually.be.rejectedWith('Ownable: new owner is address zero');
+      ).to.eventually.be.rejectedWith('Ownable: new owner not set');
     });
     it('should revert if trying to transfer ownership to old owner', async () => {
       await expect(
