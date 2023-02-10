@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: MI T
-pragma solidity ^0.8.4;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.16;
 
 contract NonUpgradableMock {
     function healthCheck() external pure returns (string memory) {

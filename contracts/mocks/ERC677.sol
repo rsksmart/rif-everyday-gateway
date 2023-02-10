@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.16;
 
 // Use only for testing purposes
 // FIXME: this potentially need to be placed in a separated repo
