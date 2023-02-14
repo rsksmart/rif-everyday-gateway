@@ -25,7 +25,7 @@ contract GatewayAccessControl is IGatewayAccessControl, AccessControl, Ownable {
         _setRoleAdmin(LOW_LEVEL_OPERATOR, OWNER);
         _setRoleAdmin(HIGH_LEVEL_OPERATOR, OWNER);
         _setRoleAdmin(FINANCIAL_OWNER, OWNER);
-        _setRoleAdmin(FINANCIAL_OPERATOR, OWNER);
+        _setRoleAdmin(FINANCIAL_OPERATOR, FINANCIAL_OWNER);
 
         _setupRole(OWNER, msg.sender);
     }
@@ -135,7 +135,7 @@ contract GatewayAccessControl is IGatewayAccessControl, AccessControl, Ownable {
      */
     function addFinancialOperator(address financialOperator)
         public
-        onlyRole(OWNER)
+        onlyRole(FINANCIAL_OWNER)
     {
         grantRole(FINANCIAL_OPERATOR, financialOperator);
     }
@@ -145,7 +145,7 @@ contract GatewayAccessControl is IGatewayAccessControl, AccessControl, Ownable {
      */
     function removeFinancialOperator(address financialOperator)
         public
-        onlyRole(OWNER)
+        onlyRole(FINANCIAL_OWNER)
     {
         revokeRole(FINANCIAL_OPERATOR, financialOperator);
     }

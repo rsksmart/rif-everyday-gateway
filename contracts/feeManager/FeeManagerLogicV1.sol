@@ -271,7 +271,7 @@ contract FeeManagerLogicV1 is
     /**
      * @inheritdoc IFeeManager
      */
-    function setRIFGateway(IRIFGateway rifGateway) public override {
+    function setRIFGateway(IRIFGateway rifGateway) public override onlyOwner {
         require(
             IGatewayAccessControl(IRIFGateway(rifGateway).getAccessControl())
                 .isFinancialOwner(msg.sender),

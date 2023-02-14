@@ -54,9 +54,11 @@ describe('Gateway Access Control', () => {
       expect(await gatewayAccessControl.getRoleAdmin(FINANCIAL_OWNER)).to.equal(
         OWNER
       );
+    });
+    it('should have FINANCIAL_OWNER as admin role of FINANCIAL_OPERATOR', async () => {
       expect(
         await gatewayAccessControl.getRoleAdmin(FINANCIAL_OPERATOR)
-      ).to.equal(OWNER);
+      ).to.equal(FINANCIAL_OWNER);
     });
   });
 
@@ -138,16 +140,19 @@ describe('Gateway Access Control', () => {
         .true;
     });
 
-    it('should not allow non-OWNER to add a FINANCIAL_OPERATOR', async () => {
+    it('should not allow non-FINANCIAL_OWNER to add a FINANCIAL_OPERATOR', async () => {
       await expect(
-        gatewayAccessControl.connect(alice).addFinancialOperator(bob.address)
+        gatewayAccessControl.connect(owner).addFinancialOperator(bob.address)
       ).to.be.eventually.rejected;
     });
 
-    it('should allow OWNER to add a FINANCIAL_OPERATOR', async () => {
+    it('should allow FINANCIAL_OWNER to add a FINANCIAL_OPERATOR', async () => {
+      await (
+        await gatewayAccessControl.connect(owner).addFinancialOwner(bob.address)
+      ).wait();
       await (
         await gatewayAccessControl
-          .connect(owner)
+          .connect(bob)
           .addFinancialOperator(alice.address)
       ).wait();
       expect(await gatewayAccessControl.isFinancialOperator(alice.address)).to
