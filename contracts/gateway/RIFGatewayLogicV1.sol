@@ -26,6 +26,10 @@ contract RIFGatewayLogicV1 is
     SubscriptionReporter,
     RIFGatewayStorageV1
 {
+    constructor() {
+        initialize(address(0), address(0), address(0));
+    }
+
     /**
      * @inheritdoc UUPSUpgradeable
      */

@@ -21,6 +21,10 @@ contract FeeManagerLogicV1 is
     IFeeManager,
     FeeManagerStorageV1
 {
+    constructor() {
+        initialize();
+    }
+
     /**
      * @inheritdoc UUPSUpgradeable
      */

@@ -12,6 +12,7 @@ import "../feeManager/FeeManager.sol";
 abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
     IFeeManager public feeManager;
+    uint256[10] private __gap;
 
     function initialize(address feeManagerAddr) public {
         require(address(feeManager) == address(0), "Already initialized");

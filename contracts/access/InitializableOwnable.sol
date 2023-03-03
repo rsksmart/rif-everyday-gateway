@@ -11,6 +11,7 @@ import "./IOwnable.sol";
 abstract contract InitializableOwnable is IOwnable {
     bool private _initialized;
     address private _owner;
+    uint256[10] private __gap;
 
     /**
      * @dev Emitted when the owner is changed.
