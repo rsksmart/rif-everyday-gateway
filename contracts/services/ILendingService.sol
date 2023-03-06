@@ -26,7 +26,7 @@ interface ILendingService {
 
     /**
      * @notice Lends funds to a user from a service listing
-     * @param mtx The meta transaction { bytes32 suffixData, ForwardRequest req { address from, uint256 nonce, address executor }, bytes sig }
+     * @param mtx The meta transaction { ForwardRequest req { address from, uint256 nonce, address executor }, bytes sig }
      * @param amount The amount of the loan
      * @param listingId The id of the listing
      * @param wallet The address of the lender
@@ -40,7 +40,7 @@ interface ILendingService {
 
     /**
      * @notice Withdraws funds from the service listing
-     * @param mtx The meta transaction { bytes32 suffixData, ForwardRequest req { address from, uint256 nonce, address executor }, bytes sig }
+     * @param mtx The meta transaction { ForwardRequest req { address from, uint256 nonce, address executor }, bytes sig }
      * @param listingId The id of the listing
      */
     function withdraw(

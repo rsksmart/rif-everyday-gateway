@@ -117,19 +117,6 @@ export class TypedRequestData implements TypedMessage<Types> {
   }
 }
 
-export const getSuffixData = (typedRequestData: TypedRequestData): string => {
-  const encoded = TypedDataUtils.encodeData(
-    typedRequestData.primaryType,
-    typedRequestData.message,
-    typedRequestData.types,
-    SignTypedDataVersion.V4
-  );
-
-  const messageSize = Object.keys(typedRequestData.message).length;
-
-  return '0x' + encoded.slice(messageSize * ONE_FIELD_IN_BYTES).toString('hex');
-};
-
 export const signTransactionForExecutor = async (
   from: string,
   privateKey: string,
@@ -168,15 +155,12 @@ export const signTransactionForExecutor = async (
 
   const privateKeyBuf = Buffer.from(privateKey.substring(2, 66), 'hex');
 
-  const suffixData = getSuffixData(typedRequestData);
-
   const signature = getLocalEip712Signature(typedRequestData, privateKeyBuf);
 
-  return { req: forwardRequest, sig: signature, suffixData: suffixData };
+  return { req: forwardRequest, sig: signature };
 };
 
 export type MetaTransactionStruct = {
-  suffixData: PromiseOrValue<BytesLike>;
   req: IForwarder.ForwardRequestStruct;
   sig: PromiseOrValue<BytesLike>;
 };

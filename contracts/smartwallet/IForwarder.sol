@@ -16,7 +16,6 @@ interface IForwarder {
     }
 
     struct MetaTransaction {
-        bytes32 suffixData;
         ForwardRequest req;
         bytes sig;
     }
@@ -31,12 +30,10 @@ interface IForwarder {
      * @notice verify the transaction would execute.
      * validate the signature and the nonce of the request.
      * revert if either signature or nonce are incorrect.
-     + @param suffixData the extension data used when signing this request
      * @param forwardRequest the request to verify
      * @param signature the signature to verify
      */
     function verify(
-        bytes32 suffixData,
         ForwardRequest calldata forwardRequest,
         bytes calldata signature
     ) external view;

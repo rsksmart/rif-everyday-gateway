@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
-export const BORROW_SERVICE_INTERFACEID = '0xf977581c';
-export const LENDING_SERVICE_INTERFACEID = '0xcc2ee280';
+export const BORROW_SERVICE_INTERFACEID = '0xdcfdcd9c';
+export const LENDING_SERVICE_INTERFACEID = '0x05205206';
 
 export function getFirstOrderInterfaceID(
   contractInterface: ethers.utils.Interface
