@@ -6,6 +6,7 @@ import {
   SmartWalletFactory,
   LendingService,
   ERC20,
+  IGatewayAccessControl,
 } from '../../typechain-types';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import {
@@ -23,6 +24,8 @@ describe('Tropykus Lending Service', () => {
   let owner: SignerWithAddress;
   let tropykusLendingService: LendingService;
   let smartWalletFactory: SmartWalletFactory;
+  let financialOperator: SignerWithAddress;
+  let financialOwner: SignerWithAddress;
   let privateKey: string;
   let externalWallet: Wallet | SignerWithAddress;
   let crbtc: string;
@@ -31,6 +34,7 @@ describe('Tropykus Lending Service', () => {
   let docAddr: string;
   let feeManager: IFeeManager;
   let RIFGateway: IRIFGateway;
+  let gatewayAccessControl: IGatewayAccessControl;
   const listingId0 = 0;
   const listingId1 = 1;
 
@@ -42,8 +46,24 @@ describe('Tropykus Lending Service', () => {
   });
 
   beforeEach(async () => {
-    ({ RIFGateway: RIFGateway, feeManager: feeManager } =
-      await deployRIFGateway());
+    ({
+      RIFGateway: RIFGateway,
+      feeManager: feeManager,
+      gatewayAccessControl: gatewayAccessControl,
+    } = await deployRIFGateway());
+
+    [owner, financialOperator, financialOwner] = await ethers.getSigners();
+
+    await (
+      await gatewayAccessControl.addFinancialOwner(financialOwner.address)
+    ).wait();
+    await (
+      await gatewayAccessControl.addFinancialOperator(financialOperator.address)
+    ).wait();
+
+    await (
+      await feeManager.connect(financialOwner).setRIFGateway(RIFGateway.address)
+    ).wait();
 
     ({ contract: tropykusLendingService } =
       await deployContract<LendingService>('TropykusLendingService', {

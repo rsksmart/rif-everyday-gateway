@@ -8,8 +8,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./IForwarder.sol";
 import "./RSKAddrValidator.sol";
 
-/* solhint-disable no-inline-assembly */
-/* solhint-disable avoid-low-level-calls */
+/* solhint-disable no-inline-assembly, avoid-low-level-calls, no-empty-blocks */
 
 /**
  * @title SmartWallet
@@ -173,7 +172,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
      * @return id chainId the chain id
      */
     function _getChainID() private view returns (uint256 id) {
-        //slither-disable-next-line assembly
+        // slither-disable-next-line assembly
         assembly {
             id := chainid()
         }
@@ -260,6 +259,5 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
             );
     }
 
-    /* solhint-disable no-empty-blocks */
     receive() external payable {}
 }

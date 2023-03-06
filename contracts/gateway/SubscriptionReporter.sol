@@ -11,10 +11,12 @@ import "../feeManager/FeeManager.sol";
  */
 abstract contract SubscriptionReporter is ISubscriptionReporter {
     mapping(address => Subscription[]) public subscriptions;
-    IFeeManager public immutable feeManager;
+    IFeeManager public feeManager;
+    uint256[10] private __gap;
 
-    constructor() {
-        feeManager = new FeeManager();
+    function initialize(address feeManagerAddr) public {
+        require(address(feeManager) == address(0), "Already initialized");
+        feeManager = IFeeManager(feeManagerAddr);
     }
 
     /**

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.16;
 
+import "../feeManager/IFeeManager.sol";
+
 /**
  * @title Subscription Reporter Interface
  * @dev Interface for the Subscription Reporter contract
@@ -41,4 +43,10 @@ interface ISubscriptionReporter {
         external
         view
         returns (Subscription[] memory);
+
+    /**
+     * @notice Returns FeeManager address for charging fees
+     * @return feeManager address set
+     */
+    function feeManager() external view returns (IFeeManager);
 }

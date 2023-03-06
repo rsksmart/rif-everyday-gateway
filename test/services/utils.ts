@@ -1,23 +1,27 @@
-import { BigNumber } from 'ethers';
+import { BigNumber, Contract } from 'ethers';
 import { ethers } from 'hardhat';
 import {
   BORROW_SERVICE_INTERFACEID,
   LENDING_SERVICE_INTERFACEID,
 } from 'test/utils/interfaceIDs';
 import {
+  FeeManager,
+  IFeeManager,
+  IGatewayAccessControl,
+  IRIFGateway,
   RIFGateway,
   ServiceTypeManager,
-  GatewayAccessControl,
-  FeeManager,
+  SubscriptionReporter,
 } from 'typechain-types';
-import { deployContract } from 'utils/deployment.utils';
+import { deployContract, deployProxyContract } from 'utils/deployment.utils';
 
-export const deployRIFGateway = async (registerInterfaceId = true) => {
+export async function deployRIFGateway(
+  registerInterfaceId = true,
+  registerOwner = true
+) {
+  // Deploy Service Type Manager
   const { contract: serviceTypeManager } =
     await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
-
-  const { contract: gatewayAccessControl } =
-    await deployContract<GatewayAccessControl>('GatewayAccessControl', {});
 
   if (registerInterfaceId) {
     // allow lending service interface id
@@ -33,21 +37,53 @@ export const deployRIFGateway = async (registerInterfaceId = true) => {
     await tBx.wait();
   }
 
-  const { contract: RIFGateway } = await deployContract<RIFGateway>(
-    'RIFGateway',
-    {
-      ServiceTypeManager: serviceTypeManager.address,
-      GatewayAccessControl: gatewayAccessControl.address,
-    }
+  // Deploy access control
+  const { contract: gatewayAccessControl } =
+    await deployContract<IGatewayAccessControl>('GatewayAccessControl', {});
+
+  // Deploy FeeManager
+  const feeManager = await deployFeeManager();
+
+  const RIFGatewayIface = new ethers.utils.Interface([
+    'function initialize(address serviceTypeManagerAddr,address gatewayAccessControlAddr, address feeManagerAddr)',
+  ]);
+
+  const RIFGatewayInitMsgData = RIFGatewayIface.encodeFunctionData(
+    'initialize',
+    [
+      serviceTypeManager.address,
+      gatewayAccessControl.address,
+      feeManager.address,
+    ]
   );
 
-  const feeManager = await ethers.getContractAt(
-    'FeeManager',
-    await RIFGateway.feeManager()
-  );
+  const { contract: rifGateway } = await deployProxyContract<
+    RIFGateway,
+    IRIFGateway
+  >('RIFGateway', 'RIFGatewayLogicV1', RIFGatewayInitMsgData);
 
-  return { RIFGateway, feeManager, serviceTypeManager, gatewayAccessControl };
-};
+  return {
+    RIFGateway: rifGateway,
+    feeManager,
+    serviceTypeManager,
+    gatewayAccessControl,
+  };
+}
+
+export async function deployFeeManager() {
+  // Deploy Fee Manager
+  const feeManagerIface = new ethers.utils.Interface(['function initialize()']);
+  const feeManagerMsgData = feeManagerIface.encodeFunctionData(
+    'initialize',
+    []
+  );
+  const { contract: feeManager } = await deployProxyContract<
+    FeeManager,
+    IFeeManager
+  >('FeeManager', 'FeeManagerLogicV1', feeManagerMsgData);
+
+  return feeManager;
+}
 
 export function toSmallNumber(bn: BigNumber, divisor = 1e18) {
   return +bn / divisor;

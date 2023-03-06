@@ -6,6 +6,13 @@ import {ServiceListing} from "../services/ServiceData.sol";
 import "../smartwallet/SmartWalletFactory.sol";
 import "../smartwallet/IForwarder.sol";
 
+/* solhint-disable avoid-low-level-calls */
+
+/**
+ * @title TropykusCommon
+ * @dev Defines common functions to be used for Tropykus contracts
+ * @author RIF protocols team
+ */
 abstract contract TropykusCommon {
     uint256 internal constant _UNIT_DECIMAL_PRECISION = 1e18;
 

@@ -5,8 +5,7 @@ pragma experimental ABIEncoderV2;
 import "./ISmartWalletFactory.sol";
 import "./SmartWallet.sol";
 
-/* solhint-disable no-inline-assembly */
-/* solhint-disable avoid-low-level-calls */
+/* solhint-disable no-inline-assembly, avoid-low-level-calls */
 
 /**
  * @title SmartWalletFactory
