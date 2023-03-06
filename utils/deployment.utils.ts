@@ -57,11 +57,13 @@ export const deployProxyContract = async <
     contractName
   )) as Factory<RIFGateway>;
 
-  const mainProxyContract = await mainContractFactory
-    .connect(owner)
-    .deploy(logicContract.address, initializeData, {
+  const mainProxyContract = await mainContractFactory.deploy(
+    logicContract.address,
+    initializeData,
+    {
       gasLimit: 3000000,
-    });
+    }
+  );
   await mainProxyContract.deployed();
 
   const contractAsInterface = (await ethers.getContractAt(

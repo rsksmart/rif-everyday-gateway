@@ -19,6 +19,7 @@ import { signTransactionForExecutor } from '../smartwallet/utils';
 
 async function serviceSetUp(rifGateway: IRIFGateway, consume = true) {
   const [owner, feeManagerOwner, beneficiary] = await ethers.getSigners();
+
   const { smartWalletFactory } = await smartwalletFactoryFixture();
   const { privateKey, externalWallet } = await externalSmartwalletFixture(
     smartWalletFactory,
@@ -311,6 +312,15 @@ describe('FeeManager', () => {
         await feeManager
           .connect(feeManagerOwner)
           .setRIFGateway(rifGateway.address)
+      ).wait();
+
+      ({ tropykusLendingService } = await serviceSetUp(rifGateway));
+
+      await (
+        await feeManager.payInBehalfOf(tropykusLendingService.address, {
+          value: ONE_GWEI * 2,
+          gasLimit: 30000000,
+        })
       ).wait();
 
       ({ tropykusLendingService } = await serviceSetUp(rifGateway));
