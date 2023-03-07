@@ -7,8 +7,10 @@ import {
   TropykusLendingService,
   IRIFGateway,
   IFeeManager,
+  IGatewayAccessControl,
+  FeeManager,
 } from 'typechain-types';
-import { deployContract } from 'utils/deployment.utils';
+import { deployContract, deployProxyContract } from 'utils/deployment.utils';
 import { writeFileSync } from 'fs';
 import { PaybackOption } from 'test/constants/service';
 import { deployTropykusContracts } from 'test/utils/tropykusFixture';
@@ -16,45 +18,33 @@ import {
   BORROW_SERVICE_INTERFACEID,
   LENDING_SERVICE_INTERFACEID,
 } from 'test/utils/interfaceIDs';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 const NATIVE_CURRENCY = ethers.constants.AddressZero;
 
-async function deployServiceTypeManager() {
-  if (hre.network.config.chainId === 31) {
-    const owner = (await ethers.getSigners())[0];
-    const serviceTypeManager = await ethers.getContractAt(
-      'ServiceTypeManager',
-      '0x98C79984c16aEe51D8c56956C5AFa2127352285f',
-      owner
-    );
-    return serviceTypeManager;
-  } else {
-    const { contract: serviceTypeManager } =
-      await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
-    console.log('ServiceTypeManager deployed at: ', serviceTypeManager.address);
-    return serviceTypeManager;
-  }
+async function deployServiceTypeManager(deployer: SignerWithAddress) {
+  const { contract: serviceTypeManager } =
+    await deployContract<ServiceTypeManager>('ServiceTypeManager', {});
+  // }
+  console.log('ServiceTypeManager deployed at: ', serviceTypeManager.address);
+  return serviceTypeManager;
 }
 
-async function deploySmartWalletFactory() {
-  if (hre.network.config.chainId === 31) {
-    const owner = (await ethers.getSigners())[0];
-    const smartWalletFactory = await ethers.getContractAt(
+async function deploySmartWalletFactory(deployer: SignerWithAddress) {
+  const { contract: smartWalletFactory } =
+    await deployContract<ISmartWalletFactory>(
       'SmartWalletFactory',
-      '0x677dae6b27F90F6fb4703fDb1D20e873881Fe81A',
-      owner
+      {},
+      null,
+      deployer
     );
-    return smartWalletFactory;
-  } else {
-    const { contract: smartWalletFactory } =
-      await deployContract<ISmartWalletFactory>('SmartWalletFactory', {});
-    console.log('SmartWalletFactory deployed at: ', smartWalletFactory.address);
-    return smartWalletFactory;
-  }
+  console.log('SmartWalletFactory deployed at: ', smartWalletFactory.address);
+  return smartWalletFactory as ISmartWalletFactory;
 }
 
 async function deployAndSetupTropykusContracts() {
+  let contracts;
   if (hre.network.config.chainId === 31) {
-    return {
+    contracts = {
       comptroller: '0xb1bec5376929b4e0235f1353819dba92c4b0c6bb',
       oracle: '0x9fbB872D3B45f95b4E3126BC767553D3Fa1e31C0',
       crbtc: '0x5b35072cd6110606c8421e013304110fa04a32a3',
@@ -62,10 +52,38 @@ async function deployAndSetupTropykusContracts() {
       doc: '0xcb46c0ddc60d18efeb0e586c17af6ea36452dae0',
     };
   } else {
-    const contracts = await deployTropykusContracts();
-    console.log('TropykusContracts delpoyed');
-    return contracts;
+    contracts = await deployTropykusContracts();
   }
+  console.log(
+    `TropykusContracts${hre.network.config.chainId != 31 ? +'deployed' : +''}`,
+    contracts
+  );
+  return contracts;
+}
+
+async function deployRIFGatewayContract(
+  serviceTypeManagerAddr: string,
+  feeManagerAddr: string,
+  accessControlAddr: string,
+  deployer: SignerWithAddress
+) {
+  const RIFGatewayIface = new ethers.utils.Interface([
+    'function initialize(address serviceTypeManagerAddr,address gatewayAccessControlAddr, address feeManagerAddr)',
+  ]);
+
+  const RIFGatewayInitMsgData = RIFGatewayIface.encodeFunctionData(
+    'initialize',
+    [serviceTypeManagerAddr, feeManagerAddr, accessControlAddr]
+  );
+
+  const { contract: rifGateway } = await deployProxyContract(
+    'RIFGateway',
+    'RIFGatewayLogicV1',
+    RIFGatewayInitMsgData,
+    deployer
+  );
+  console.log('RIFGateway contract deployed at: ', rifGateway.address);
+  return rifGateway as IRIFGateway;
 }
 
 async function deployProviders(
@@ -82,15 +100,15 @@ async function deployProviders(
   const { contract: tropykusLendingService } =
     await deployContract<TropykusLendingService>('TropykusLendingService', {
       gateway: rifGateway.address,
-      crbtc: contracts.crbtc,
       smartWalletFactory: smartWalletFactory.address,
+      contracts,
     });
 
   const { contract: tropykusBorrowingService } =
     await deployContract<TropykusBorrowingService>('TropykusBorrowingService', {
       gateway: rifGateway.address,
       smartWalletFactory: smartWalletFactory.address,
-      contracts: contracts,
+      contracts,
     });
 
   return {
@@ -99,56 +117,70 @@ async function deployProviders(
   };
 }
 
-async function deployRIFGatewayContract(
-  serviceTypeManagerAddr: string,
-  feeManagerAddr: string
-) {
-  const { contract: RIFGateway } = await deployContract<IRIFGateway>(
-    'RIFGateway',
-    {
-      stm: serviceTypeManagerAddr,
-    }
+async function deployFeeManager(deployer: SignerWithAddress) {
+  const feeManagerIface = new ethers.utils.Interface(['function initialize()']);
+  const feeManagerMsgData = feeManagerIface.encodeFunctionData(
+    'initialize',
+    []
   );
-  console.log('RIFGateway contract deployed at: ', RIFGateway.address);
-  return RIFGateway;
+  const { contract: feeManager } = await deployProxyContract<
+    FeeManager,
+    IFeeManager
+  >('FeeManager', 'FeeManagerLogicV1', feeManagerMsgData, deployer);
+
+  console.log('FeeManager contract deployed at: ', feeManager.address);
+  return feeManager;
 }
 
-async function deployFeeManager(feesOwner: string) {
-  const { contract: FeeManager } = await deployContract<IFeeManager>(
-    'FeeManager',
-    {
-      feesOwner,
-    }
+async function deployAccessControl(deployer: SignerWithAddress) {
+  const { contract: accessControl } =
+    await deployContract<IGatewayAccessControl>(
+      'GatewayAccessControl',
+      {},
+      null,
+      deployer
+    );
+  console.log(
+    'GatewayAccessControl contract deployed at: ',
+    accessControl.address
   );
-  console.log('FeeManager contract deployed at: ', FeeManager.address);
-  return FeeManager;
+  return accessControl;
 }
 
 async function setupServices() {
-  // TODO: pass owner address through ENV
-  const [owner] = await ethers.getSigners();
-  const feeManagerContract = await deployFeeManager(owner.address);
-  const smartWalletFactory = await deploySmartWalletFactory();
-  const tropykusContracts = await deployAndSetupTropykusContracts();
-  const serviceTypeManager = await deployServiceTypeManager();
+  const [owner, feeManagerOwner] = await ethers.getSigners();
 
+  const feeManagerContract = await deployFeeManager(feeManagerOwner);
+  const smartWalletFactory = await deploySmartWalletFactory(owner);
+  const tropykusContracts = await deployAndSetupTropykusContracts();
+  const serviceTypeManager = await deployServiceTypeManager(owner);
+  const accessControlContract = await deployAccessControl(owner);
+
+  console.log('After access Control');
   // allow lending service interface id
-  const tLx = await serviceTypeManager.addServiceType(
-    LENDING_SERVICE_INTERFACEID
-  );
+  const tLx = await serviceTypeManager
+    .connect(owner)
+    .addServiceType(LENDING_SERVICE_INTERFACEID, { gasLimit: 3000000 });
   await tLx.wait();
 
+  console.log('After adding lending service');
   // allow borrowing service interface id
-  const tBx = await serviceTypeManager.addServiceType(
-    BORROW_SERVICE_INTERFACEID
-  );
+  const tBx = await serviceTypeManager
+    .connect(owner)
+    .addServiceType(BORROW_SERVICE_INTERFACEID);
   await tBx.wait();
+
+  console.log('After adding borrowing service');
 
   const RIFGatewayContract = await deployRIFGatewayContract(
     serviceTypeManager.address,
-    feeManagerContract.address
+    feeManagerContract.address,
+    accessControlContract.address,
+    owner
   );
+  console.log('After RIF Gateway deployment');
 
+  // Emulate service provider implementation
   const { tropykusLendingService, tropykusBorrowingService } =
     await deployProviders(
       RIFGatewayContract,
@@ -181,6 +213,7 @@ async function setupServices() {
 
   const contractsJSON = {
     RIFGatewayContract: RIFGatewayContract.address,
+    AccessControl: accessControlContract.address,
     FeeManager: feeManagerContract.address,
     smartWalletFactory: smartWalletFactory.address,
     ServiceTypeManager: serviceTypeManager.address,
@@ -293,4 +326,4 @@ async function setupServices() {
   ).wait();
 }
 
-setupServices().then(() => console.log('done 👀'));
+setupServices().then(() => console.log('Done 🎉'));

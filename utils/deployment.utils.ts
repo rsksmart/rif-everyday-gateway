@@ -10,22 +10,24 @@ export interface Factory<C extends Contract> extends ContractFactory {
 export const deployContract = async <C extends Contract, A = {}>(
   contractName: string,
   constructorArgs: A,
-  factory?: Factory<C>
+  factory: null | Factory<C> = null,
+  signer: null | SignerWithAddress = null
 ): Promise<{
   contract: C;
-  signers: SignerWithAddress[];
   contractFactory: Factory<C>;
 }> => {
+  const deployer = signer ?? (await ethers.getSigners())[0];
   const options = Object.values(constructorArgs);
   const contractFactory =
     factory ?? ((await ethers.getContractFactory(contractName)) as Factory<C>);
 
-  const contract = await contractFactory.deploy(...options);
+  const contract = (await contractFactory
+    .connect(deployer)
+    .deploy(...options)) as C;
   await contract.deployed();
 
   return {
-    contract: contract,
-    signers: await ethers.getSigners(),
+    contract,
     contractFactory,
   };
 };
@@ -41,7 +43,6 @@ export const deployProxyContract = async <
   signer: SignerWithAddress | null = null
 ): Promise<{
   contract: I;
-  signers: SignerWithAddress[];
 }> => {
   const owner = signer ?? (await ethers.getSigners())[0];
   // Deploy contracts logic
@@ -70,8 +71,5 @@ export const deployProxyContract = async <
     mainProxyContract.signer
   )) as I;
 
-  return {
-    contract: contractAsInterface,
-    signers: await ethers.getSigners(),
-  };
+  return { contract: contractAsInterface };
 };
