@@ -46,19 +46,20 @@ describe('Tropykus Lending Service', () => {
   });
 
   beforeEach(async () => {
+    [owner, financialOperator, financialOwner] = await ethers.getSigners();
     ({
       RIFGateway: RIFGateway,
       feeManager: feeManager,
       gatewayAccessControl: gatewayAccessControl,
-    } = await deployRIFGateway());
-
-    [owner, financialOperator, financialOwner] = await ethers.getSigners();
+    } = await deployRIFGateway(true, financialOwner));
 
     await (
       await gatewayAccessControl.addFinancialOwner(financialOwner.address)
     ).wait();
     await (
-      await gatewayAccessControl.addFinancialOperator(financialOperator.address)
+      await gatewayAccessControl
+        .connect(financialOwner)
+        .addFinancialOperator(financialOperator.address)
     ).wait();
 
     await (

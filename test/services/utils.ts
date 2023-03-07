@@ -14,10 +14,11 @@ import {
   SubscriptionReporter,
 } from 'typechain-types';
 import { deployContract, deployProxyContract } from 'utils/deployment.utils';
+import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 
 export async function deployRIFGateway(
   registerInterfaceId = true,
-  registerOwner = true
+  registerFeeManagerOwner: SignerWithAddress | null = null
 ) {
   // Deploy Service Type Manager
   const { contract: serviceTypeManager } =
@@ -42,7 +43,7 @@ export async function deployRIFGateway(
     await deployContract<IGatewayAccessControl>('GatewayAccessControl', {});
 
   // Deploy FeeManager
-  const feeManager = await deployFeeManager();
+  const feeManager = await deployFeeManager(registerFeeManagerOwner);
 
   const RIFGatewayIface = new ethers.utils.Interface([
     'function initialize(address serviceTypeManagerAddr,address gatewayAccessControlAddr, address feeManagerAddr)',
@@ -70,7 +71,9 @@ export async function deployRIFGateway(
   };
 }
 
-export async function deployFeeManager() {
+export async function deployFeeManager(
+  signer: SignerWithAddress | null = null
+) {
   // Deploy Fee Manager
   const feeManagerIface = new ethers.utils.Interface(['function initialize()']);
   const feeManagerMsgData = feeManagerIface.encodeFunctionData(
@@ -80,7 +83,7 @@ export async function deployFeeManager() {
   const { contract: feeManager } = await deployProxyContract<
     FeeManager,
     IFeeManager
-  >('FeeManager', 'FeeManagerLogicV1', feeManagerMsgData);
+  >('FeeManager', 'FeeManagerLogicV1', feeManagerMsgData, signer);
 
   return feeManager;
 }

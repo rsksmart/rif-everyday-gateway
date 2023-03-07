@@ -18,7 +18,8 @@ import { PaybackOption } from '../constants/service';
 import { signTransactionForExecutor } from '../smartwallet/utils';
 
 async function serviceSetUp(rifGateway: IRIFGateway, consume = true) {
-  const [owner, beneficiary] = await ethers.getSigners();
+  const [owner, feeManagerOwner, beneficiary] = await ethers.getSigners();
+
   const { smartWalletFactory } = await smartwalletFactoryFixture();
   const { privateKey, externalWallet } = await externalSmartwalletFixture(
     smartWalletFactory,
@@ -104,73 +105,90 @@ describe('FeeManager', () => {
   let financialOperator: SignerWithAddress;
   let financialOwner: SignerWithAddress;
   let owner: SignerWithAddress;
+  let feeManagerOwner: SignerWithAddress;
   let beneficiaryAddr: string;
   let gatewayAccessControl: IGatewayAccessControl;
   let rifGateway: IRIFGateway;
 
   beforeEach(async () => {
+    [owner, feeManagerOwner, beneficiary, financialOperator, financialOwner] =
+      await ethers.getSigners();
     ({
       RIFGateway: rifGateway,
       gatewayAccessControl: gatewayAccessControl,
       feeManager,
-    } = await deployRIFGateway(true));
-    [owner, beneficiary, financialOperator, financialOwner] =
-      await ethers.getSigners();
+    } = await deployRIFGateway(true, feeManagerOwner));
     beneficiaryAddr = beneficiary.address;
-
-    await (
-      await gatewayAccessControl.addFinancialOwner(financialOwner.address)
-    ).wait();
-    await (
-      await gatewayAccessControl.addFinancialOperator(financialOperator.address)
-    ).wait();
   });
 
   it('should allow FINANCIAL_OWNER to set RIFGateway address', async () => {
     await (
-      await feeManager.connect(financialOwner).setRIFGateway(rifGateway.address)
+      await gatewayAccessControl.addFinancialOwner(feeManagerOwner.address)
+    ).wait();
+
+    await (
+      await feeManager
+        .connect(feeManagerOwner)
+        .setRIFGateway(rifGateway.address)
     ).wait();
 
     expect(await feeManager.getRIFGateway()).to.equal(rifGateway.address);
   });
-
   it('should not allow non-FINANCIAL_OWNER to set RIFGateway address', async () => {
     await expect(
-      feeManager.connect(owner).setRIFGateway(rifGateway.address)
+      feeManager.connect(feeManagerOwner).setRIFGateway(rifGateway.address)
     ).to.be.rejectedWith('Not FINANCIAL_OWNER role');
   });
 
   describe('Roles', () => {
+    beforeEach(async () => {
+      await (
+        await gatewayAccessControl.addFinancialOwner(feeManagerOwner.address)
+      ).wait();
+      await (
+        await gatewayAccessControl
+          .connect(feeManagerOwner)
+          .addFinancialOperator(financialOperator.address)
+      ).wait();
+      await (
+        await feeManager
+          .connect(feeManagerOwner)
+          .setRIFGateway(rifGateway.address)
+      ).wait();
+    });
+
     it('should set FeeManager address as gatewayFeesOwner', async () => {
       expect(await feeManager.getGatewayFeesOwner()).to.equal(
         feeManager.address
       );
     });
-
     it('should transfer ownership to the given address', async () => {
       await (
         await feeManager
-          .connect(owner)
+          .connect(feeManagerOwner)
           .transferOwnership(financialOwner.address)
       ).wait();
 
       expect(await feeManager.owner()).to.equal(financialOwner.address);
       expect(
         await gatewayAccessControl.isFinancialOwner(financialOwner.address)
+      ).to.be.false;
+      expect(
+        await gatewayAccessControl.isFinancialOwner(feeManagerOwner.address)
       ).to.be.true;
-      expect(await gatewayAccessControl.isFinancialOwner(owner.address)).to.be
-        .false;
     });
     it('should revert if trying to transfer ownership to address zero', async () => {
       await expect(
         feeManager
-          .connect(owner)
+          .connect(feeManagerOwner)
           .transferOwnership(ethers.constants.AddressZero)
       ).to.eventually.be.rejectedWith('Ownable: new owner not set');
     });
     it('should revert if trying to transfer ownership to old owner', async () => {
       await expect(
-        feeManager.connect(owner).transferOwnership(owner.address)
+        feeManager
+          .connect(feeManagerOwner)
+          .transferOwnership(feeManagerOwner.address)
       ).to.eventually.be.rejectedWith('NewOwnerIsCurrentOwner()');
     });
   });
@@ -187,8 +205,11 @@ describe('FeeManager', () => {
   describe('fundBeneficiary', () => {
     beforeEach(async () => {
       await (
+        await gatewayAccessControl.addFinancialOwner(feeManagerOwner.address)
+      ).wait();
+      await (
         await feeManager
-          .connect(financialOwner)
+          .connect(feeManagerOwner)
           .setRIFGateway(rifGateway.address)
       ).wait();
     });
@@ -280,9 +301,17 @@ describe('FeeManager', () => {
       feeManagerAsBeneficiary = feeManager.connect(beneficiary);
       feeManagerAsServiceProvider = feeManager.connect(serviceProvider);
       await (
+        await gatewayAccessControl.addFinancialOwner(feeManagerOwner.address)
+      ).wait();
+      await (
+        await gatewayAccessControl
+          .connect(feeManagerOwner)
+          .addFinancialOperator(financialOperator.address)
+      ).wait();
+      await (
         await feeManager
-          .connect(financialOwner)
-          .setRIFGateway(rifGateway.address, { gasLimit: 3000000 })
+          .connect(feeManagerOwner)
+          .setRIFGateway(rifGateway.address)
       ).wait();
 
       ({ tropykusLendingService } = await serviceSetUp(rifGateway));

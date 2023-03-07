@@ -57,6 +57,7 @@ describe('Tropykus Borrowing Service', () => {
 
   beforeEach(async () => {
     tropykusContractsDeployed = await tropykusFixture();
+    [owner, financialOperator, financialOwner] = await ethers.getSigners();
 
     doc = (await ethers.getContractAt(
       'IERC20',
@@ -80,15 +81,15 @@ describe('Tropykus Borrowing Service', () => {
       RIFGateway: RIFGateway,
       feeManager: feeManager,
       gatewayAccessControl: gatewayAccessControl,
-    } = await deployRIFGateway());
-
-    [owner, financialOperator, financialOwner] = await ethers.getSigners();
+    } = await deployRIFGateway(true, financialOwner));
 
     await (
       await gatewayAccessControl.addFinancialOwner(financialOwner.address)
     ).wait();
     await (
-      await gatewayAccessControl.addFinancialOperator(financialOperator.address)
+      await gatewayAccessControl
+        .connect(financialOwner)
+        .addFinancialOperator(financialOperator.address)
     ).wait();
 
     await (

@@ -37,17 +37,19 @@ export const deployProxyContract = async <
 >(
   contractName: string,
   logicContractName: string,
-  initializeData: string
+  initializeData: string,
+  signer: SignerWithAddress | null = null
 ): Promise<{
   contract: I;
   signers: SignerWithAddress[];
 }> => {
+  const owner = signer ?? (await ethers.getSigners())[0];
   // Deploy contracts logic
   const logicContractFactory = (await ethers.getContractFactory(
     logicContractName
   )) as Factory<L>;
 
-  const logicContract = await logicContractFactory.deploy();
+  const logicContract = await logicContractFactory.connect(owner).deploy();
   await logicContract.deployed();
 
   // Deploy main upgradeable contract
@@ -55,13 +57,11 @@ export const deployProxyContract = async <
     contractName
   )) as Factory<RIFGateway>;
 
-  const mainProxyContract = await mainContractFactory.deploy(
-    logicContract.address,
-    initializeData,
-    {
+  const mainProxyContract = await mainContractFactory
+    .connect(owner)
+    .deploy(logicContract.address, initializeData, {
       gasLimit: 3000000,
-    }
-  );
+    });
   await mainProxyContract.deployed();
 
   const contractAsInterface = (await ethers.getContractAt(
