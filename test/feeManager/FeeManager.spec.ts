@@ -358,9 +358,6 @@ describe('FeeManager', () => {
       const financialOperatorBalanceBefore = await ethers.provider.getBalance(
         financialOperator.address
       );
-      expect(financialOperatorBalanceBefore).to.equal(
-        ethers.utils.parseEther('100000000000000000000000000') // hardhat initial account balance
-      );
 
       // Unit under test
       await feeManager

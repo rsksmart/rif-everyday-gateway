@@ -36,7 +36,7 @@ export const externalSmartwalletFixture = async (
 
     await signer.sendTransaction({
       to: externalWallet.address,
-      value: ethers.utils.parseEther(ETH_BALANCE_FOR_TROPYKUS_TEST),
+      value: ethers.utils.parseEther('80'),
     });
   }
   let smartWallet;
