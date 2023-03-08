@@ -14,6 +14,9 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+const ZERO_PRIVATE_KEY =
+  '0000000000000000000000000000000000000000000000000000000000000000';
+
 export default <HardhatUserConfig>{
   solidity: {
     compilers: [
@@ -39,23 +42,23 @@ export default <HardhatUserConfig>{
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
       accounts: [
-        process.env.LOCAL_PRIVATE_KEY_RIF_GATEWAY_OWNER,
-        process.env.LOCAL_PRIVATE_KEY_FEE_MANAGER_OWNER,
+        process.env.LOCAL_PRIVATE_KEY_RIF_GATEWAY_OWNER ?? ZERO_PRIVATE_KEY,
+        process.env.LOCAL_PRIVATE_KEY_FEE_MANAGER_OWNER ?? ZERO_PRIVATE_KEY,
       ],
     },
     testnet: {
       url: 'https://public-node.testnet.rsk.co',
       accounts: [
-        process.env.TESTNET_PRIVATE_KEY_RIF_GATEWAY_OWNER,
-        process.env.TESTNET_PRIVATE_KEY_FEE_MANAGER_OWNER,
+        process.env.TESTNET_PRIVATE_KEY_RIF_GATEWAY_OWNER ?? ZERO_PRIVATE_KEY,
+        process.env.TESTNET_PRIVATE_KEY_FEE_MANAGER_OWNER ?? ZERO_PRIVATE_KEY,
       ],
       chainId: 31,
     },
     mainnet: {
       url: 'https://public-node.rsk.co',
       accounts: [
-        process.env.MAINNET_PRIVATE_KEY_RIF_GATEWAY_OWNER,
-        process.env.MAINNET_PRIVATE_KEY_FEE_MANAGER_OWNER,
+        process.env.MAINNET_PRIVATE_KEY_RIF_GATEWAY_OWNER ?? ZERO_PRIVATE_KEY,
+        process.env.MAINNET_PRIVATE_KEY_FEE_MANAGER_OWNER ?? ZERO_PRIVATE_KEY,
       ],
       chainId: 30,
     },
