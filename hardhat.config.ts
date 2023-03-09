@@ -62,6 +62,11 @@ export default <HardhatUserConfig>{
       ],
       chainId: 30,
     },
+    hardhat: {
+      accounts: {
+        accountsBalance: '100000000000000000000000000000000000000000000',
+      },
+    },
   },
   typechain: {
     target: 'ethers-v5',
