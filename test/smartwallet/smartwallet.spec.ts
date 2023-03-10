@@ -68,21 +68,19 @@ describe('RIF Gateway SmartWallet', async () => {
     });
 
     it('should allow to sign a message', async () => {
-      const { req, suffixData, sig } = await signTransactionForExecutor(
+      const { req, sig } = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         externalWallet.address,
         smartWalletFactory
       );
 
-      await expect(
-        smartWallet!.verify(suffixData, req, sig),
-        'Verification failed'
-      ).not.to.be.rejected;
+      await expect(smartWallet!.verify(req, sig), 'Verification failed').not.to
+        .be.rejected;
     });
 
     it('should revert if executor is different from the sender', async () => {
-      const { req, suffixData, sig } = await signTransactionForExecutor(
+      const { req, sig } = await signTransactionForExecutor(
         externalWallet.address,
         privateKey,
         ethers.constants.AddressZero, // wrong executor specified
@@ -90,7 +88,7 @@ describe('RIF Gateway SmartWallet', async () => {
       );
 
       await expect(
-        smartWallet!.verify(suffixData, req, sig),
+        smartWallet!.verify(req, sig),
         'Executor verification failed'
       ).to.be.rejected;
     });

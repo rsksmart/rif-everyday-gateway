@@ -100,12 +100,12 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     /**
      * @inheritdoc IForwarder
      */
-    function verify(
-        bytes32 suffixData,
-        ForwardRequest memory req,
-        bytes calldata sig
-    ) external view override {
-        _verifySig(suffixData, req, sig);
+    function verify(ForwardRequest memory req, bytes calldata sig)
+        external
+        view
+        override
+    {
+        _verifySig(req, sig);
     }
 
     /**
@@ -136,7 +136,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
         (mtx.sig); // This line saves gas TODO: Research why 🤷‍♂️
 
         _verifyNonce(mtx.req);
-        _verifySig(mtx.suffixData, mtx.req, mtx.sig);
+        _verifySig(mtx.req, mtx.sig);
 
         // slither-disable missing-zero-check low-level-calls
         (success, ret) = to.call{value: msg.value}(data);
@@ -201,15 +201,13 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
 
     /**
      * @notice Verifies that the signature is valid
-     * @param suffixData the suffix data
      * @param req the forward request
      * @param sig the signature
      */
-    function _verifySig(
-        bytes32 suffixData,
-        ForwardRequest memory req,
-        bytes memory sig
-    ) private view {
+    function _verifySig(ForwardRequest memory req, bytes memory sig)
+        private
+        view
+    {
         // TODO: this can be removes since the signature validation already verifies the req.from
         //Verify Owner
         require(
@@ -229,7 +227,7 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
                     abi.encodePacked(
                         "\x19\x01",
                         domainSeparator,
-                        keccak256(_getEncoded(suffixData, req))
+                        keccak256(_getEncoded(req))
                     )
                 ).recover(sig),
                 req.from
@@ -239,12 +237,11 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     }
 
     /**
-     * @notice Returns the encoded data given the suffix data and the forward request
-     * @param suffixData the suffix data
+     * @notice Returns the encoded data given the forward request
      * @param req the forward request
      * @return encodedData the encoded data
      */
-    function _getEncoded(bytes32 suffixData, ForwardRequest memory req)
+    function _getEncoded(ForwardRequest memory req)
         private
         pure
         returns (bytes memory)
@@ -255,7 +252,6 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
                     "ForwardRequest(address from,uint256 nonce,address executor)"
                 ), //requestTypeHash,
                 abi.encode(req.from, req.nonce, req.executor)
-                //suffixData
             );
     }
 
