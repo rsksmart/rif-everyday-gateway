@@ -10,13 +10,12 @@ import 'hardhat-watcher';
 import { HardhatUserConfig } from 'hardhat/config';
 import 'tsconfig-paths/register';
 import 'solidity-coverage';
+import * as dotenv from 'dotenv';
 
-const CONTRACTS_DEFAULT_ETH_BALANCE =
-  '100000000000000000000000000000000000000000000';
-const accountConfig = {
-  mnemonic:
-    'maximum curtain toward fox digital hair put warrior obey travel friend insect',
-};
+dotenv.config();
+
+const ZERO_PRIVATE_KEY =
+  '0000000000000000000000000000000000000000000000000000000000000000';
 
 export default <HardhatUserConfig>{
   solidity: {
@@ -42,21 +41,30 @@ export default <HardhatUserConfig>{
     ganache: {
       url: 'http://127.0.0.1:8545',
       chainId: 1337,
-      accounts: {
-        ...accountConfig,
-      },
+      accounts: [
+        process.env.LOCAL_PRIVATE_KEY_RIF_GATEWAY_OWNER ?? ZERO_PRIVATE_KEY,
+        process.env.LOCAL_PRIVATE_KEY_FEE_MANAGER_OWNER ?? ZERO_PRIVATE_KEY,
+      ],
     },
     testnet: {
       url: 'https://public-node.testnet.rsk.co',
-      accounts: {
-        ...accountConfig,
-      },
+      accounts: [
+        process.env.TESTNET_PRIVATE_KEY_RIF_GATEWAY_OWNER ?? ZERO_PRIVATE_KEY,
+        process.env.TESTNET_PRIVATE_KEY_FEE_MANAGER_OWNER ?? ZERO_PRIVATE_KEY,
+      ],
       chainId: 31,
+    },
+    mainnet: {
+      url: 'https://public-node.rsk.co',
+      accounts: [
+        process.env.MAINNET_PRIVATE_KEY_RIF_GATEWAY_OWNER ?? ZERO_PRIVATE_KEY,
+        process.env.MAINNET_PRIVATE_KEY_FEE_MANAGER_OWNER ?? ZERO_PRIVATE_KEY,
+      ],
+      chainId: 30,
     },
     hardhat: {
       accounts: {
-        ...accountConfig,
-        accountsBalance: CONTRACTS_DEFAULT_ETH_BALANCE,
+        accountsBalance: '100000000000000000000000000000000000000000000',
       },
     },
   },

@@ -6,7 +6,8 @@ import { deployContract, Factory } from 'utils/deployment.utils';
 const ETH_BALANCE_FOR_TROPYKUS_TEST = '1000000';
 
 export const smartwalletFactoryFixture = async () => {
-  const { contract: smartWalletFactory, signers } =
+  const signers = await ethers.getSigners();
+  const { contract: smartWalletFactory } =
     await deployContract<ISmartWalletFactory>(
       'SmartWalletFactory',
       {},
@@ -35,7 +36,7 @@ export const externalSmartwalletFixture = async (
 
     await signer.sendTransaction({
       to: externalWallet.address,
-      value: ethers.utils.parseEther(ETH_BALANCE_FOR_TROPYKUS_TEST),
+      value: ethers.utils.parseEther('10000'),
     });
   }
   let smartWallet;
