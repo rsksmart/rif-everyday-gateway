@@ -43,7 +43,7 @@ export type EIP712Payload = {
   };
 };
 
-class DeFiGatewaySigner {
+export class DeFiGatewaySigner {
   static async sign(
     account: MTAccount,
     data: MTData
