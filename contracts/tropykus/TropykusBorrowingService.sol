@@ -182,7 +182,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         // slither-disable-next-line arbitrary-send-eth
         (success, ) = smartWallet.execute{
             value: isCollateralInRBTC ? msg.value : 0
-        }(mtx, mintSignature, collateralCurrencyMarket, address(0));
+        }(mtx, mintSignature, collateralCurrencyMarket);
 
         if (!success) {
             revert CollateralTransferFailed(
@@ -216,8 +216,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         (bool success, bytes memory resp) = smartWallet.execute(
             mtx,
             abi.encodeWithSignature("enterMarkets(address[])", markets),
-            address(_comptroller),
-            address(0)
+            address(_comptroller)
         );
 
         if (!success) {
@@ -233,7 +232,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
         SmartWallet smartWallet = _smartWalletFactory.getSmartWallet(
             msg.sender
         );
-        (bool success, bytes memory resp) = smartWallet.execute(
+        (bool success, bytes memory resp) = smartWallet.executeAndForwardTokens(
             mtx,
             abi.encodeWithSignature("borrow(uint256)", amount),
             _getMarketForCurrency(listing.currency, _comptroller, _crbtc),
@@ -285,7 +284,7 @@ contract TropykusBorrowingService is BorrowService, TropykusCommon {
             );
 
         // slither-disable-next-line arbitrary-send-eth
-        (bool success, bytes memory resp) = smartWallet.execute{
+        (bool success, bytes memory resp) = smartWallet.executeAndForwardTokens{
             value: msg.value
         }(mtx, repayBorrowSignature, market, listing.currency);
 

@@ -126,30 +126,47 @@ contract SmartWallet is IForwarder, ReentrancyGuard {
     /**
      * @inheritdoc IForwarder
      */
-    // TODO: Add a nested structure to `IForwarder.MetaTransaction` in order to
     function execute(
         IForwarder.MetaTransaction calldata mtx,
         bytes calldata data,
-        address to,
+        address targetContract
+    ) external payable override returns (bool success, bytes memory ret) {
+        (success, ret) = _execute(mtx, data, targetContract);
+    }
+
+    /**
+     * @inheritdoc IForwarder
+     */
+    function executeAndForwardTokens(
+        IForwarder.MetaTransaction calldata mtx,
+        bytes calldata data,
+        address targetContract,
         address currency
     ) external payable override returns (bool success, bytes memory ret) {
-        (mtx.sig); // This line saves gas TODO: Research why 🤷‍♂️
+        (success, ret) = _execute(mtx, data, targetContract);
+        _forwardTokensIfAny(mtx.req.from, currency);
+    }
+
+    function _execute(
+        IForwarder.MetaTransaction calldata mtx,
+        bytes calldata data,
+        address targetContract
+    ) internal returns (bool success, bytes memory ret) {
+        (mtx.sig);
 
         _verifyNonce(mtx.req);
         _verifySig(mtx.req, mtx.sig);
 
         // slither-disable missing-zero-check low-level-calls
-        (success, ret) = to.call{value: msg.value}(data);
+        (success, ret) = targetContract.call{value: msg.value}(data);
 
-        //If any balance has been added then transfer it to the owner EOA
+        // If any balance has been added then transfer it to the owner EOA
         uint256 currentBalance = address(this).balance;
         if (currentBalance > 0) {
-            //can't fail: req.from signed (off-chain) the request, so it must be an EOA...
+            // can't fail: req.from signed (off-chain) the request, so it must be an EOA...
             // slither-disable-next-line unchecked-lowlevel
             payable(mtx.req.from).call{value: currentBalance}("");
         }
-
-        _forwardTokensIfAny(mtx.req.from, currency);
     }
 
     function _forwardTokensIfAny(address to, address currency)

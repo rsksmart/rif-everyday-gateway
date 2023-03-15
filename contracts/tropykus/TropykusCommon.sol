@@ -109,7 +109,7 @@ abstract contract TropykusCommon {
         //slither-disable-next-line arbitrary-send-eth
         (bool success, ) = smartWallet.execute{
             value: transferHasRBTC ? msg.value : 0
-        }(mtx, mintSignature, market, address(0));
+        }(mtx, mintSignature, market);
 
         if (!success) {
             revert MintTokensInMarketError(market, currency);
@@ -146,8 +146,7 @@ abstract contract TropykusCommon {
                 address(smartWallet),
                 amount
             ),
-            erc20Token,
-            address(0)
+            erc20Token
         );
 
         if (!transferFromTxSuccess) {
@@ -162,8 +161,7 @@ abstract contract TropykusCommon {
         (approveTxSuccess, ) = smartWallet.execute(
             mtx,
             abi.encodeWithSignature("approve(address,uint256)", market, amount),
-            erc20Token,
-            address(0)
+            erc20Token
         );
 
         if (!approveTxSuccess) {
@@ -202,7 +200,7 @@ abstract contract TropykusCommon {
             revert("no tokens to withdraw");
         }
         // slither-disable-next-line low-level-calls
-        (bool success, bytes memory res) = smartWallet.execute(
+        (bool success, bytes memory res) = smartWallet.executeAndForwardTokens(
             mtx,
             abi.encodeWithSignature("redeem(uint256)", tokens),
             market,

@@ -1,7 +1,12 @@
 import { expect } from 'chairc';
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers';
 import { loadFixture } from 'ethereum-waffle';
-import { SmartWalletFactory, SmartWallet } from 'typechain-types';
+import {
+  SmartWalletFactory,
+  SmartWallet,
+  IERC20,
+  ERC20__factory,
+} from 'typechain-types';
 import {
   externalSmartwalletFixture,
   smartwalletFactoryFixture,
@@ -9,6 +14,8 @@ import {
 import { computeSalt, encoder, signTransactionForExecutor } from './utils';
 import { ethers } from 'hardhat';
 import { Wallet } from 'ethers';
+import { parseEther } from 'ethers/lib/utils';
+import StandardTokenJSON from '../utils/tropykusCompiledContracts/StandardToken.json';
 
 describe('RIF Gateway SmartWallet', async () => {
   let smartWalletFactory: SmartWalletFactory;
@@ -108,7 +115,6 @@ describe('RIF Gateway SmartWallet', async () => {
           mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero,
           {
             gasLimit: 3000000,
           }
@@ -132,7 +138,6 @@ describe('RIF Gateway SmartWallet', async () => {
           mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero,
           {
             gasLimit: 3000000,
           }
@@ -144,7 +149,6 @@ describe('RIF Gateway SmartWallet', async () => {
           mtx,
           ethers.constants.AddressZero,
           ethers.constants.AddressZero,
-          ethers.constants.AddressZero,
           {
             gasLimit: 3000000,
           }
@@ -153,6 +157,76 @@ describe('RIF Gateway SmartWallet', async () => {
       )
         .to.revertedWith('InvalidBlockForNonce')
         .withArgs(0);
+    });
+
+    describe('executeAndForwardTokens', () => {
+      let doc: IERC20;
+      let smartWalletAddress: string;
+      let externalWalletAddress: string;
+
+      beforeEach(async () => {
+        const [owner] = signers;
+        const standardTokenContract = new ethers.ContractFactory(
+          StandardTokenJSON.abi,
+          StandardTokenJSON.bytecode,
+          owner
+        );
+
+        doc = (await standardTokenContract.deploy(
+          parseEther('2000000'),
+          'Test DOC',
+          18,
+          'tDOC'
+        )) as IERC20;
+
+        await doc.deployed();
+
+        smartWalletAddress = smartWallet!.address;
+        externalWalletAddress = externalWallet.address;
+      });
+
+      it('should forward all ERC20 of the given token to the smart wallet owner', async () => {
+        const amount = 10000;
+        const mtx = await signTransactionForExecutor(
+          externalWalletAddress,
+          privateKey,
+          externalWalletAddress,
+          smartWalletFactory
+        );
+
+        await doc.transfer(smartWalletAddress, amount);
+        const userDocBalanceBeforeExecute = await doc.balanceOf(
+          externalWalletAddress
+        );
+        const smartWalletDocBalanceBeforeExecute = await doc.balanceOf(
+          smartWalletAddress
+        );
+
+        await expect(
+          smartWallet!.executeAndForwardTokens(
+            mtx,
+            ethers.constants.AddressZero,
+            ethers.constants.AddressZero,
+            doc.address,
+            {
+              gasLimit: 3000000,
+            }
+          )
+        ).not.to.be.rejected;
+
+        const userDocBalanceAfterExecute = await doc.balanceOf(
+          externalWalletAddress
+        );
+        const smartWalletDocBalanceAfterExecute = await doc.balanceOf(
+          smartWalletAddress
+        );
+
+        expect(userDocBalanceBeforeExecute).to.equal(0);
+        expect(smartWalletDocBalanceBeforeExecute).to.equal(amount);
+
+        expect(userDocBalanceAfterExecute).to.equal(amount);
+        expect(smartWalletDocBalanceAfterExecute).to.equal(0);
+      });
     });
   });
 });
